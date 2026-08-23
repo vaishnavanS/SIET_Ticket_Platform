@@ -1,0 +1,118 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Reports - SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-left">
+        <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <strong>SIET Helpdesk</strong>
+    </div>
+    <nav class="admin-nav">
+        <a href="{% url 'accounts:admin_dashboard' %}">Overview</a>
+        <div class="dropdown">
+            <button class="dropdown-btn" type="button">Administration ▾</button>
+            <div class="dropdown-menu">
+                <a href="{% url 'accounts:admin_users' %}">Users</a>
+                <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
+                <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+            </div>
+        </div>
+        <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
+        <a class="active" href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
+        <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+    </nav>
+</header>
+
+<!-- Mobile Sidebar Drawer -->
+<div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+<aside id="mobileSidebar" class="mobile-sidebar">
+    <div class="sidebar-header">
+        <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close Menu">✕</button>
+        <div class="sidebar-brand">
+            <strong>SIET Helpdesk</strong>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="{% url 'accounts:admin_dashboard' %}" class="sidebar-link">Overview</a>
+        <a href="{% url 'accounts:admin_users' %}" class="sidebar-link">Users</a>
+        <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link">Technician Groups</a>
+        <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+        <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
+        <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link active">Issue Reports</a>
+        <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+    </nav>
+</aside>
+
+<main class="page-shell">
+    <div class="page-heading"><div><p class="eyebrow">TICKET OPERATIONS</p><h1>Issue reports</h1><p>Review, prioritize, assign, and resolve reported issues.</p></div></div>
+    <div class="filter-pills"><a class="filter-pill {% if not selected_status %}active{% endif %}" href="{% url 'accounts:admin_tickets' %}">All</a>{% for value,label in status_choices %}<a class="filter-pill {% if selected_status == value %}active{% endif %}" href="?status={{ value }}">{{ label }}</a>{% endfor %}</div>
+    <section class="panel">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ticket</th>
+                        <th>Reporter</th>
+                        <th>Facing Issue In</th>
+                        <th>Location</th>
+                        <th>Urgency</th>
+                        <th>Attachment</th>
+                        <th>Assigned to</th>
+                        <th>Status</th>
+                        <th>SLA</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in tickets %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'tickets:detail' ticket.pk %}" style="text-decoration: none; color: inherit; display: block;">
+                                <strong style="color: #165c20;">#{{ ticket.ticket_number }}</strong>
+                                <span style="font-weight: 600; display: block; color: #173b1c; font-size: 13px; margin-top: 1px;">{{ ticket.title }}</span>
+                                <p style="margin: 3px 0 0; color: #4b6650; font-size: 12px; line-height: 1.35;">{{ ticket.description|truncatechars:65 }}</p>
+                            </a>
+                        </td>
+
+                        <td>{{ ticket.reporter.username }}</td>
+                        <td><span class="badge">{{ ticket.category.name|default:'General' }}</span></td>
+                        <td><strong>{{ ticket.location|default:'-' }}</strong></td>
+                        <td><span class="urgency {{ ticket.urgency }}">{{ ticket.get_urgency_display }}</span></td>
+                        <td>
+                            {% if ticket.attachment %}
+                            <a href="{{ ticket.attachment.url }}" target="_blank" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: #eaf6ea; border: 1px solid #c9dec7; border-radius: 4px; font-size: 11.5px; color: #1e7e34; font-weight: 600; text-decoration: none;">
+                                Attached File
+                            </a>
+                            {% else %}
+                            <span class="muted" style="font-size: 12px;">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ ticket.assigned_technician.username|default:'Unassigned' }}</td>
+                        <td><span class="badge">{{ ticket.get_status_display }}</span></td>
+                        <td>{% if ticket.is_sla_breached %}<span class="status suspended">Breached</span>{% else %}<span class="status active">On track</span>{% endif %}</td>
+                        <td><a class="text-button" href="{% url 'tickets:detail' ticket.pk %}">View & Process</a></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="10"><div class="empty-state"><strong>No issue reports found</strong><span>Tickets submitted by users will appear here.</span></div></td></tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+
+</main>
+<script src="{% static 'js/mobile_nav.js' %}"></script>
+</body>
+</html>

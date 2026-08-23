@@ -1,0 +1,126 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users - SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-left">
+        <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <strong>SIET Helpdesk</strong>
+    </div>
+    <nav class="admin-nav">
+        <a href="{% url 'accounts:admin_dashboard' %}">Overview</a>
+        <div class="dropdown">
+            <button class="dropdown-btn active" type="button">Administration ▾</button>
+            <div class="dropdown-menu">
+                <a class="active" href="{% url 'accounts:admin_users' %}">Users</a>
+                <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
+                <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+            </div>
+        </div>
+        <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
+        <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
+        <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+    </nav>
+</header>
+
+<!-- Mobile Sidebar Drawer -->
+<div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+<aside id="mobileSidebar" class="mobile-sidebar">
+    <div class="sidebar-header">
+        <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close Menu">✕</button>
+        <div class="sidebar-brand">
+            <strong>SIET Helpdesk</strong>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="{% url 'accounts:admin_dashboard' %}" class="sidebar-link">Overview</a>
+        <a href="{% url 'accounts:admin_users' %}" class="sidebar-link active">Users</a>
+        <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link">Technician Groups</a>
+        <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+        <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
+        <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link">Issue Reports</a>
+        <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+    </nav>
+</aside>
+
+<main class="page-shell">
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">USER MANAGEMENT</p>
+            <h1>Users</h1>
+            <p>Create accounts and review assigned roles.</p>
+        </div>
+        <a class="primary-button" href="{% url 'accounts:admin_create_user' %}">+ Create User</a>
+    </div>
+    <section class="panel">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in users %}
+                    <tr>
+                        <td><strong>{{ item.username }}</strong></td>
+                        <td>{{ item.get_full_name|default:'-' }}</td>
+                        <td>{{ item.email|default:'-' }}</td>
+                        <td><span class="badge">{{ item.profile.get_role_display }}</span></td>
+                        <td>
+                            {% if item.profile.is_suspended %}
+                            <span class="status suspended">Suspended</span>
+                            {% elif item.profile.is_active %}
+                            <span class="status active">Active</span>
+                            {% else %}
+                            <span class="status">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item != user %}
+                            <div class="row-actions">
+                                {% if item.profile.is_suspended %}
+                                <form method="post" action="{% url 'accounts:admin_user_action' item.id 'activate' %}">
+                                {% else %}
+                                <form method="post" action="{% url 'accounts:admin_user_action' item.id 'suspend' %}">
+                                {% endif %}
+                                    {% csrf_token %}
+                                    <button class="text-button" type="submit">{% if item.profile.is_suspended %}Activate{% else %}Suspend{% endif %}</button>
+                                </form>
+                                <form method="post" action="{% url 'accounts:admin_user_action' item.id 'delete' %}" onsubmit="return confirm('Delete this user permanently?');">
+                                    {% csrf_token %}
+                                    <button class="text-button delete-button" type="submit">Delete</button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <span class="muted">Current admin</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6">No users found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</main>
+<script src="{% static 'js/mobile_nav.js' %}"></script>
+</body>
+</html>

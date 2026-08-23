@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIET Helpdesk - Login</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+</head>
+<body>
+    <header class="navbar">
+        <span class="logo-text">SIET-Helpdesk</span>
+        <span class="service-text">&#9881; &nbsp;Campus IT Service Desk</span>
+    </header>
+
+    <main class="login-container">
+        <div class="login-card">
+            <div class="logo-section">
+                <img src="{% static 'images/logo.jpg' %}" alt="SIET logo" class="logo">
+            </div>
+
+            <h1>Login to your account</h1>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-error">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <form method="post" class="login-form">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="username">Login</label>
+                    <input type="text" id="username" name="username" placeholder="Username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Password" required>
+                </div>
+
+                <div class="form-group remember-me">
+                    <input type="checkbox" id="remember-me" name="remember_me">
+                    <label for="remember-me">Remember me</label>
+                </div>
+
+                <button type="submit" class="login-btn">Sign in</button>
+            </form>
+
+            <div class="forgot-password">
+                <a href="{% url 'accounts:password_reset' %}">Forgot Password?</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer"></footer>
+</body>
+</html>

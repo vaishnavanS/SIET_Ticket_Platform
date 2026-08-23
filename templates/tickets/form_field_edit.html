@@ -1,0 +1,247 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Question / Rule - SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+</head>
+<body>
+    <header class="topbar">
+        <strong>SIET Helpdesk</strong>
+        <nav class="admin-nav">
+            <a href="{% url 'accounts:admin_dashboard' %}">Overview</a>
+            <div class="dropdown">
+                <button class="dropdown-btn active" type="button">Administration ▾</button>
+                <div class="dropdown-menu">
+                    <a href="{% url 'accounts:admin_users' %}">Users</a>
+                    <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
+                    <a class="active" href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                </div>
+            </div>
+            <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
+            <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
+            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+        </nav>
+    </header>
+
+    <main class="page-shell narrow-shell">
+        <div class="page-heading">
+            <div>
+                <p class="eyebrow">FORM STUDIO / EDIT QUESTION</p>
+                <h1>Edit Question: {{ field.label }}</h1>
+                <p>Modify field properties, options, and GLPI "Visible If..." conditional rules.</p>
+            </div>
+        </div>
+
+        <section class="panel form-panel">
+            <form method="post">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                <div class="form-errors">{{ form.non_field_errors }}</div>
+                {% endif %}
+                
+                <div class="field">
+                    <label for="id_label">Question Title / Label *</label>
+                    {{ form.label }}
+                    {% if form.label.errors %}<small class="field-error">{{ form.label.errors|striptags }}</small>{% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="id_field_key">Field Key</label>
+                    {{ form.field_key }}
+                    {% if form.field_key.errors %}<small class="field-error">{{ form.field_key.errors|striptags }}</small>{% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="id_field_type">Field Type *</label>
+                    {{ form.field_type }}
+                    {% if form.field_type.errors %}<small class="field-error">{{ form.field_type.errors|striptags }}</small>{% endif %}
+                </div>
+
+                <div class="field" id="options-field-wrap">
+                    <label for="id_options_text">Question Options (one per line)</label>
+                    {{ form.options_text }}
+                    <small class="field-help">Options for radio, checkbox, or dropdown fields. Include "Other" to trigger details box.</small>
+                    {% if form.options_text.errors %}<small class="field-error">{{ form.options_text.errors|striptags }}</small>{% endif %}
+                </div>
+
+                <div class="field" id="max-file-size-wrap" style="display: none;">
+                    <label for="id_max_file_size_mb">Maximum Allowed File Size (MB) *</label>
+                    {{ form.max_file_size_mb }}
+                    <small class="field-help">Specify upload limit in Megabytes (e.g. 2, 5, 10, 25, 50 MB). Default: 5 MB.</small>
+                    {% if form.max_file_size_mb.errors %}<small class="field-error">{{ form.max_file_size_mb.errors|striptags }}</small>{% endif %}
+                </div>
+
+
+
+                <div class="field">
+                    <label for="id_help_text">Helper Description</label>
+                    {{ form.help_text }}
+                </div>
+
+                <!-- Conditional Visibility Settings -->
+                <div class="field" style="background: #f7faf7; padding: 16px; border-radius: 6px; border: 1px solid #dcebda; margin-top: 10px;">
+                    <label style="color: #1b5e20; margin-bottom: 10px; font-weight: 600;">Visibility &amp; Conditional Rule</label>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-weight: normal; font-size: 13px; margin-bottom: 4px; display: block;">When to show this question</label>
+                        {{ form.condition_type }}
+                    </div>
+
+                    <div id="condition-fields-wrap" style="display: none; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px dashed #dcebda;">
+                        <div>
+                            <label style="font-weight: normal; font-size: 12px; margin-bottom: 3px; display: block;">Triggered by Question</label>
+                            <select id="condition-parent-selector" style="width: 100%; padding: 8px 10px; border: 1px solid #c9dec7; border-radius: 4px; font-size: 13px; background: #fff;">
+                                <option value="">-- Choose Parent Question --</option>
+                                {% for f in all_fields %}
+                                <option value="{{ f.field_key }}" data-options="{{ f.options|join:'|||' }}" {% if f.field_key == field.condition_field_key %}selected{% endif %}>{{ f.label }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="hidden" name="condition_field_key" id="id_condition_field_key" value="{{ form.condition_field_key.value|default:'' }}">
+                        </div>
+                        <div>
+                            <label style="font-weight: normal; font-size: 12px; margin-bottom: 3px; display: block;">Match Condition</label>
+                            {{ form.condition_operator }}
+                        </div>
+                        <div>
+                            <label style="font-weight: normal; font-size: 12px; margin-bottom: 3px; display: block;">When Parent Option Is</label>
+                            <select id="condition-option-selector" style="width: 100%; padding: 8px 10px; border: 1px solid #c9dec7; border-radius: 4px; font-size: 13px; background: #fff; margin-bottom: 6px;">
+                                <option value="">-- Choose Parent Option --</option>
+                            </select>
+                            <input type="text" name="condition_value" id="id_condition_value" value="{{ form.condition_value.value|default:'' }}" placeholder="Custom value e.g. Network Issue" style="display: none;">
+                            <small class="field-help" id="condition-value-hint">Select the answer that makes this question appear.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 20px; margin: 18px 0;">
+                    <label style="display: flex; align-items: center; gap: 6px; font-weight: normal; cursor: pointer;">
+                        {{ form.required }} Required Question
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; font-weight: normal; cursor: pointer;">
+                        {{ form.is_active }} Active Question
+                    </label>
+                </div>
+
+                <div class="form-actions">
+                    <a class="secondary-button" href="{% url 'tickets:form_builder' %}">Cancel</a>
+                    <button class="primary-button" type="submit">Save changes</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fieldTypeSelect = document.getElementById('id_field_type');
+            const optionsWrap = document.getElementById('options-field-wrap');
+            const maxFileSizeWrap = document.getElementById('max-file-size-wrap');
+            const conditionTypeSelect = document.getElementById('id_condition_type');
+            const conditionWrap = document.getElementById('condition-fields-wrap');
+            const parentSelector = document.getElementById('condition-parent-selector');
+            const optionSelector = document.getElementById('condition-option-selector');
+            const rawFieldKeyInput = document.getElementById('id_condition_field_key');
+            const rawValueInput = document.getElementById('id_condition_value');
+
+            function updateOptionsWrap() {
+                if (!fieldTypeSelect) return;
+                const type = fieldTypeSelect.value;
+                if (optionsWrap) {
+                    if (type === 'text' || type === 'textarea' || type === 'file') {
+                        optionsWrap.style.display = 'none';
+                    } else {
+                        optionsWrap.style.display = 'block';
+                    }
+                }
+                if (maxFileSizeWrap) {
+                    if (type === 'file') {
+                        maxFileSizeWrap.style.display = 'block';
+                    } else {
+                        maxFileSizeWrap.style.display = 'none';
+                    }
+                }
+            }
+
+            if (fieldTypeSelect) {
+                fieldTypeSelect.addEventListener('change', updateOptionsWrap);
+                updateOptionsWrap();
+            }
+
+
+            function updateConditionWrap() {
+                if (!conditionTypeSelect || !conditionWrap) return;
+                if (conditionTypeSelect.value === 'visible_if' || conditionTypeSelect.value === 'hidden_if') {
+                    conditionWrap.style.display = 'flex';
+                } else {
+                    conditionWrap.style.display = 'none';
+                }
+            }
+
+            function syncConditionOptions() {
+                if (!parentSelector || !optionSelector) return;
+                const selectedOpt = parentSelector.options[parentSelector.selectedIndex];
+                const rawOptionsStr = selectedOpt ? (selectedOpt.getAttribute('data-options') || '') : '';
+                const currentVal = (rawValueInput ? rawValueInput.value : '').trim();
+
+                optionSelector.innerHTML = '<option value="">-- Choose Parent Option --</option>';
+                
+                if (rawOptionsStr) {
+                    const opts = rawOptionsStr.split('|||').filter(Boolean);
+                    opts.forEach(opt => {
+                        const o = document.createElement('option');
+                        o.value = opt;
+                        o.textContent = opt;
+                        if (opt.toLowerCase() === currentVal.toLowerCase()) o.selected = true;
+                        optionSelector.appendChild(o);
+                    });
+                }
+                const customOpt = document.createElement('option');
+                customOpt.value = '__custom__';
+                customOpt.textContent = '+ Custom text value...';
+                optionSelector.appendChild(customOpt);
+
+                if (currentVal && !Array.from(optionSelector.options).some(o => o.value.toLowerCase() === currentVal.toLowerCase() && o.value !== '__custom__')) {
+                    customOpt.selected = true;
+                    if (rawValueInput) rawValueInput.style.display = 'block';
+                }
+            }
+
+            if (conditionTypeSelect) {
+                conditionTypeSelect.addEventListener('change', updateConditionWrap);
+                updateConditionWrap();
+            }
+
+            if (parentSelector) {
+                if (rawFieldKeyInput && rawFieldKeyInput.value) {
+                    parentSelector.value = rawFieldKeyInput.value;
+                }
+                parentSelector.addEventListener('change', function() {
+                    if (rawFieldKeyInput) rawFieldKeyInput.value = this.value;
+                    syncConditionOptions();
+                });
+                syncConditionOptions();
+            }
+
+            if (optionSelector) {
+                optionSelector.addEventListener('change', function() {
+                    if (this.value === '__custom__') {
+                        if (rawValueInput) {
+                            rawValueInput.style.display = 'block';
+                            rawValueInput.focus();
+                        }
+                    } else {
+                        if (rawValueInput) {
+                            rawValueInput.value = this.value;
+                            rawValueInput.style.display = 'none';
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+
+

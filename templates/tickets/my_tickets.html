@@ -1,0 +1,205 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Tickets & History - SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-left">
+            <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <strong>SIET Helpdesk</strong>
+        </div>
+        <nav>
+            <a href="{% url 'accounts:user_dashboard' %}">Home</a>
+            <a href="{% url 'tickets:user_catalog' %}">Service Catalog</a>
+            <a href="{% url 'tickets:my_tickets' %}" class="active">My Tickets & History</a>
+            <a href="{% url 'tickets:create' %}">Report an Issue</a>
+            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+        </nav>
+    </header>
+
+    <!-- Mobile Sidebar Drawer -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+    <aside id="mobileSidebar" class="mobile-sidebar">
+        <div class="sidebar-header">
+            <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close Menu">✕</button>
+            <div class="sidebar-brand">
+                <strong>SIET Helpdesk</strong>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{% url 'accounts:user_dashboard' %}" class="sidebar-link">Home</a>
+            <a href="{% url 'tickets:user_catalog' %}" class="sidebar-link">Service Catalog</a>
+            <a href="{% url 'tickets:my_tickets' %}" class="sidebar-link active">My Tickets & History</a>
+            <a href="{% url 'tickets:create' %}" class="sidebar-link">Report an Issue</a>
+            <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+        </nav>
+    </aside>
+
+    <main class="page-shell">
+        {% if messages %}
+        <div class="alert-messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="page-heading">
+            <div>
+                <p class="eyebrow">Ticket Tracking</p>
+                <h1>My Tickets & History</h1>
+                <p>Track real-time progress and updates for your requests.</p>
+            </div>
+        </div>
+
+        <!-- Quick Summary Stats -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <span>Total</span>
+                <strong>{{ total_count }}</strong>
+                <small>All tickets</small>
+            </div>
+            <div class="stat-card">
+                <span>Open</span>
+                <strong>{{ open_count }}</strong>
+                <small>Awaiting action</small>
+            </div>
+            <div class="stat-card">
+                <span>In Progress</span>
+                <strong>{{ in_progress_count }}</strong>
+                <small>Under review</small>
+            </div>
+            <div class="stat-card">
+                <span>Resolved</span>
+                <strong>{{ resolved_count }}</strong>
+                <small>Completed</small>
+            </div>
+        </section>
+
+
+        <!-- Status Filter Pills -->
+        <div class="filter-pills">
+            <a class="filter-pill {% if not selected_status %}active{% endif %}" href="{% url 'tickets:my_tickets' %}">All ({{ total_count }})</a>
+            {% for value, label in status_choices %}
+            <a class="filter-pill {% if selected_status == value %}active{% endif %}" href="?status={{ value }}">{{ label }}</a>
+            {% endfor %}
+        </div>
+
+        <!-- Ticket Cards with Live Progress Stepper -->
+        <div class="my-tickets-stack">
+            {% for ticket in tickets %}
+            <article class="my-ticket-card">
+                <div class="my-ticket-header">
+                    <div class="my-ticket-title-wrap">
+                        <span class="ticket-badge-num">#{{ ticket.ticket_number }}</span>
+                        <div>
+                            <h2 class="my-ticket-title">
+                                <a href="{% url 'tickets:detail' ticket.pk %}">{{ ticket.title }}</a>
+                            </h2>
+                            <span class="muted" style="font-size: 12px;">Submitted {{ ticket.created_at|date:"M d, Y H:i" }} &bull; Location: <strong>{{ ticket.location }}</strong></span>
+                        </div>
+                    </div>
+                    <div class="my-ticket-tags">
+                        <span class="badge">{{ ticket.category.name }}</span>
+                        <span class="urgency {{ ticket.urgency }}">{{ ticket.get_urgency_display }}</span>
+                        {% if ticket.is_sla_breached %}
+                        <span class="badge danger-badge">SLA Breached</span>
+                        {% else %}
+                        <span class="badge success-badge">SLA On Track</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Visual Process Pipeline Stepper (Horizontal Touch-Scrollable) -->
+                <div class="ticket-process-stepper-wrapper">
+                    <div class="ticket-process-stepper">
+                        <!-- Step 1: Submitted -->
+                        <div class="stepper-step completed">
+                            <div class="stepper-circle">✓</div>
+                            <div class="stepper-content">
+                                <span class="stepper-title">Submitted</span>
+                                <small class="stepper-subtitle">{{ ticket.created_at|date:"M d, H:i" }}</small>
+                            </div>
+                        </div>
+                        <div class="stepper-connector {% if ticket.assigned_technician or ticket.assigned_group %}completed{% endif %}"></div>
+
+                        <!-- Step 2: Assigned -->
+                        <div class="stepper-step {% if ticket.assigned_technician or ticket.assigned_group %}completed{% else %}pending{% endif %}">
+                            <div class="stepper-circle">{% if ticket.assigned_technician or ticket.assigned_group %}✓{% else %}2{% endif %}</div>
+                            <div class="stepper-content">
+                                <span class="stepper-title">Assigned</span>
+                                <small class="stepper-subtitle">
+                                    {% if ticket.assigned_technician %}
+                                        {{ ticket.assigned_technician.username }}
+                                    {% elif ticket.assigned_group %}
+                                        {{ ticket.assigned_group.name }}
+                                    {% else %}
+                                        Awaiting routing
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="stepper-connector {% if ticket.status == 'in_progress' or ticket.status == 'resolved' or ticket.status == 'closed' %}completed{% endif %}"></div>
+
+                        <!-- Step 3: In Progress -->
+                        <div class="stepper-step {% if ticket.status == 'in_progress' %}active{% elif ticket.status == 'resolved' or ticket.status == 'closed' %}completed{% else %}pending{% endif %}">
+                            <div class="stepper-circle">{% if ticket.status == 'resolved' or ticket.status == 'closed' %}✓{% else %}3{% endif %}</div>
+                            <div class="stepper-content">
+                                <span class="stepper-title">In Progress</span>
+                                <small class="stepper-subtitle">{% if ticket.assigned_at %}{{ ticket.assigned_at|date:"M d, H:i" }}{% else %}Diagnostics{% endif %}</small>
+                            </div>
+                        </div>
+                        <div class="stepper-connector {% if ticket.status == 'resolved' or ticket.status == 'closed' %}completed{% endif %}"></div>
+
+                        <!-- Step 4: Resolved -->
+                        <div class="stepper-step {% if ticket.status == 'resolved' or ticket.status == 'closed' %}completed{% else %}pending{% endif %}">
+                            <div class="stepper-circle">{% if ticket.status == 'resolved' or ticket.status == 'closed' %}✓{% else %}4{% endif %}</div>
+                            <div class="stepper-content">
+                                <span class="stepper-title">Resolved</span>
+                                <small class="stepper-subtitle">{% if ticket.resolved_at %}{{ ticket.resolved_at|date:"M d, H:i" }}{% else %}Solution{% endif %}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="my-ticket-footer">
+                    <div>
+                        <span class="muted" style="font-size: 13px;">
+                            <strong>{{ ticket.comments.count }}</strong> comment{{ ticket.comments.count|pluralize }} &bull; 
+                            <strong>{{ ticket.history.count }}</strong> status update{{ ticket.history.count|pluralize }}
+                            {% if ticket.attachment %}
+                            &bull; <a href="{{ ticket.attachment.url }}" target="_blank" style="color: #1e7e34; font-weight: 600;">Attachment</a>
+                            {% endif %}
+                        </span>
+
+                    </div>
+                    <a href="{% url 'tickets:detail' ticket.pk %}" class="primary-button" style="padding: 0 16px; min-height: 36px; font-size: 13px;">
+                        View Details &rarr;
+                    </a>
+                </div>
+            </article>
+            {% empty %}
+            <div class="panel" style="padding: 40px; text-align: center;">
+                <div class="empty-state">
+                    <strong>No tickets found</strong>
+                    <p style="margin: 8px 0 16px; color: #5f7a63;">You do not have any tickets under this filter.</p>
+                    <a href="{% url 'tickets:create' %}" class="primary-button">Report an Issue</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <script src="{% static 'js/mobile_nav.js' %}"></script>
+</body>
+</html>

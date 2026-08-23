@@ -1,0 +1,4 @@
+# Ignore contents of this directory
+*
+!.gitignore
+!.gitkeep

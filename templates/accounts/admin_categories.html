@@ -1,0 +1,27 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Categories - SIET Helpdesk</title><link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}"></head>
+<body><header class="topbar">
+    <strong>SIET Helpdesk</strong>
+    <nav class="admin-nav">
+        <a href="{% url 'accounts:admin_dashboard' %}">Overview</a>
+        <div class="dropdown">
+            <button class="dropdown-btn active" type="button">Administration ▾</button>
+            <div class="dropdown-menu">
+                <a href="{% url 'accounts:admin_users' %}">Users</a>
+                <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
+                <a class="active" href="{% url 'accounts:admin_categories' %}">Categories</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button class="dropdown-btn" type="button">Form & Catalog ▾</button>
+            <div class="dropdown-menu">
+                <a href="{% url 'tickets:form_builder' %}">Report an issue form</a>
+                <a href="{% url 'tickets:catalog_manager' %}">Service catalog items</a>
+            </div>
+        </div>
+        <a href="{% url 'accounts:admin_tickets' %}">Issue reports</a>
+        <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+    </nav>
+</header><main class="page-shell"><div class="page-heading"><div><p class="eyebrow">ISSUE CLASSIFICATION</p><h1>Categories</h1><p>Route issue types to the right technician group.</p></div></div><section class="management-grid"><div class="panel form-panel"><div class="panel-heading"><h2>Create category</h2></div><form method="post">{% csrf_token %}{% for field in form %}<div class="field"><label>{{ field.label }}</label>{{ field }}{% if field.errors %}<small class="field-error">{{ field.errors|striptags }}</small>{% endif %}</div>{% endfor %}<button class="primary-button" type="submit">Create category</button></form></div><div class="panel"><div class="panel-heading"><h2>Issue categories</h2><span class="muted">{{ categories|length }} categories</span></div><div class="group-list">{% for category in categories %}<article class="group-row"><div><strong>{{ category.name }}</strong><small>{{ category.description|default:'No description' }}</small></div><div class="group-meta"><span>{{ category.assigned_group.name|default:'General queue' }}</span><span>{{ category.ticket_count }} reports</span></div></article>{% empty %}<div class="empty-state"><strong>No categories yet</strong><span>Create categories such as Network, Hardware, or Account access.</span></div>{% endfor %}</div></div></section></main></body></html>

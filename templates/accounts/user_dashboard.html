@@ -1,0 +1,170 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-left">
+            <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <strong>SIET Helpdesk</strong>
+        </div>
+        <nav>
+            <a href="{% url 'accounts:user_dashboard' %}" class="active">Home</a>
+            <a href="{% url 'tickets:user_catalog' %}">Service Catalog</a>
+            <a href="{% url 'tickets:my_tickets' %}">My Tickets & History</a>
+            <a href="{% url 'tickets:create' %}">Report an Issue</a>
+            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+        </nav>
+    </header>
+
+    <!-- Mobile Sidebar Drawer -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+    <aside id="mobileSidebar" class="mobile-sidebar">
+        <div class="sidebar-header">
+            <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close Menu">✕</button>
+            <div class="sidebar-brand">
+                <strong>SIET Helpdesk</strong>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{% url 'accounts:user_dashboard' %}" class="sidebar-link active">Home</a>
+            <a href="{% url 'tickets:user_catalog' %}" class="sidebar-link">Service Catalog</a>
+            <a href="{% url 'tickets:my_tickets' %}" class="sidebar-link">My Tickets & History</a>
+            <a href="{% url 'tickets:create' %}" class="sidebar-link">Report an Issue</a>
+            <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+        </nav>
+    </aside>
+
+    <main class="page-shell">
+        {% if messages %}
+        <div class="alert-messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="page-heading">
+            <div>
+                <p class="eyebrow">Campus IT Support</p>
+                <h1>Welcome, {{ request.user.first_name|default:request.user.username }}</h1>
+                <p>Select an option to submit or track IT requests.</p>
+            </div>
+        </div>
+
+        <!-- 3 Primary Portal Action Options -->
+        <section class="portal-cards-grid">
+            <!-- Option 1: Report an Issue -->
+            <div class="portal-card featured">
+                <div>
+                    <span class="portal-tag featured">Quick Submission</span>
+                    <h2>Report an Issue</h2>
+                    <p>Submit a new issue directly to technical support.</p>
+                </div>
+                <div class="portal-action-wrap">
+                    <a class="primary-button full-width" href="{% url 'tickets:create' %}">Report an Issue &rarr;</a>
+                </div>
+            </div>
+
+            <!-- Option 2: Service Catalog -->
+            <div class="portal-card">
+                <div>
+                    <span class="portal-tag">Services & Guides</span>
+                    <h2>Service Catalog</h2>
+                    <p>Browse campus services and guided request forms.</p>
+                </div>
+                <div class="portal-action-wrap">
+                    <a class="secondary-button full-width" href="{% url 'tickets:user_catalog' %}">Browse Catalog &rarr;</a>
+                </div>
+            </div>
+
+            <!-- Option 3: My Tickets & History -->
+            <div class="portal-card">
+                <div>
+                    <span class="portal-tag">Live Tracking</span>
+                    <h2>My Tickets & History</h2>
+                    <p>View progress, updates, and resolution timeline.</p>
+                </div>
+                <div class="portal-action-wrap">
+                    <a class="secondary-button full-width" href="{% url 'tickets:my_tickets' %}">
+                        {% if open_count > 0 %}
+                            Track My Tickets ({{ open_count }}) &rarr;
+                        {% else %}
+                            Track My Tickets &rarr;
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Summary & Support Guide -->
+        <div class="content-grid" style="margin-top: 28px;">
+            <!-- Left Panel: My Tickets Quick Summary -->
+            <div class="panel" style="padding: 22px;">
+                <div class="panel-heading" style="padding: 0 0 14px; margin-bottom: 14px;">
+                    <div>
+                        <h2>Tickets Overview</h2>
+                        <p class="muted" style="margin: 2px 0 0; font-size: 13px;">Your active request count</p>
+                    </div>
+                    <a href="{% url 'tickets:my_tickets' %}" class="primary-button" style="min-height: 34px; padding: 0 14px; font-size: 13px;">View All &rarr;</a>
+                </div>
+
+                <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
+                    <div class="stat-card" style="padding: 14px 16px;">
+                        <span style="margin-bottom: 6px; font-size: 13px;">Open / In Progress</span>
+                        <strong style="font-size: 26px;">{{ open_count }}</strong>
+                        <small style="margin-top: 4px;">Active issues</small>
+                    </div>
+                    <div class="stat-card" style="padding: 14px 16px;">
+                        <span style="margin-bottom: 6px; font-size: 13px;">Resolved / Closed</span>
+                        <strong style="font-size: 26px;">{{ closed_count }}</strong>
+                        <small style="margin-top: 4px;">Completed</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: How Helpdesk Works -->
+            <div class="panel" style="padding: 22px;">
+                <div class="panel-heading" style="padding: 0 0 14px; margin-bottom: 14px;">
+                    <h2>How It Works</h2>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; gap: 10px; align-items: flex-start;">
+                        <span style="background: #e4f4e3; color: #286331; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; flex-shrink: 0;">1</span>
+                        <div>
+                            <strong style="color: #123d18; font-size: 13.5px;">Submit Issue</strong>
+                            <p class="muted" style="margin: 1px 0 0; font-size: 12.5px;">Report directly or select a category.</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: flex-start;">
+                        <span style="background: #e4f4e3; color: #286331; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; flex-shrink: 0;">2</span>
+                        <div>
+                            <strong style="color: #123d18; font-size: 13.5px;">Auto Routing</strong>
+                            <p class="muted" style="margin: 1px 0 0; font-size: 12.5px;">Assigned to the dedicated support team.</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: flex-start;">
+                        <span style="background: #e4f4e3; color: #286331; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; flex-shrink: 0;">3</span>
+                        <div>
+                            <strong style="color: #123d18; font-size: 13.5px;">Track Progress</strong>
+                            <p class="muted" style="margin: 1px 0 0; font-size: 12.5px;">Follow real-time status updates.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="{% static 'js/mobile_nav.js' %}"></script>
+</body>
+</html>

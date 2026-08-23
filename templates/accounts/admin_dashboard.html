@@ -1,0 +1,160 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-left">
+            <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <strong>SIET Helpdesk</strong>
+        </div>
+        <nav class="admin-nav">
+            <a class="active" href="{% url 'accounts:admin_dashboard' %}">Overview</a>
+            <div class="dropdown">
+                <button class="dropdown-btn" type="button">Administration ▾</button>
+                <div class="dropdown-menu">
+                    <a href="{% url 'accounts:admin_users' %}">Users</a>
+                    <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
+                    <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                </div>
+            </div>
+            <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
+            <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
+            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+        </nav>
+    </header>
+
+    <!-- Mobile Sidebar Drawer -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+    <aside id="mobileSidebar" class="mobile-sidebar">
+        <div class="sidebar-header">
+            <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close Menu">✕</button>
+            <div class="sidebar-brand">
+                <strong>SIET Helpdesk</strong>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{% url 'accounts:admin_dashboard' %}" class="sidebar-link active">Overview</a>
+            <a href="{% url 'accounts:admin_users' %}" class="sidebar-link">Users</a>
+            <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link">Technician Groups</a>
+            <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+            <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
+            <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link">Issue Reports</a>
+            <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+        </nav>
+    </aside>
+
+    <main class="page-shell">
+        <div class="page-heading"><div><p class="eyebrow">ADMINISTRATION</p><h1>Admin Dashboard</h1><p>Manage users, support teams, categories, and tickets.</p></div></div>
+        <div class="admin-tools"><span>Report an Issue Dynamic Form Studio</span><a class="secondary-button" href="{% url 'tickets:form_builder' %}">Open Form Studio</a></div>
+        <section id="overview" class="report-section">
+        <section class="stats-grid">
+            <div class="stat-card"><span>Total users</span><strong>{{ user_count }}</strong><small>All platform accounts</small></div>
+            <div class="stat-card"><span>Technicians</span><strong>{{ technician_count }}</strong><small>Available support staff</small></div>
+            <div class="stat-card"><span>Open tickets</span><strong>{{ open_count }}</strong><small>Waiting for action</small></div>
+            <div class="stat-card danger"><span>SLA breaches</span><strong>{{ breached_count }}</strong><small>Need attention</small></div>
+        </section>
+        <section class="charts-grid">
+            <div class="panel chart-panel"><div class="panel-heading"><div><h2>Ticket status</h2><p>Current workload across all reports</p></div><strong class="chart-total">{{ total_tickets }}</strong></div><div class="bar-chart">{% for item in status_counts %}<div class="bar-row"><span>{{ item.label }}</span><div class="bar-track"><div class="bar-fill {{ item.class }}" style="--bar-size: {% if total_tickets %}{% widthratio item.value total_tickets 100 %}{% else %}0{% endif %}%"></div></div><strong>{{ item.value }}</strong></div>{% endfor %}</div></div>
+            <div class="panel chart-panel"><div class="panel-heading"><div><h2>Urgency overview</h2><p>Priority distribution of issue reports</p></div></div><div class="bar-chart">{% for item in urgency_counts %}<div class="bar-row"><span>{{ item.label }}</span><div class="bar-track"><div class="bar-fill {{ item.class }}" style="--bar-size: {% if total_tickets %}{% widthratio item.value total_tickets 100 %}{% else %}0{% endif %}%"></div></div><strong>{{ item.value }}</strong></div>{% endfor %}</div></div>
+        </section>
+        <section class="content-grid">
+            <div class="panel">
+                <div class="panel-heading">
+                    <h2>Recent users</h2>
+                    <a href="{% url 'accounts:admin_users' %}">View all</a>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in recent_users %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.get_full_name|default:item.username }}</strong>
+                                    <small>{{ item.email }}</small>
+                                </td>
+                                <td><span class="badge">{{ item.profile.get_role_display }}</span></td>
+                                <td>{{ item.date_joined|date:'d M Y' }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3">No users found.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-heading">
+                    <h2>Recent tickets</h2>
+                    <a href="{% url 'accounts:admin_tickets' %}">Manage</a>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Facing Issue In</th>
+                                <th>Location</th>
+                                <th>Attachment</th>
+                                <th>Status</th>
+                                <th>Reporter</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in recent_tickets %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'tickets:detail' ticket.pk %}" style="text-decoration: none; color: inherit; display: block;">
+                                        <strong style="color: #165c20;">#{{ ticket.ticket_number }}</strong>
+                                        <span style="font-weight: 600; display: block; font-size: 12.5px; color: #173b1c;">{{ ticket.title|truncatechars:26 }}</span>
+                                        <p style="margin: 2px 0 0; color: #4b6650; font-size: 11.5px; line-height: 1.3;">{{ ticket.description|truncatechars:50 }}</p>
+                                    </a>
+                                </td>
+
+                                <td><span class="badge">{{ ticket.category.name|default:'General' }}</span></td>
+                                <td><strong>{{ ticket.location|default:'-' }}</strong></td>
+                                <td>
+                                    {% if ticket.attachment %}
+                                    <a href="{{ ticket.attachment.url }}" target="_blank" style="display: inline-block; padding: 2px 6px; background: #eaf6ea; border: 1px solid #c9dec7; border-radius: 4px; font-size: 11px; color: #1e7e34; font-weight: 600; text-decoration: none;">
+                                        File
+                                    </a>
+                                    {% else %}
+                                    <span class="muted" style="font-size: 11px;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="badge">{{ ticket.get_status_display }}</span></td>
+                                <td>{{ ticket.reporter.username }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6">No tickets found.</td></tr>
+                            {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </section>
+        </section>
+
+    </main>
+    <script src="{% static 'js/mobile_nav.js' %}"></script>
+</body>
+</html>
+

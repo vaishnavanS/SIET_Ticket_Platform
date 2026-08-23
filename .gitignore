@@ -1,0 +1,120 @@
+# ==============================================================================
+# SIET Ticket Platform - .gitignore
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Environment & Secret Credentials (NEVER COMMIT TO PUBLIC REPO)
+# ------------------------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+secrets.json
+credentials.json
+
+# ------------------------------------------------------------------------------
+# 2. Database Files
+# ------------------------------------------------------------------------------
+*.sqlite3
+*.sqlite3-journal
+*.db
+db.sqlite3
+db.sqlite3-journal
+*.sql
+*.dump
+
+# ------------------------------------------------------------------------------
+# 3. User Uploaded Files & Media Attachments
+# ------------------------------------------------------------------------------
+media/*
+!media/.gitignore
+!media/.gitkeep
+media/ticket_attachments/*
+!media/ticket_attachments/.gitkeep
+media/uploads/*
+!media/uploads/.gitkeep
+
+# ------------------------------------------------------------------------------
+# 4. Virtual Environments
+# ------------------------------------------------------------------------------
+venv/
+win_venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+ENV*/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ------------------------------------------------------------------------------
+# 5. Python Bytecode, Caches & Distribution
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ------------------------------------------------------------------------------
+# 6. Django Static Root (Collected Static Files)
+# ------------------------------------------------------------------------------
+staticfiles/
+static_root/
+local_settings.py
+
+# ------------------------------------------------------------------------------
+# 7. IDE, Editor & OS Specific Files
+# ------------------------------------------------------------------------------
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# macOS / Windows OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ------------------------------------------------------------------------------
+# 8. Logs & Diagnostic Caches
+# ------------------------------------------------------------------------------
+*.log
+logs/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+.mypy_cache/
+.hypothesis/

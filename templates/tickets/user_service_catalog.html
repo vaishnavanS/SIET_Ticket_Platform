@@ -1,0 +1,86 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Service Catalog - SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-left">
+            <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <strong>SIET Helpdesk</strong>
+        </div>
+        <nav>
+            <a href="{% url 'accounts:user_dashboard' %}">Home</a>
+            <a href="{% url 'tickets:user_catalog' %}" class="active">Service Catalog</a>
+            <a href="{% url 'tickets:my_tickets' %}">My Tickets & History</a>
+            <a href="{% url 'tickets:create' %}">Report an Issue</a>
+            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+        </nav>
+    </header>
+
+    <!-- Mobile Sidebar Drawer -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+    <aside id="mobileSidebar" class="mobile-sidebar">
+        <div class="sidebar-header">
+            <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close Menu">✕</button>
+            <div class="sidebar-brand">
+                <strong>SIET Helpdesk</strong>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{% url 'accounts:user_dashboard' %}" class="sidebar-link">Home</a>
+            <a href="{% url 'tickets:user_catalog' %}" class="sidebar-link active">Service Catalog</a>
+            <a href="{% url 'tickets:my_tickets' %}" class="sidebar-link">My Tickets & History</a>
+            <a href="{% url 'tickets:create' %}" class="sidebar-link">Report an Issue</a>
+            <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+        </nav>
+    </aside>
+
+    <main class="page-shell">
+        {% if messages %}
+        <div class="alert-messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="page-heading">
+            <div>
+                <p class="eyebrow">Campus IT Services</p>
+                <h1>IT Service Catalog</h1>
+                <p>Browse available services and request forms.</p>
+            </div>
+        </div>
+
+
+        <!-- Service Catalog Cards Grid -->
+        <section class="catalog-grid">
+            {% for item in catalog_items %}
+            <a href="{% if item.category %}{% url 'tickets:create' %}?category={{ item.category.pk }}{% else %}{% url 'tickets:create' %}{% endif %}" class="catalog-card">
+                <div>
+                    <span class="catalog-category-tag">{{ item.category.name|default:"General Service" }}</span>
+                    <h3>{{ item.title }}</h3>
+                    <p>{{ item.description }}</p>
+                </div>
+                <span class="catalog-action">Open Request &rarr;</span>
+            </a>
+            {% empty %}
+            <div class="panel" style="padding: 30px; grid-column: 1 / -1; text-align: center;">
+                <p class="muted">No service catalog items published yet.</p>
+            </div>
+            {% endfor %}
+        </section>
+    </main>
+
+    <script src="{% static 'js/mobile_nav.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,364 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket #{{ ticket.ticket_number }} - SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-left">
+            <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <strong>SIET Helpdesk</strong>
+        </div>
+        {% if is_admin %}
+        <nav class="admin-nav">
+            <a href="{% url 'accounts:admin_dashboard' %}">Overview</a>
+            <div class="dropdown">
+                <button class="dropdown-btn" type="button">Administration ▾</button>
+                <div class="dropdown-menu">
+                    <a href="{% url 'accounts:admin_users' %}">Users</a>
+                    <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
+                    <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                </div>
+            </div>
+            <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
+            <a class="active" href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
+            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+        </nav>
+        {% elif is_technician %}
+        <nav>
+            <a href="{% url 'accounts:technician_dashboard' %}" class="active">Assigned Tickets</a>
+            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+        </nav>
+        {% else %}
+        <nav>
+            <a href="{% url 'accounts:user_dashboard' %}">Home</a>
+            <a href="{% url 'tickets:user_catalog' %}">Service Catalog</a>
+            <a href="{% url 'tickets:my_tickets' %}" class="active">My Tickets & History</a>
+            <a href="{% url 'tickets:create' %}">Report an Issue</a>
+            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+        </nav>
+        {% endif %}
+    </header>
+
+    <!-- Mobile Sidebar Drawer -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+    <aside id="mobileSidebar" class="mobile-sidebar">
+        <div class="sidebar-header">
+            <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close Menu">✕</button>
+            <div class="sidebar-brand">
+                <strong>SIET Helpdesk</strong>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            {% if is_admin %}
+                <a href="{% url 'accounts:admin_dashboard' %}" class="sidebar-link">Overview</a>
+                <a href="{% url 'accounts:admin_users' %}" class="sidebar-link">Users</a>
+                <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link">Technician Groups</a>
+                <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+                <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
+                <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link active">Issue Reports</a>
+                <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+            {% elif is_technician %}
+                <a href="{% url 'accounts:technician_dashboard' %}" class="sidebar-link active">Assigned Tickets</a>
+                <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+            {% else %}
+                <a href="{% url 'accounts:user_dashboard' %}" class="sidebar-link">Home</a>
+                <a href="{% url 'tickets:user_catalog' %}" class="sidebar-link">Service Catalog</a>
+                <a href="{% url 'tickets:my_tickets' %}" class="sidebar-link active">My Tickets & History</a>
+                <a href="{% url 'tickets:create' %}" class="sidebar-link">Report an Issue</a>
+                <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+            {% endif %}
+        </nav>
+    </aside>
+
+
+
+
+    <main class="page-shell">
+        {% if messages %}
+        <div class="alert-messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="page-heading">
+            <div>
+                <p class="eyebrow">TICKET #{{ ticket.ticket_number }} / PROCESS TIMELINE</p>
+                <h1>{{ ticket.title }}</h1>
+                <p>Reported on {{ ticket.created_at|date:"M d, Y H:i" }} by <strong>{{ ticket.reporter.get_full_name|default:ticket.reporter.username }}</strong></p>
+            </div>
+            <div>
+                {% if is_admin %}
+                <a href="{% url 'accounts:admin_tickets' %}" class="secondary-button">&larr; Back to Issue Reports</a>
+                {% elif is_technician %}
+                <a href="{% url 'accounts:technician_dashboard' %}" class="secondary-button">&larr; Back to Workspace</a>
+                {% else %}
+                <a href="{% url 'tickets:my_tickets' %}" class="secondary-button">&larr; Back to My Tickets</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="management-grid">
+            <!-- Left Main Column -->
+            <div class="detail-main-flow">
+                <!-- Overview & Visual Process Pipeline Panel -->
+                <section class="panel form-panel" style="margin-bottom: 22px;">
+                    <div class="detail-header-tags" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                        <span class="badge">{{ ticket.category.name }}</span>
+                        <span class="urgency {{ ticket.urgency }}">{{ ticket.get_urgency_display }} urgency</span>
+                        <span class="badge status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+                        {% if ticket.is_sla_breached %}
+                            <span class="badge danger-badge">SLA Breached ({{ ticket.get_sla_breach_type_display }})</span>
+                        {% elif ticket.is_overdue %}
+                            <span class="badge warning-badge">Overdue</span>
+                        {% else %}
+                            <span class="badge success-badge">SLA On Track</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Live Visual Progress Stepper -->
+                    <div style="margin-bottom: 24px;">
+                        <h3 style="font-size: 15px; color: #165c20; margin-bottom: 12px;">Live Request Progress</h3>
+                        <div class="ticket-process-stepper-wrapper">
+                            <div class="ticket-process-stepper">
+                                <!-- Step 1: Submitted -->
+                                <div class="stepper-step completed">
+                                    <div class="stepper-circle">✓</div>
+                                    <div class="stepper-content">
+                                        <span class="stepper-title">Submitted</span>
+                                        <small class="stepper-subtitle">{{ ticket.created_at|date:"M d, H:i" }}</small>
+                                    </div>
+                                </div>
+                                <div class="stepper-connector {% if step_assigned %}completed{% endif %}"></div>
+
+                                <!-- Step 2: Assigned -->
+                                <div class="stepper-step {% if step_assigned %}completed{% else %}pending{% endif %}">
+                                    <div class="stepper-circle">{% if step_assigned %}✓{% else %}2{% endif %}</div>
+                                    <div class="stepper-content">
+                                        <span class="stepper-title">Assigned</span>
+                                        <small class="stepper-subtitle">
+                                            {% if ticket.assigned_technician %}
+                                                {{ ticket.assigned_technician.username }}
+                                            {% elif ticket.assigned_group %}
+                                                {{ ticket.assigned_group.name }}
+                                            {% else %}
+                                                Pending
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="stepper-connector {% if step_in_progress %}completed{% endif %}"></div>
+
+                                <!-- Step 3: In Progress -->
+                                <div class="stepper-step {% if ticket.status == 'in_progress' %}active{% elif step_resolved %}completed{% else %}pending{% endif %}">
+                                    <div class="stepper-circle">{% if step_resolved %}✓{% else %}3{% endif %}</div>
+                                    <div class="stepper-content">
+                                        <span class="stepper-title">In Progress</span>
+                                        <small class="stepper-subtitle">{% if ticket.assigned_at %}{{ ticket.assigned_at|date:"M d, H:i" }}{% else %}Diagnostics{% endif %}</small>
+                                    </div>
+                                </div>
+                                <div class="stepper-connector {% if step_resolved %}completed{% endif %}"></div>
+
+                                <!-- Step 4: Resolved -->
+                                <div class="stepper-step {% if step_resolved %}completed{% else %}pending{% endif %}">
+                                    <div class="stepper-circle">{% if step_resolved %}✓{% else %}4{% endif %}</div>
+                                    <div class="stepper-content">
+                                        <span class="stepper-title">Resolved</span>
+                                        <small class="stepper-subtitle">{% if ticket.resolved_at %}{{ ticket.resolved_at|date:"M d, H:i" }}{% else %}Solution{% endif %}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="field-group" style="margin-bottom: 20px; padding: 16px 20px; background: #fbfdfb; border: 1px solid #dcebda; border-radius: 8px; border-left: 4px solid #4caf50;">
+                        <h3 style="margin: 0 0 10px; color: #165c20; font-size: 15px;">Problem Description</h3>
+                        <div class="description-text" style="line-height: 1.6; color: #2b492f; font-size: 14px;">{{ ticket.description|linebreaks }}</div>
+                    </div>
+
+
+                    {% if ticket.attachment %}
+                    <div class="field-group attachment-box" style="margin-bottom: 20px; padding: 16px 20px; background: #f7faf7; border: 1px solid #dcebda; border-radius: 8px; border-left: 4px solid #2e7d32;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="margin: 0; font-size: 15px; color: #165c20;">Attached Screenshot / Document</h3>
+                            <a href="{{ ticket.attachment.url }}" target="_blank" download class="primary-button" style="padding: 6px 14px; font-size: 12.5px; text-decoration: none;">Download File</a>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <a href="{{ ticket.attachment.url }}" target="_blank" style="display: inline-block; max-width: 520px; border-radius: 6px; overflow: hidden; border: 1px solid #dcebda;">
+                                <img src="{{ ticket.attachment.url }}" alt="Attachment Preview" style="width: 100%; max-height: 340px; display: block; object-fit: contain; background: #fff;" onerror="this.style.display='none'">
+                            </a>
+                            <p style="margin: 8px 0 0; font-size: 13px; color: #2b492f;">
+                                <strong>File:</strong> <a href="{{ ticket.attachment.url }}" target="_blank" style="color: #1e7e34; font-weight: 600; text-decoration: underline;">{{ ticket.attachment.name }}</a>
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+
+                    {% if ticket.custom_answers %}
+                    <div class="field-group custom-answers-box" style="padding: 14px 18px; background: #f7faf7; border: 1px solid #deebdc; border-radius: 6px;">
+                        <h3 style="margin: 0 0 10px; font-size: 14px; color: #165c20;">Custom Form Responses</h3>
+                        <ul class="custom-answers-list" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px;">
+                            {% for label, answer in ticket.custom_answers.items %}
+                            <li style="font-size: 13px; color: #2b492f;">
+                                <strong style="color: #165c20;">{{ label }}:</strong>
+                                <span>{{ answer }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </section>
+
+                <!-- Comments & Discussion Timeline Panel -->
+                <section class="panel timeline-panel">
+                    <div class="panel-heading">
+                        <h2>Activity & Communication ({{ comments|length }})</h2>
+                    </div>
+                    <div class="comments-list">
+                        {% for comment in comments %}
+                        <div class="comment-card">
+                            <div class="comment-header">
+                                <strong>{{ comment.author.get_full_name|default:comment.author.username }}</strong>
+                                <small>{{ comment.created_at|date:"M d, Y H:i" }}</small>
+                            </div>
+                            <div class="comment-body">
+                                <p>{{ comment.content|linebreaks }}</p>
+                                {% if comment.attachment %}
+                                <a href="{{ comment.attachment.url }}" target="_blank" class="attachment-link small">
+                                    Attachment: {{ comment.attachment.name }}
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state">
+                            <strong>No comments posted yet.</strong>
+                            <span>Use the form below to post a response or question.</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Add Comment Form -->
+                    <div class="add-comment-section">
+                        <h3>Post an update or reply</h3>
+                        <form action="{% url 'tickets:add_comment' ticket.pk %}" method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="field">
+                                <textarea name="content" rows="4" placeholder="Write your message or inquiry here..." required></textarea>
+                            </div>
+                            <div class="field">
+                                <label for="id_comment_attachment">Attach file / screenshot (optional):</label>
+                                <input type="file" name="attachment" id="id_comment_attachment">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="primary-button">Post Message</button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Sidebar Column -->
+            <div class="detail-sidebar-flow">
+                {% if can_update_status %}
+                <section class="panel form-panel status-action-card" style="margin-bottom: 22px;">
+                    <h2>Manage Workflow Status</h2>
+                    <form action="{% url 'tickets:update_status' ticket.pk %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="field">
+                            <label for="id_status_select">Ticket Status</label>
+                            <select name="status" id="id_status_select">
+                                {% for code, label in status_choices %}
+                                <option value="{{ code }}" {% if ticket.status == code %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="id_status_comment">Progress Note / Explanation (optional)</label>
+                            <textarea name="comment" id="id_status_comment" rows="3" placeholder="Explain status update..."></textarea>
+                        </div>
+                        <div class="field">
+                            <label for="id_status_attachment">Attach file (optional)</label>
+                            <input type="file" name="attachment" id="id_status_attachment">
+                        </div>
+                        <button type="submit" class="primary-button full-width">Update Status</button>
+                    </form>
+                </section>
+                {% endif %}
+
+                <!-- Meta Details Card -->
+                <section class="panel form-panel metadata-card" style="margin-bottom: 22px;">
+                    <h2>Ticket Information</h2>
+                    <ul class="meta-list">
+                        <li>
+                            <span>Reporter:</span>
+                            <strong>{{ ticket.reporter.username }} ({{ ticket.reporter.email|default:"No email" }})</strong>
+                        </li>
+                        <li>
+                            <span>Category:</span>
+                            <strong>{{ ticket.category.name }}</strong>
+                        </li>
+                        <li>
+                            <span>Location:</span>
+                            <strong>{{ ticket.location }}</strong>
+                        </li>
+                        <li>
+                            <span>Assigned Tech:</span>
+                            <strong>{% if ticket.assigned_technician %}{{ ticket.assigned_technician.username }}{% else %}Unassigned{% endif %}</strong>
+                        </li>
+                        <li>
+                            <span>Technician Group:</span>
+                            <strong>{% if ticket.assigned_group %}{{ ticket.assigned_group.name }}{% else %}General Pool{% endif %}</strong>
+                        </li>
+                        <li>
+                            <span>Created At:</span>
+                            <strong>{{ ticket.created_at|date:"Y-m-d H:i" }}</strong>
+                        </li>
+                        {% if ticket.assigned_at %}
+                        <li>
+                            <span>Assigned At:</span>
+                            <strong>{{ ticket.assigned_at|date:"Y-m-d H:i" }}</strong>
+                        </li>
+                        {% endif %}
+                        {% if ticket.resolved_at %}
+                        <li>
+                            <span>Resolved At:</span>
+                            <strong>{{ ticket.resolved_at|date:"Y-m-d H:i" }}</strong>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </section>
+
+                <!-- History Audit Trail Card -->
+                <section class="panel form-panel history-card">
+                    <h2>Audit History (Immutable)</h2>
+                    <ul class="history-list">
+                        {% for item in history %}
+                        <li>
+                            <small>{{ item.changed_at|date:"M d, H:i" }}</small>
+                            <p><strong>{{ item.changed_by.username }}</strong> changed <em>{{ item.field_name }}</em> from "{{ item.old_value }}" to "{{ item.new_value }}".</p>
+                        </li>
+                        {% empty %}
+                        <li class="empty-history">No history recorded yet.</li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </main>
+    <script src="{% static 'js/mobile_nav.js' %}"></script>
+</body>
+</html>
+

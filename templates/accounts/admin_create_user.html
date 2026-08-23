@@ -1,0 +1,11 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Create User - SIET Helpdesk</title><link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}"></head>
+<body>
+<header class="topbar"><strong>SIET Helpdesk</strong><nav class="admin-nav"><a href="{% url 'accounts:admin_dashboard' %}">Overview</a><a class="active" href="{% url 'accounts:admin_users' %}">Users</a><a href="{% url 'accounts:admin_tickets' %}">Issue reports</a><a href="{% url 'accounts:admin_groups' %}">Technician groups</a><a href="{% url 'accounts:admin_categories' %}">Categories</a><a href="{% url 'tickets:form_builder' %}">Issue form</a><a class="logout" href="{% url 'accounts:logout' %}">Logout</a></nav></header>
+<main class="page-shell narrow-shell"><div class="page-heading"><div><p class="eyebrow">USER MANAGEMENT</p><h1>Create user</h1><p>Create an account and assign its role in one step.</p></div></div>
+<section class="panel form-panel"><form method="post">{% csrf_token %}{% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}{% for field in form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.errors %}<small class="field-error">{{ field.errors|striptags }}</small>{% endif %}</div>{% endfor %}<div class="form-actions"><a class="secondary-button" href="{% url 'accounts:admin_users' %}">Cancel</a><button class="primary-button" type="submit">Create user</button></div></form></section>
+</main>
+</body>
+</html>

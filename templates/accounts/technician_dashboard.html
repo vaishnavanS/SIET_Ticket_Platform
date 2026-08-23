@@ -1,0 +1,154 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technician Dashboard - SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-left">
+            <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <strong>SIET Helpdesk</strong>
+        </div>
+        <nav>
+            <a href="{% url 'accounts:technician_dashboard' %}" class="active">Assigned Tickets</a>
+            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+        </nav>
+    </header>
+
+    <!-- Mobile Sidebar Drawer -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+    <aside id="mobileSidebar" class="mobile-sidebar">
+        <div class="sidebar-header">
+            <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close Menu">✕</button>
+            <div class="sidebar-brand">
+                <strong>SIET Helpdesk</strong>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{% url 'accounts:technician_dashboard' %}" class="sidebar-link active">Assigned Tickets</a>
+            <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+        </nav>
+    </aside>
+
+    <main class="page-shell">
+        {% if messages %}
+        <div class="alert-messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="page-heading">
+            <div>
+                <p class="eyebrow">TECHNICIAN WORKSPACE</p>
+                <h1>My assigned tickets</h1>
+                <p>Review issue details, track SLAs, and update ticket statuses in real time.</p>
+            </div>
+        </div>
+
+        <section class="stats-grid">
+            <div class="stat-card">
+                <span>Active tickets</span>
+                <strong>{{ active_count }}</strong>
+                <small>Open & in-progress</small>
+            </div>
+            <div class="stat-card">
+                <span>In progress</span>
+                <strong>{{ in_progress_count }}</strong>
+                <small>Currently being worked on</small>
+            </div>
+            <div class="stat-card">
+                <span>Resolved</span>
+                <strong>{{ resolved_count }}</strong>
+                <small>Completed assignments</small>
+            </div>
+            <div class="stat-card danger">
+                <span>SLA Breached</span>
+                <strong>{{ sla_breached_count }}</strong>
+                <small>Require immediate attention</small>
+            </div>
+        </section>
+
+        <div class="filter-pills">
+            <a class="filter-pill {% if not selected_status %}active{% endif %}" href="{% url 'accounts:technician_dashboard' %}">All ({{ tickets|length }})</a>
+            {% for value, label in status_choices %}
+            <a class="filter-pill {% if selected_status == value %}active{% endif %}" href="?status={{ value }}">{{ label }}</a>
+            {% endfor %}
+        </div>
+
+        <section class="panel">
+            <div class="panel-heading">
+                <h2>Assigned tickets queue</h2>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticket</th>
+                            <th>Reporter</th>
+                            <th>Category</th>
+                            <th>Urgency</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in tickets %}
+                        <tr>
+                            <td>
+                                <strong>#{{ ticket.ticket_number }} - {{ ticket.title }}</strong>
+                                <small>
+                                    {{ ticket.created_at|date:"Y-m-d H:i" }} &bull; Location: {{ ticket.location }}
+                                    {% if ticket.attachment %}
+                                    &bull; <a href="{{ ticket.attachment.url }}" target="_blank" style="color: #1e7e34; font-weight: 600; text-decoration: underline;">Attached file</a>
+                                    {% endif %}
+                                </small>
+                            </td>
+
+                            <td>
+                                <strong>{{ ticket.reporter.get_full_name|default:ticket.reporter.username }}</strong>
+                                <small>{{ ticket.reporter.email }}</small>
+                            </td>
+                            <td><span class="badge">{{ ticket.category.name }}</span></td>
+                            <td><span class="urgency {{ ticket.urgency }}">{{ ticket.get_urgency_display }}</span></td>
+                            <td>
+                                <span class="status status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+                                {% if ticket.is_sla_breached %}
+                                <small class="field-error" style="display: block; margin: 2px 0 0;">SLA Breached</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="row-actions">
+                                    <a href="{% url 'tickets:detail' ticket.pk %}" class="text-button">View details</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <strong>No tickets found.</strong>
+                                    <span>No assigned tickets match the current status filter.</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="{% static 'js/mobile_nav.js' %}"></script>
+</body>
+</html>

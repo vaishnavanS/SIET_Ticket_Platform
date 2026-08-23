@@ -1,0 +1,281 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report an Issue - SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-left">
+            <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <strong>SIET Helpdesk</strong>
+        </div>
+        <nav>
+            <a href="{% url 'accounts:user_dashboard' %}">Home</a>
+            <a href="{% url 'tickets:user_catalog' %}">Service Catalog</a>
+            <a href="{% url 'tickets:my_tickets' %}">My Tickets & History</a>
+            <a href="{% url 'tickets:create' %}" class="active">Report an Issue</a>
+            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+        </nav>
+    </header>
+
+    <!-- Mobile Sidebar Drawer -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+    <aside id="mobileSidebar" class="mobile-sidebar">
+        <div class="sidebar-header">
+            <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close Menu">✕</button>
+            <div class="sidebar-brand">
+                <strong>SIET Helpdesk</strong>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{% url 'accounts:user_dashboard' %}" class="sidebar-link">Home</a>
+            <a href="{% url 'tickets:user_catalog' %}" class="sidebar-link">Service Catalog</a>
+            <a href="{% url 'tickets:my_tickets' %}" class="sidebar-link">My Tickets & History</a>
+            <a href="{% url 'tickets:create' %}" class="sidebar-link active">Report an Issue</a>
+            <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+        </nav>
+    </aside>
+
+
+
+    <main class="page-shell narrow-shell">
+        <div class="page-heading">
+            <div>
+                <p class="eyebrow">HELP DESK / ISSUE SUBMISSION</p>
+                <h1>Report an Issue</h1>
+                <p>Fill in the details below to submit your request.</p>
+            </div>
+        </div>
+
+
+
+
+        <section class="panel form-panel">
+            <form method="post" enctype="multipart/form-data" id="ticket-report-form">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                <div class="form-errors">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <!-- Standard Issue Fields (Title, Urgency, Location) -->
+                {{ form.category }}
+
+                <div class="field">
+                    <label for="{{ form.title.id_for_label }}">Issue Title *</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}<small class="field-error">{{ form.title.errors|striptags }}</small>{% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.urgency.id_for_label }}">Urgency Level *</label>
+                    {{ form.urgency }}
+                    {% if form.urgency.errors %}<small class="field-error">{{ form.urgency.errors|striptags }}</small>{% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.location.id_for_label }}">Location / Room / Lab *</label>
+                    {{ form.location }}
+                    {% if form.location.errors %}<small class="field-error">{{ form.location.errors|striptags }}</small>{% endif %}
+                </div>
+
+
+                <!-- Dynamic Form Questions Configured by Admin in Form Studio -->
+                {% for field in form %}
+                    {% if field.name not in 'title,description,category,urgency,location,attachment' %}
+                    <div class="field dynamic-field-wrapper" 
+                         id="field-wrapper-{{ field.name }}" 
+                         data-key="{{ field.name }}"
+                         data-cond-type="{{ field.field.condition_type|default:'always' }}"
+                         data-cond-parent="{{ field.field.condition_field_key|default:'' }}"
+                         data-cond-op="{{ field.field.condition_operator|default:'equals' }}"
+                         data-cond-val="{{ field.field.condition_value|default:''|lower }}"
+                         {% if field.field.category_id %}data-category-id="{{ field.field.category_id }}"{% endif %}>
+                        
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                            {% if field.field.required %}<span style="color:#b33e34;">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}
+                        {% if field.errors %}<small class="field-error">{{ field.errors|striptags }}</small>{% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Dynamic "Other" Details Expander -->
+                <div class="field dynamic-field-wrapper" id="other-details-box" style="display: none; background: #fffcf5; padding: 14px; border: 1px solid #f9e2aa; border-radius: 6px;">
+                    <label for="other_issue_details" style="color: #7a5a0d;">Describe other issue details</label>
+                    <textarea id="other_issue_details" name="other_issue_details" rows="3" placeholder="Please explain the details of the other problem..."></textarea>
+                </div>
+
+                <!-- Standard Description fallback if problem_description is not a dynamic field -->
+                {% if 'problem_description' not in form.fields %}
+                <div class="field">
+                    <label for="{{ form.description.id_for_label }}">Problem Description *</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}<small class="field-error">{{ form.description.errors|striptags }}</small>{% endif %}
+                </div>
+                {% endif %}
+
+
+                <div class="field">
+                    <label for="{{ form.attachment.id_for_label }}">Attachment (Optional screenshot / photo)</label>
+                    {{ form.attachment }}
+                    <small class="field-help">Allowed formats: JPG, PNG, GIF. Max file size: {{ max_attachment_size_mb|default:5 }} MB.</small>
+                    {% if form.attachment.errors %}<small class="field-error">{{ form.attachment.errors|striptags }}</small>{% endif %}
+                </div>
+
+                <div class="form-actions">
+                    <a class="secondary-button" href="{% url 'tickets:my_tickets' %}">Cancel</a>
+                    <button class="primary-button" type="submit">Submit Issue Report</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <!-- Reactive Dynamic Condition Engine & File Upload Limits -->
+    <script>
+        const fieldsSchema = {{ fields_schema_json|safe }};
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('ticket-report-form');
+            const categoryHiddenInput = document.getElementById('id_category');
+            const otherDetailsBox = document.getElementById('other-details-box');
+            const dynamicWrappers = document.querySelectorAll('.dynamic-field-wrapper[data-key]');
+
+            // Client-side instant file size validation
+            const fileInputs = form.querySelectorAll('input[type="file"]');
+            fileInputs.forEach(fileInput => {
+                fileInput.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        const file = this.files[0];
+                        let maxMb = {{ max_attachment_size_mb|default:5 }};
+                        const parentWrapper = this.closest('.dynamic-field-wrapper');
+                        if (parentWrapper) {
+                            const key = parentWrapper.getAttribute('data-key');
+                            const schemaField = fieldsSchema.find(f => f.key === key);
+                            if (schemaField && schemaField.max_file_size_mb) {
+                                maxMb = schemaField.max_file_size_mb;
+                            }
+                        }
+                        const maxBytes = maxMb * 1024 * 1024;
+                        if (file.size > maxBytes) {
+                            alert(`File "${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds the maximum allowed limit of ${maxMb} MB. Please select a smaller file.`);
+                            this.value = '';
+                        }
+                    }
+                });
+            });
+
+            function evaluateRules() {
+                const values = {};
+                let hasOther = false;
+
+
+                // Collect values from all form inputs
+                const allInputs = form.querySelectorAll('input, select, textarea');
+                allInputs.forEach(input => {
+                    const key = input.name;
+                    if (!key) return;
+
+                    if (input.type === 'radio') {
+                        if (input.checked) {
+                            values[key] = input.value;
+                            if (input.value && input.value.toLowerCase().includes('other')) hasOther = true;
+                        }
+                    } else if (input.type === 'checkbox') {
+                        if (!values[key]) values[key] = [];
+                        if (input.checked) {
+                            values[key].push(input.value);
+                            if (input.value && input.value.toLowerCase().includes('other')) hasOther = true;
+                        }
+                    } else if (input.tagName === 'SELECT') {
+                        if (input.options && input.selectedIndex >= 0) {
+                            const val = input.value;
+                            values[key] = val;
+                            const optText = input.options[input.selectedIndex] ? input.options[input.selectedIndex].text.toLowerCase() : '';
+                            if (optText.includes('other') || (val && val.toLowerCase().includes('other'))) hasOther = true;
+                        }
+                    } else if (input.type !== 'hidden') {
+                        values[key] = input.value;
+                        if (input.value && input.value.toLowerCase().includes('other')) hasOther = true;
+                    }
+                });
+
+                // Auto-sync category hidden input if facing_issue_in is selected
+                if (categoryHiddenInput && values['facing_issue_in']) {
+                    if (Array.isArray(values['facing_issue_in']) && values['facing_issue_in'].length > 0) {
+                        categoryHiddenInput.value = values['facing_issue_in'][0];
+                    } else if (typeof values['facing_issue_in'] === 'string') {
+                        categoryHiddenInput.value = values['facing_issue_in'];
+                    }
+                }
+
+                // Evaluate each dynamic question block's visibility
+                dynamicWrappers.forEach(block => {
+                    const condType = block.getAttribute('data-cond-type') || 'always';
+                    const parentKey = block.getAttribute('data-cond-parent');
+                    const condOp = block.getAttribute('data-cond-op') || 'equals';
+                    const targetVal = (block.getAttribute('data-cond-val') || '').toLowerCase().trim();
+
+                    // If condition is always or no parent key configured -> always show
+                    if (condType === 'always' || !parentKey || !parentKey.trim()) {
+                        block.style.display = 'block';
+                        return;
+                    }
+
+                    // Evaluate condition based on parent question's value
+                    const parentVal = values[parentKey];
+                    let isMatch = false;
+
+                    if (parentVal !== undefined && parentVal !== null && parentVal !== '') {
+                        if (Array.isArray(parentVal) && parentVal.length > 0) {
+                            if (condOp === 'equals') {
+                                isMatch = parentVal.some(pv => pv.toLowerCase().trim() === targetVal);
+                            } else if (condOp === 'not_equals') {
+                                isMatch = !parentVal.some(pv => pv.toLowerCase().trim() === targetVal);
+                            } else {
+                                isMatch = parentVal.some(pv => pv.toLowerCase().includes(targetVal));
+                            }
+                        } else if (typeof parentVal === 'string' && parentVal.trim() !== '') {
+                            const pLower = parentVal.toLowerCase().trim();
+                            if (condOp === 'equals') {
+                                isMatch = (pLower === targetVal);
+                            } else if (condOp === 'not_equals') {
+                                isMatch = (pLower !== targetVal);
+                            } else {
+                                isMatch = pLower.includes(targetVal);
+                            }
+                        }
+                    }
+
+                    if (condType === 'visible_if') {
+                        block.style.display = isMatch ? 'block' : 'none';
+                    } else if (condType === 'hidden_if') {
+                        block.style.display = isMatch ? 'none' : 'block';
+                    }
+                });
+
+                // Toggle "Other" details expander
+                if (otherDetailsBox) {
+                    otherDetailsBox.style.display = hasOther ? 'block' : 'none';
+                }
+            }
+
+            form.addEventListener('change', evaluateRules);
+            form.addEventListener('input', evaluateRules);
+            evaluateRules();
+        });
+    </script>
+
+    <script src="{% static 'js/mobile_nav.js' %}"></script>
+</body>
+</html>

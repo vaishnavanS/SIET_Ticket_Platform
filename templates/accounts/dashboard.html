@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIET Helpdesk - Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="{% static 'images/logo.jpg' %}" alt="Logo" class="navbar-logo">
+                <span class="navbar-title">SIET Helpdesk</span>
+            </div>
+            <div class="navbar-menu">
+                <span class="user-greeting"></span>
+                <a href="{% url 'accounts:logout' %}" class="logout-btn">Logout</a>
+            </div>
+        </nav>
+
+        <div class="main-content">
+            <h1>Dashboard</h1>
+            <p>Welcome to SIET Helpdesk Platform</p>
+            
+            <div class="coming-soon">
+                <h2>Hello! We hope You are Fine</h2>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

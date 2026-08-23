@@ -1,0 +1,232 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f7fbf6;
+    background-image: radial-gradient(#e4eee2 1px, transparent 1px);
+    background-size: 92px 92px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    color: #173b1c;
+}
+
+.navbar {
+    height: 52px;
+    background: #063b0c;
+    padding: 0 5%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.logo-text {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.service-text {
+    color: #d7c800;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.login-container {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 18px;
+}
+
+/* Light Green Authentic Card */
+.login-card {
+    width: min(520px, 100%);
+    padding: 34px 30px 38px;
+    background: #e5f8df;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0, 70, 0, 0.16);
+    text-align: center;
+}
+
+.logo-section {
+    margin-bottom: 18px;
+}
+
+.logo {
+    width: 82px;
+    height: 82px;
+    object-fit: contain;
+    border-radius: 50%;
+}
+
+.login-card h1 {
+    margin-bottom: 16px;
+    color: #064b0d;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.login-form {
+    width: min(340px, 100%);
+    margin: 0 auto;
+    text-align: left;
+}
+
+.reset-desc {
+    width: 100%;
+    margin: 0 auto 20px;
+    color: #1b4d21;
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 7px;
+    color: #17451c;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"] {
+    width: 100%;
+    height: 40px;
+    padding: 0 13px;
+    border: 2px solid #9aca75;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #17451c;
+    font-size: 15px;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="email"]:focus,
+.form-group input[type="password"]:focus {
+    outline: none;
+    border-color: #2f8d3b;
+}
+
+.form-group.remember-me {
+    display: flex;
+    align-items: center;
+    margin: 6px 0 24px;
+}
+
+.form-group.remember-me input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    margin-right: 9px;
+    accent-color: #063b0c;
+    cursor: pointer;
+}
+
+.form-group.remember-me label {
+    margin: 0;
+    font-weight: 400;
+    color: #17451c;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.login-btn {
+    width: 100%;
+    height: 40px;
+    background: #4caf50;
+    color: #ffffff;
+    border: none;
+    border-radius: 7px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.login-btn:hover {
+    background-color: #438f4c;
+    color: #ffffff;
+}
+
+.login-btn:active {
+    transform: scale(0.98);
+}
+
+.forgot-password {
+    margin-top: 22px;
+    text-align: center;
+}
+
+.forgot-password a {
+    color: #3b9144;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.forgot-password a:hover {
+    color: #1b5e20;
+    text-decoration: underline;
+}
+
+.alert {
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    text-align: left;
+}
+
+.alert-error {
+    background: #fde9e7;
+    color: #a03f35;
+    border: 1px solid #f9c9c5;
+}
+
+.alert-success {
+    background: #e4f4e3;
+    color: #286331;
+    border: 1px solid #c7e5c5;
+}
+
+.site-footer {
+    padding: 0 20px 18px;
+    color: #6ca570;
+    font-size: 12px;
+    text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .navbar {
+        padding: 0 16px;
+    }
+
+    .service-text { font-size: 11px; }
+
+    .login-card {
+        padding: 26px 18px 30px;
+    }
+}

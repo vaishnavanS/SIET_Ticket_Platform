@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technician Groups - SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-left">
+        <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <strong>SIET Helpdesk</strong>
+    </div>
+    <nav class="admin-nav">
+        <a href="{% url 'accounts:admin_dashboard' %}">Overview</a>
+        <div class="dropdown">
+            <button class="dropdown-btn active" type="button">Administration ▾</button>
+            <div class="dropdown-menu">
+                <a href="{% url 'accounts:admin_users' %}">Users</a>
+                <a class="active" href="{% url 'accounts:admin_groups' %}">Technician groups</a>
+                <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+            </div>
+        </div>
+        <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
+        <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
+        <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+    </nav>
+</header>
+
+<!-- Mobile Sidebar Drawer -->
+<div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+<aside id="mobileSidebar" class="mobile-sidebar">
+    <div class="sidebar-header">
+        <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close Menu">✕</button>
+        <div class="sidebar-brand">
+            <strong>SIET Helpdesk</strong>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="{% url 'accounts:admin_dashboard' %}" class="sidebar-link">Overview</a>
+        <a href="{% url 'accounts:admin_users' %}" class="sidebar-link">Users</a>
+        <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link active">Technician Groups</a>
+        <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+        <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
+        <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link">Issue Reports</a>
+        <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+    </nav>
+</aside>
+
+<main class="page-shell">
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">SUPPORT TEAMS</p>
+            <h1>Technician groups</h1>
+            <p>Organize technicians around the type of issue they handle.</p>
+        </div>
+    </div>
+    <section class="management-grid">
+        <div class="panel form-panel">
+            <div class="panel-heading"><h2>Create group</h2></div>
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="field">
+                    <label>{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                    <small class="field-error">{{ field.errors|striptags }}</small>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                <button class="primary-button" type="submit">Create group</button>
+            </form>
+        </div>
+        <div class="panel">
+            <div class="panel-heading">
+                <h2>Existing groups</h2>
+                <span class="muted">{{ groups|length }} groups</span>
+            </div>
+            <div class="group-list">
+                {% for group in groups %}
+                <article class="group-row">
+                    <div>
+                        <strong>{{ group.name }}</strong>
+                        <small>{{ group.description|default:'No description' }}</small>
+                    </div>
+                    <div class="group-meta">
+                        <span>{{ group.technicians.count }} technicians</span>
+                        <span>{{ group.categories.count }} categories</span>
+                        <span>Max {{ group.max_tickets_per_tech }} tickets/tech</span>
+                    </div>
+                </article>
+                {% empty %}
+                <div class="empty-state">
+                    <strong>No technician groups yet</strong>
+                    <span>Create a group and select the technicians who should receive its issues.</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</main>
+<script src="{% static 'js/mobile_nav.js' %}"></script>
+</body>
+</html>

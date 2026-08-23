@@ -1,0 +1,765 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Studio - Report an Issue | SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-left">
+            <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <strong>SIET Helpdesk</strong>
+        </div>
+        <nav class="admin-nav">
+            <a href="{% url 'accounts:admin_dashboard' %}">Overview</a>
+            <div class="dropdown">
+                <button class="dropdown-btn active" type="button">Administration ▾</button>
+                <div class="dropdown-menu">
+                    <a href="{% url 'accounts:admin_users' %}">Users</a>
+                    <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
+                    <a class="active" href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                </div>
+            </div>
+            <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
+            <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
+            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+        </nav>
+    </header>
+
+    <!-- Mobile Sidebar Drawer -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+    <aside id="mobileSidebar" class="mobile-sidebar">
+        <div class="sidebar-header">
+            <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close Menu">✕</button>
+            <div class="sidebar-brand">
+                <strong>SIET Helpdesk</strong>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{% url 'accounts:admin_dashboard' %}" class="sidebar-link">Overview</a>
+            <a href="{% url 'accounts:admin_users' %}" class="sidebar-link">Users</a>
+            <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link">Technician Groups</a>
+            <a href="{% url 'tickets:form_builder' %}" class="sidebar-link active">Forms & Dynamic Studio</a>
+            <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
+            <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link">Issue Reports</a>
+            <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+        </nav>
+    </aside>
+
+
+    <main class="page-shell">
+        {% if messages %}
+        <div class="alert-messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="page-heading">
+            <div>
+                <p class="eyebrow">ADMINISTRATION / FORMS</p>
+                <h1>Report an Issue - Dynamic Form Studio</h1>
+                <p>Visually build dynamic question flows, configure GLPI-style "Visible If..." conditional logic, and map automatic technician group routing.</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn-preview" id="open-preview-btn">Live Test Preview</button>
+            </div>
+        </div>
+
+        <!-- Studio Navigation Tabs -->
+        <nav class="studio-tabs">
+            <button type="button" class="studio-tab-btn active" data-tab="tab-canvas">Form Canvas & Questions ({{ fields|length }})</button>
+            <button type="button" class="studio-tab-btn" data-tab="tab-routing">Technician Group Routing ({{ categories|length }})</button>
+            <button type="button" class="studio-tab-btn" data-tab="tab-catalog">Service Catalog Tiles ({{ catalog_items|length }})</button>
+        </nav>
+
+
+        <!-- TAB 1: FORM CANVAS & QUESTIONS -->
+        <div class="studio-tab-pane active" id="tab-canvas">
+            <div class="management-grid">
+                <!-- Add Question Form Panel -->
+                <div class="panel form-panel">
+                    <div class="panel-heading">
+                        <h2>Add Question / Rule</h2>
+                    </div>
+                    <form method="post" id="question-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="save_field">
+                        
+                        <div class="field">
+                            <label for="id_label">Question Title / Label *</label>
+                            {{ form.label }}
+                            <small class="field-help">e.g., "Facing Issue In", "Which Network Problem?", "Device Model"</small>
+                            {% if form.label.errors %}<small class="field-error">{{ form.label.errors|striptags }}</small>{% endif %}
+                        </div>
+
+                        <div class="field">
+                            <label for="id_field_key">Field Key (Auto-slugged if empty)</label>
+                            {{ form.field_key }}
+                            <small class="field-help">Unique identifier, e.g., <code>facing_issue_in</code></small>
+                            {% if form.field_key.errors %}<small class="field-error">{{ form.field_key.errors|striptags }}</small>{% endif %}
+                        </div>
+
+                        <div class="field">
+                            <label for="id_field_type">Field Type *</label>
+                            {{ form.field_type }}
+                            {% if form.field_type.errors %}<small class="field-error">{{ form.field_type.errors|striptags }}</small>{% endif %}
+                        </div>
+
+                        <div class="field" id="options-container">
+                            <label for="id_options_text">Question Options (one per line)</label>
+                            {{ form.options_text }}
+                            <small class="field-help">For radios, checkboxes, and dropdowns. Add "Other" to enable auto-expansion.</small>
+                            {% if form.options_text.errors %}<small class="field-error">{{ form.options_text.errors|striptags }}</small>{% endif %}
+                        </div>
+
+                        <div class="field" id="max-file-size-container" style="display: none;">
+                            <label for="id_max_file_size_mb">Maximum Allowed File Size (MB) *</label>
+                            {{ form.max_file_size_mb }}
+                            <small class="field-help">Specify upload limit in Megabytes (e.g. 2, 5, 10, 25, 50 MB). Default: 5 MB.</small>
+                            {% if form.max_file_size_mb.errors %}<small class="field-error">{{ form.max_file_size_mb.errors|striptags }}</small>{% endif %}
+                        </div>
+
+                        <div class="field">
+                            <label for="id_help_text">Helper Description (Optional)</label>
+                            {{ form.help_text }}
+                        </div>
+
+
+                        <!-- Conditional Logic Settings Inside Form Panel -->
+                        <div class="field" style="background: #f7faf7; padding: 14px; border-radius: 6px; border: 1px solid #dcebda;">
+                            <label style="color: #1b5e20; margin-bottom: 8px; font-weight: 600;">Visibility &amp; Conditional Rule</label>
+                            <div style="margin-bottom: 10px;">
+                                <label style="font-weight: normal; font-size: 13px; margin-bottom: 4px; display: block;">When to show this question</label>
+                                {{ form.condition_type }}
+                            </div>
+                            <div id="condition-fields-wrap" style="display: none; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px dashed #dcebda;">
+                                <div>
+                                    <label style="font-weight: normal; font-size: 12px; margin-bottom: 3px; display: block;">Triggered by Question</label>
+                                    <select id="condition-parent-selector" style="width: 100%; padding: 8px 10px; border: 1px solid #c9dec7; border-radius: 4px; font-size: 13px; background: #fff;">
+                                        <option value="">-- Choose Parent Question --</option>
+                                        {% for f in fields %}
+                                        <option value="{{ f.field_key }}" data-options="{{ f.options|join:'|||' }}">{{ f.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <input type="hidden" name="condition_field_key" id="id_condition_field_key" value="{{ form.condition_field_key.value|default:'' }}">
+                                </div>
+                                <div>
+                                    <label style="font-weight: normal; font-size: 12px; margin-bottom: 3px; display: block;">Match Condition</label>
+                                    {{ form.condition_operator }}
+                                </div>
+                                <div>
+                                    <label style="font-weight: normal; font-size: 12px; margin-bottom: 3px; display: block;">When Parent Option Is</label>
+                                    <select id="condition-option-selector" style="width: 100%; padding: 8px 10px; border: 1px solid #c9dec7; border-radius: 4px; font-size: 13px; background: #fff; margin-bottom: 6px;">
+                                        <option value="">-- Choose Parent Option --</option>
+                                    </select>
+                                    <input type="text" name="condition_value" id="id_condition_value" value="{{ form.condition_value.value|default:'' }}" placeholder="Custom value e.g. Network Issue" style="display: none;">
+                                    <small class="field-help" id="condition-value-hint">Select the answer that makes this question appear.</small>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div style="display: flex; gap: 16px; margin: 16px 0;">
+                            <label style="display: flex; align-items: center; gap: 6px; font-weight: normal; cursor: pointer;">
+                                {{ form.required }} Required Question
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; font-weight: normal; cursor: pointer;">
+                                {{ form.is_active }} Active
+                            </label>
+                        </div>
+
+                        <button class="primary-button full-width" type="submit">+ Save Question Block</button>
+                    </form>
+                </div>
+
+                <!-- Canvas: Form Sections & Dynamic Question Cards -->
+                <div>
+                    <!-- Core Standard Fields Overview Panel -->
+                    <div class="panel" style="padding: 18px 22px; margin-bottom: 20px; border-left: 4px solid #4caf50;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div>
+                                <strong style="font-size: 15px; color: #165c20;">Core Ticket Fields (Global)</strong>
+                                <p class="muted" style="margin: 2px 0 0; font-size: 12.5px;">Standard fields included on all support requests</p>
+                            </div>
+                            <span class="badge success-badge">5 Built-in Fields</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                            <div style="padding: 10px 12px; background: #fbfdfb; border: 1px solid #e1ede0; border-radius: 6px;">
+                                <strong style="font-size: 13px; color: #173b1c; display: block;">Issue Title *</strong>
+                                <span class="muted" style="font-size: 11.5px;">Single line text input</span>
+                            </div>
+                            <div style="padding: 10px 12px; background: #fbfdfb; border: 1px solid #e1ede0; border-radius: 6px;">
+                                <strong style="font-size: 13px; color: #173b1c; display: block;">Urgency Level *</strong>
+                                <span class="muted" style="font-size: 11.5px;">Priority selection</span>
+                            </div>
+                            <div style="padding: 10px 12px; background: #fbfdfb; border: 1px solid #e1ede0; border-radius: 6px;">
+                                <strong style="font-size: 13px; color: #173b1c; display: block;">Location / Room / Lab *</strong>
+                                <span class="muted" style="font-size: 11.5px;">Campus location input</span>
+                            </div>
+                            <div style="padding: 10px 12px; background: #fbfdfb; border: 1px solid #e1ede0; border-radius: 6px;">
+                                <strong style="font-size: 13px; color: #173b1c; display: block;">Problem Description *</strong>
+                                <span class="muted" style="font-size: 11.5px;">Multiline detailed textarea</span>
+                            </div>
+                            <div style="padding: 10px 12px; background: #fbfdfb; border: 1px solid #e1ede0; border-radius: 6px;">
+                                <strong style="font-size: 13px; color: #173b1c; display: block;">File Attachment</strong>
+                                <span class="muted" style="font-size: 11.5px;">Image / screenshot upload</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Flow Canvas -->
+                    <div class="studio-action-bar">
+                        <strong>Dynamic Question Hierarchy &amp; Rules ({{ fields|length }} Blocks)</strong>
+                        <span class="muted">Branching questions and option selectors</span>
+                    </div>
+
+                    <div class="question-cards-stack">
+                        {% for item in fields %}
+                        <article class="question-card" id="card-{{ item.id }}">
+                            <div class="card-header">
+                                <div class="card-title-wrap">
+                                    <span class="card-label">Q{{ forloop.counter0 }}: {{ item.label }}</span>
+                                    <span class="card-type-tag">{{ item.get_field_type_display }}</span>
+                                    {% if item.required %}<span class="badge danger-badge" style="font-size: 11px;">Required</span>{% endif %}
+                                    {% if not item.is_active %}<span class="badge warning-badge" style="font-size: 11px;">Inactive</span>{% endif %}
+                                </div>
+                                <div class="card-controls">
+                                    <a href="{% url 'tickets:field_edit' item.pk %}" class="text-button">Edit</a>
+                                    <form method="post" action="{% url 'tickets:field_delete' item.pk %}" onsubmit="return confirm('Remove question \'{{ item.label }}\'?');">
+                                        {% csrf_token %}
+                                        <button class="text-button delete-button" type="submit">Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                {% if item.help_text %}<p class="card-description">{{ item.help_text }}</p>{% endif %}
+                                
+                                {% if item.options %}
+                                <div class="chip-list">
+                                    {% for opt in item.options %}
+                                    <span class="chip {% if 'other' in opt|lower %}other-chip{% endif %}">
+                                        {{ opt }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                                {% elif item.field_type == 'file' %}
+                                <span class="muted" style="font-size: 13px; color: #165c20; font-weight: 500;">
+                                    File attachment upload (Allowed: JPG, PNG, GIF &bull; Max: <strong>{{ item.max_file_size_mb|default:5 }} MB</strong>)
+                                </span>
+                                {% else %}
+                                <span class="muted" style="font-size: 13px;">Free text input field</span>
+                                {% endif %}
+
+
+                            </div>
+                            <div class="card-footer">
+                                <div>
+                                    <span class="muted">Key: <code>{{ item.field_key }}</code></span>
+                                </div>
+                                <div>
+                                    {% if item.condition_type == 'always' or not item.condition_field_key %}
+                                    <span class="condition-badge always">Always Visible</span>
+                                    {% else %}
+                                    <span class="condition-badge conditional" title="Rule: {{ item.condition_operator }} '{{ item.condition_value }}'">
+                                        Visible if <strong>{{ item.condition_field_key }}</strong> {{ item.get_condition_operator_display|lower }} "<strong>{{ item.condition_value }}</strong>"
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </article>
+                        {% empty %}
+                        <div class="panel" style="padding: 30px; text-align: center;">
+                            <div class="empty-state">
+                                <strong>No dynamic questions configured yet</strong>
+                                <span>Add questions using the builder on the left to start customizing dynamic form branches.</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- TAB 2: TECHNICIAN GROUP ROUTING -->
+        <div class="studio-tab-pane" id="tab-routing">
+            <div class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <h2>Automatic Technician Group Routing</h2>
+                        <p class="muted">Map each primary issue option to a dedicated technician group for automatic round-robin assignment.</p>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Issue Category / Option</th>
+                            <th>Currently Assigned Technician Group</th>
+                            <th>Active Reports</th>
+                            <th>Assign / Update Group</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in categories %}
+                        <tr>
+                            <td>
+                                <strong>{{ cat.name }}</strong>
+                                <small>{{ cat.description|default:"Auto-mapped issue option" }}</small>
+                            </td>
+                            <td>
+                                {% if cat.assigned_group %}
+                                <span class="badge success-badge">{{ cat.assigned_group.name }}</span>
+                                {% else %}
+                                <span class="badge warning-badge">General Support Queue</span>
+                                {% endif %}
+                            </td>
+                            <td><strong>{{ cat.tickets.count }}</strong></td>
+                            <td>
+                                <form method="post" style="display: flex; gap: 8px; align-items: center;">
+
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="update_routing">
+                                    <input type="hidden" name="category_id" value="{{ cat.id }}">
+                                    <select name="group_id" class="inline-select" style="min-width: 180px;">
+                                        <option value="">-- General Queue (Unassigned) --</option>
+                                        {% for grp in technician_groups %}
+                                        <option value="{{ grp.id }}" {% if cat.assigned_group_id == grp.id %}selected{% endif %}>{{ grp.name }} ({{ grp.technicians.count }} techs)</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button class="text-button" type="submit">Save</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty-state">No categories configured. Create a question with options (e.g. Network, PC, SEB) to auto-generate routing categories.</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 3: SERVICE CATALOG TILES -->
+        <div class="studio-tab-pane" id="tab-catalog">
+            <div class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <h2>User Homepage Service Catalog Tiles</h2>
+                        <p class="muted">Control which service cards appear on the normal user portal.</p>
+                    </div>
+                    <a href="{% url 'tickets:catalog_manager' %}" class="primary-button">+ Open Catalog Manager</a>
+                </div>
+                <div class="group-list">
+                    {% for item in catalog_items %}
+                    <article class="group-row">
+                        <div>
+                            <strong>{{ item.icon }} {{ item.title }}</strong>
+                            <small>{{ item.description|default:"No description" }}</small>
+                            {% if item.category %}
+                            <small>Pre-selected Option: <strong>{{ item.category.name }}</strong></small>
+                            {% endif %}
+                        </div>
+                        <div class="row-actions">
+                            {% if item.show_on_homepage %}
+                            <span class="badge success-badge">Visible on Homepage</span>
+                            {% else %}
+                            <span class="badge warning-badge">Hidden from Homepage</span>
+                            {% endif %}
+                            <form method="post" action="{% url 'tickets:catalog_toggle' item.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_homepage">
+                                <button type="submit" class="text-button">
+                                    {% if item.show_on_homepage %}Hide{% else %}Show{% endif %}
+                                </button>
+                            </form>
+                        </div>
+                    </article>
+                    {% empty %}
+                    <div class="empty-state">No service tiles configured yet. Click "+ Open Catalog Manager" to add tiles.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- IN-STUDIO LIVE PREVIEW MODAL -->
+    <div class="modal-overlay" id="preview-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Live Interactive Form Preview</h3>
+                <button type="button" class="modal-close" id="close-preview-btn">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <p class="muted" style="margin-bottom: 20px;">Test the dynamic branching rules and "Other" expansion exactly as a student or staff member would experience it:</p>
+                <div id="preview-form-content" style="display: flex; flex-direction: column; gap: 18px;">
+                    <!-- Dynamically generated preview fields -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="secondary-button" id="close-preview-footer-btn">Close Preview</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Tab Switching, Condition Toggling, and Live Interactive Preview -->
+    <script>
+        const fieldsSchema = {{ fields_schema_json|safe }};
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching
+            const tabButtons = document.querySelectorAll('.studio-tab-btn');
+            const tabPanes = document.querySelectorAll('.studio-tab-pane');
+
+            tabButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    tabButtons.forEach(b => b.classList.remove('active'));
+                    tabPanes.forEach(p => p.classList.remove('active'));
+                    btn.classList.add('active');
+                    const target = document.getElementById(btn.getAttribute('data-tab'));
+                    if (target) target.classList.add('active');
+                });
+            });
+
+            // Field Type toggle in Add Question form (hide options for text / textarea / file, show max file size for file)
+            const fieldTypeSelect = document.getElementById('id_field_type');
+            const optionsContainer = document.getElementById('options-container');
+            const maxFileSizeContainer = document.getElementById('max-file-size-container');
+
+            function updateOptionsContainer() {
+                if (!fieldTypeSelect) return;
+                const type = fieldTypeSelect.value;
+                if (optionsContainer) {
+                    if (type === 'text' || type === 'textarea' || type === 'file') {
+                        optionsContainer.style.display = 'none';
+                    } else {
+                        optionsContainer.style.display = 'block';
+                    }
+                }
+                if (maxFileSizeContainer) {
+                    if (type === 'file') {
+                        maxFileSizeContainer.style.display = 'block';
+                    } else {
+                        maxFileSizeContainer.style.display = 'none';
+                    }
+                }
+            }
+
+            if (fieldTypeSelect) {
+                fieldTypeSelect.addEventListener('change', updateOptionsContainer);
+                updateOptionsContainer();
+            }
+
+
+            // Visual Condition Parent & Option Selector in Studio
+            const conditionTypeSelect = document.getElementById('id_condition_type');
+            const conditionWrap = document.getElementById('condition-fields-wrap');
+            const parentSelector = document.getElementById('condition-parent-selector');
+            const optionSelector = document.getElementById('condition-option-selector');
+            const rawFieldKeyInput = document.getElementById('id_condition_field_key');
+            const rawValueInput = document.getElementById('id_condition_value');
+
+            function updateConditionWrap() {
+                if (!conditionTypeSelect || !conditionWrap) return;
+                if (conditionTypeSelect.value === 'visible_if' || conditionTypeSelect.value === 'hidden_if') {
+                    conditionWrap.style.display = 'flex';
+                } else {
+                    conditionWrap.style.display = 'none';
+                }
+            }
+
+            function syncConditionOptions() {
+                if (!parentSelector || !optionSelector) return;
+                const selectedOpt = parentSelector.options[parentSelector.selectedIndex];
+                const rawOptionsStr = selectedOpt ? (selectedOpt.getAttribute('data-options') || '') : '';
+                const currentVal = (rawValueInput ? rawValueInput.value : '').trim();
+
+                optionSelector.innerHTML = '<option value="">-- Choose Parent Option --</option>';
+                
+                if (rawOptionsStr) {
+                    const opts = rawOptionsStr.split('|||').filter(Boolean);
+                    opts.forEach(opt => {
+                        const o = document.createElement('option');
+                        o.value = opt;
+                        o.textContent = opt;
+                        if (opt.toLowerCase() === currentVal.toLowerCase()) o.selected = true;
+                        optionSelector.appendChild(o);
+                    });
+                }
+                const customOpt = document.createElement('option');
+                customOpt.value = '__custom__';
+                customOpt.textContent = '+ Custom text value...';
+                optionSelector.appendChild(customOpt);
+
+                if (currentVal && !Array.from(optionSelector.options).some(o => o.value.toLowerCase() === currentVal.toLowerCase() && o.value !== '__custom__')) {
+                    customOpt.selected = true;
+                    if (rawValueInput) rawValueInput.style.display = 'block';
+                }
+            }
+
+            if (conditionTypeSelect) {
+                conditionTypeSelect.addEventListener('change', updateConditionWrap);
+                updateConditionWrap();
+            }
+
+            if (parentSelector) {
+                if (rawFieldKeyInput && rawFieldKeyInput.value) {
+                    parentSelector.value = rawFieldKeyInput.value;
+                }
+                parentSelector.addEventListener('change', function() {
+                    if (rawFieldKeyInput) rawFieldKeyInput.value = this.value;
+                    syncConditionOptions();
+                });
+                syncConditionOptions();
+            }
+
+            if (optionSelector) {
+                optionSelector.addEventListener('change', function() {
+                    if (this.value === '__custom__') {
+                        if (rawValueInput) {
+                            rawValueInput.style.display = 'block';
+                            rawValueInput.focus();
+                        }
+                    } else {
+                        if (rawValueInput) {
+                            rawValueInput.value = this.value;
+                            rawValueInput.style.display = 'none';
+                        }
+                    }
+                });
+            }
+
+            // In-Studio Live Preview Modal
+            const previewModal = document.getElementById('preview-modal');
+            const openPreviewBtn = document.getElementById('open-preview-btn');
+            const closePreviewBtn = document.getElementById('close-preview-btn');
+            const closePreviewFooterBtn = document.getElementById('close-preview-footer-btn');
+            const previewContainer = document.getElementById('preview-form-content');
+
+            function openPreview() {
+                if (!previewModal || !previewContainer) return;
+                renderPreviewForm();
+                previewModal.classList.add('open');
+            }
+
+            function closePreview() {
+                if (previewModal) previewModal.classList.remove('open');
+            }
+
+            if (openPreviewBtn) openPreviewBtn.addEventListener('click', openPreview);
+            if (closePreviewBtn) closePreviewBtn.addEventListener('click', closePreview);
+            if (closePreviewFooterBtn) closePreviewFooterBtn.addEventListener('click', closePreview);
+
+            // Render interactive preview form
+            function renderPreviewForm() {
+                previewContainer.innerHTML = '';
+                
+                // Add Standard Top Inputs (Title, Urgency, Location)
+                const titleBlock = document.createElement('div');
+                titleBlock.className = 'field';
+                titleBlock.innerHTML = `
+                    <label>Issue Title *</label>
+                    <input type="text" placeholder="e.g., WiFi disconnected in CS Lab 2" disabled style="background:#fafafa;">
+                `;
+                previewContainer.appendChild(titleBlock);
+
+                const urgencyBlock = document.createElement('div');
+                urgencyBlock.className = 'field';
+                urgencyBlock.innerHTML = `
+                    <label>Urgency Level *</label>
+                    <select disabled style="background:#fafafa;">
+                        <option>Medium</option>
+                        <option>Low</option>
+                        <option>High</option>
+                        <option>Critical</option>
+                    </select>
+                `;
+                previewContainer.appendChild(urgencyBlock);
+
+                const locBlock = document.createElement('div');
+                locBlock.className = 'field';
+                locBlock.innerHTML = `
+                    <label>Location / Room / Lab *</label>
+                    <input type="text" placeholder="e.g., Block B - Room 204 / Lab 3" disabled style="background:#fafafa;">
+                `;
+                previewContainer.appendChild(locBlock);
+
+                // Render dynamic question blocks WITH STYLED BUTTON PILLS
+                fieldsSchema.forEach(field => {
+                    const block = document.createElement('div');
+                    block.className = 'field dynamic-field-wrapper';
+                    block.id = `preview-field-${field.key}`;
+                    block.setAttribute('data-key', field.key);
+                    block.setAttribute('data-cond-type', field.condition_type || 'always');
+                    block.setAttribute('data-cond-parent', field.condition_field_key || '');
+                    block.setAttribute('data-cond-op', field.condition_operator || 'equals');
+                    block.setAttribute('data-cond-val', (field.condition_value || '').toLowerCase());
+
+                    let inputHtml = '';
+                    if (field.type === 'radio') {
+                        inputHtml = `<ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">` +
+                            field.options.map(opt => `
+                                <li>
+                                    <label style="display:flex; align-items:center; gap:10px; padding:10px 14px; border:1px solid #dcebda; border-radius:6px; background:#fff; cursor:pointer;">
+                                        <input type="radio" name="preview_${field.key}" value="${opt}" class="preview-input">
+                                        <span style="font-weight:500; font-size:13.5px; color:#173b1c;">${opt}</span>
+                                    </label>
+                                </li>
+                            `).join('') + `</ul>`;
+                    } else if (field.type === 'checkbox') {
+                        inputHtml = `<ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">` +
+                            field.options.map(opt => `
+                                <li>
+                                    <label style="display:flex; align-items:center; gap:10px; padding:10px 14px; border:1px solid #dcebda; border-radius:6px; background:#fff; cursor:pointer;">
+                                        <input type="checkbox" name="preview_${field.key}" value="${opt}" class="preview-input">
+                                        <span style="font-weight:500; font-size:13.5px; color:#173b1c;">${opt}</span>
+                                    </label>
+                                </li>
+                            `).join('') + `</ul>`;
+                    } else if (field.type === 'select') {
+                        inputHtml = `<select name="preview_${field.key}" class="preview-input">
+                            <option value="">-- Select an option --</option>
+                            ${field.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                        </select>`;
+                    } else if (field.type === 'textarea') {
+                        inputHtml = `<textarea placeholder="${field.help_text || 'Enter details...'}" rows="3" class="preview-input"></textarea>`;
+                    } else {
+                        inputHtml = `<input type="text" placeholder="${field.help_text || 'Enter details...'}" class="preview-input">`;
+                    }
+
+                    block.innerHTML = `
+                        <label>
+                            ${field.label} ${field.required ? '<span style="color:#b33e34;">*</span>' : ''}
+                        </label>
+                        ${inputHtml}
+                        ${field.help_text ? `<small class="field-help">${field.help_text}</small>` : ''}
+                    `;
+                    previewContainer.appendChild(block);
+                });
+
+                // Add "Other issue details" dynamic expander
+                const otherBlock = document.createElement('div');
+                otherBlock.className = 'field dynamic-field-wrapper';
+                otherBlock.id = 'preview-other-details';
+                otherBlock.style.display = 'none';
+                otherBlock.style.background = '#fffcf5';
+                otherBlock.style.padding = '14px';
+                otherBlock.style.border = '1px solid #f9e2aa';
+                otherBlock.style.borderRadius = '6px';
+                otherBlock.innerHTML = `
+                    <label style="color:#7a5a0d;">Describe other issue details</label>
+                    <textarea rows="3" placeholder="Please specify your other problem here..."></textarea>
+                `;
+                previewContainer.appendChild(otherBlock);
+
+                // Add Attachment
+                const attachBlock = document.createElement('div');
+                attachBlock.className = 'field';
+                attachBlock.innerHTML = `
+                    <label>Attachment (Optional screenshot / photo)</label>
+                    <input type="file" disabled style="background:#fafafa;">
+                    <small class="field-help">Allowed formats: JPG, PNG, GIF. Max file size: 5MB.</small>
+                `;
+                previewContainer.appendChild(attachBlock);
+
+                // Attach reactive event listener to preview inputs
+                const previewInputs = previewContainer.querySelectorAll('.preview-input');
+                previewInputs.forEach(input => {
+                    input.addEventListener('change', evaluatePreviewConditions);
+                    input.addEventListener('input', evaluatePreviewConditions);
+                });
+
+                evaluatePreviewConditions();
+            }
+
+            // Evaluates conditional branching in preview
+            function evaluatePreviewConditions() {
+                const values = {};
+                let hasOtherSelected = false;
+
+                // Collect current values
+                fieldsSchema.forEach(field => {
+                    if (field.type === 'radio') {
+                        const checked = previewContainer.querySelector(`input[name="preview_${field.key}"]:checked`);
+                        values[field.key] = checked ? checked.value : '';
+                        if (checked && checked.value.toLowerCase().includes('other')) hasOtherSelected = true;
+                    } else if (field.type === 'checkbox') {
+                        const checkedNodes = previewContainer.querySelectorAll(`input[name="preview_${field.key}"]:checked`);
+                        const vals = Array.from(checkedNodes).map(n => n.value);
+                        values[field.key] = vals;
+                        if (vals.some(v => v.toLowerCase().includes('other'))) hasOtherSelected = true;
+                    } else if (field.type === 'select') {
+                        const sel = previewContainer.querySelector(`select[name="preview_${field.key}"]`);
+                        values[field.key] = sel ? sel.value : '';
+                        if (sel && sel.value.toLowerCase().includes('other')) hasOtherSelected = true;
+                    }
+                });
+
+                // Evaluate each dynamic block
+                const blocks = previewContainer.querySelectorAll('.dynamic-field-wrapper[data-key]');
+                blocks.forEach(block => {
+                    const condType = block.getAttribute('data-cond-type') || 'always';
+                    const parentKey = block.getAttribute('data-cond-parent');
+                    const condOp = block.getAttribute('data-cond-op') || 'equals';
+                    const targetVal = (block.getAttribute('data-cond-val') || '').toLowerCase().trim();
+
+                    if (condType === 'always' || !parentKey || !parentKey.trim()) {
+                        block.style.display = 'block';
+                        return;
+                    }
+
+                    const parentVal = values[parentKey];
+                    let match = false;
+
+                    if (parentVal !== undefined && parentVal !== null && parentVal !== '') {
+                        if (Array.isArray(parentVal) && parentVal.length > 0) {
+                            if (condOp === 'equals') {
+                                match = parentVal.some(pv => pv.toLowerCase().trim() === targetVal);
+                            } else if (condOp === 'not_equals') {
+                                match = !parentVal.some(pv => pv.toLowerCase().trim() === targetVal);
+                            } else {
+                                match = parentVal.some(pv => pv.toLowerCase().includes(targetVal));
+                            }
+                        } else if (typeof parentVal === 'string' && parentVal.trim() !== '') {
+                            const pLower = parentVal.toLowerCase().trim();
+                            if (condOp === 'equals') {
+                                match = (pLower === targetVal);
+                            } else if (condOp === 'not_equals') {
+                                match = (pLower !== targetVal);
+                            } else {
+                                match = pLower.includes(targetVal);
+                            }
+                        }
+                    }
+
+                    if (condType === 'visible_if') {
+                        block.style.display = match ? 'block' : 'none';
+                    } else if (condType === 'hidden_if') {
+                        block.style.display = match ? 'none' : 'block';
+                    }
+                });
+
+                const otherBox = document.getElementById('preview-other-details');
+                if (otherBox) {
+                    otherBox.style.display = hasOtherSelected ? 'block' : 'none';
+                }
+            }
+        });
+    </script>
+    <script src="{% static 'js/mobile_nav.js' %}"></script>
+</body>
+</html>
+
+
