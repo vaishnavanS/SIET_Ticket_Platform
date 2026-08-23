@@ -1,303 +1,84 @@
-# SIET Helpdesk Ticketing Platform
+# SIET IT Helpdesk & Issue Ticketing Platform
 
-A professional Django-based helpdesk ticketing system for SIET (Srinivas Institute of Engineering and Technology) to manage IT service requests and issues.
+A centralized, enterprise-grade IT Service Management (ITSM) and helpdesk ticketing platform engineered for the Sri Shakthi Institute of Engineering and Technology (SIET) campus community. The platform streamlines campus IT operations, lab hardware diagnostics, network troubleshooting, and online examination technical support through dynamic form workflows and intelligent automated routing.
 
-## Features
+---
 
-- **User Roles**: Admin, Technician, and Normal User
-- **Ticket Management**: Create, track, and resolve support tickets
-- **Smart Assignment**: Round-robin ticket assignment to technicians or groups
-- **Technician Groups**: Organize technicians by department (Network, Electrical, etc.)
-- **SLA Tracking**: Monitor response and resolution times
-- **File Attachments**: Securely upload images and documents
-- **Dashboard**: Real-time ticket status and analytics
-- **Admin Panel**: Django admin interface for complete control
-- **Email Notifications**: Automatic notifications for ticket updates
+## 1. Overview & Purpose
 
-## Project Structure
+In a modern educational institution, technical disruptions—such as lab workstation failures, campus Wi-Fi dropouts, classroom projector glitches, and Safe Exam Browser (SEB) lockups—require prompt, structured resolution.
 
-```
-SIET_Ticket_Platform/
-├── accounts/                    # User authentication and profiles
-│   ├── models.py              # UserProfile, TechnicianGroup models
-│   ├── admin.py               # Django admin configuration
-│   ├── views.py               # Login, logout, dashboard views
-│   ├── urls.py                # Account-related URLs
-│   ├── signals.py             # Auto-create UserProfile signals
-│   └── management/
-│       └── commands/
-│           └── create_admin.py # Management command for creating admin
-├── tickets/                     # Ticket management app
-│   ├── models.py              # Ticket, Category, TicketComment models
-│   ├── admin.py               # Ticket admin interface
-│   ├── views.py               # Ticket views (to be implemented)
-│   └── urls.py                # Ticket-related URLs
-├── siet_helpdesk/              # Project settings and main configuration
-│   ├── settings.py            # Django settings
-│   ├── urls.py                # Main URL configuration
-│   └── wsgi.py                # WSGI configuration
-├── templates/                  # HTML templates
-│   └── accounts/
-│       ├── login.html         # Login page
-│       ├── dashboard.html     # Dashboard template
-│       └── password_reset*.html # Password reset templates
-├── static/                     # Static files
-│   ├── css/
-│   │   ├── login.css          # Login page styles
-│   │   └── dashboard.css      # Dashboard styles
-│   ├── js/                    # JavaScript files
-│   └── images/
-│       └── logo.png           # SIET Logo
-├── media/                      # User-uploaded files
-│   └── uploads/               # Ticket attachments
-├── manage.py                   # Django management script
-├── requirements.txt            # Python dependencies
-└── .env.example               # Environment configuration template
-```
+The SIET Helpdesk Platform replaces manual, unorganized communication channels with an automated, transparent, and auditable IT ticketing system. It empowers students and faculty to submit detailed issue reports while providing IT technicians and administrators with real-time tracking, workload balancing, and SLA compliance monitoring.
 
-## Installation
+---
 
-### Prerequisites
-- Python 3.8+
-- pip (Python package manager)
-- Virtual environment (recommended)
+## 2. Core Functional Modules
 
-### Setup Steps
+### 2.1. Campus User Portal (Students & Faculty)
+- **Interactive Issue Reporting**: Submit support requests with category selection, urgency indicators, campus location/lab details, dynamic questionnaires, and screenshot/document attachments.
+- **Visual Lifecycle Stepper**: Real-time 4-stage tracking pipeline (Submitted -> Assigned -> In Progress -> Resolved) showing exact timestamps and technician assignments.
+- **Ticket History & Discussion**: View open and past tickets with threaded technician communication and audit logs.
+- **Service Catalog**: Browse self-service catalog tiles for common issues (Campus Wi-Fi, Lab Hardware, SEB Exam Support, General IT) with pre-filled routing metadata.
 
-1. **Create Virtual Environment**
-```bash
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+### 2.2. GLPI-Grade Dynamic Form Studio
+- **Dynamic Question Builder**: System administrators can create, reorder, edit, and delete dynamic questions on the ticket submission canvas without modifying codebase files.
+- **Conditional Branching Rules**: Configure visual visibility conditions (`Visible If...`, `Hidden If...`) where sub-questions dynamically appear based on user selections (e.g. choosing "Network Issue" reveals network-specific sub-questions).
+- **Dynamic Question Types**:
+  - Single-choice radio button pills with highlighted active states
+  - Multi-select checkboxes
+  - Dropdown select menus
+  - Single-line text boxes
+  - Multiline text areas (including Problem Description)
+  - File upload inputs with admin-configurable upload size limits (MB)
+- **Auto-Expanding "Other" Details**: Selecting "Other" on any choice dynamically reveals a dedicated detail specification area.
+- **Live In-Studio Form Preview**: Real-time modal matching 100% of the live user form to test branching logic before deploying to campus users.
 
-2. **Install Dependencies**
-```bash
-pip install -r requirements.txt
-```
+### 2.3. Intelligent Auto-Routing & Workload Balancing
+- **Technician Support Groups**: Specialized teams organized by expertise (Network Support Group, Hardware Maintenance Group, Online Exam & SEB Tech Support).
+- **Round-Robin Workload Distribution**: Automatically assigns incoming tickets to the technician within the designated group who has the lowest active workload.
+- **Capacity Throttling**: Technicians have a configurable active ticket ceiling to prevent assignment bottlenecks.
+- **General Support Fallback**: Tickets with unmapped categories or full technician queues route safely to the administrative holding queue.
 
-3. **Create Environment File**
-```bash
-cp .env.example .env
-# Edit .env with your database configuration
-```
+### 2.4. Technician Workspace
+- **Assigned Queue Dashboard**: Live workbench listing active assignments filtered by status (Open, In Progress, Resolved, Closed).
+- **SLA Countdown & Breach Badges**: Visual indicators highlighting on-track and breached response/resolution milestones.
+- **Direct Processing & Diagnostics**: Single-click status transitions, technical resolution notes, and direct communication timeline.
+- **Attachment Viewer**: Inline thumbnail preview and download links for user-submitted diagnostic photos and screenshots.
 
-4. **Run Migrations**
-```bash
-python manage.py migrate
-```
+### 2.5. Administrative Control Center
+- **Global Ticket Oversight**: Comprehensive table of all campus issue reports with location, category, urgency, SLA status, and attachment links.
+- **User & Role Management**: Administrative interface to manage user accounts, assign roles (Admin, Technician, Normal User), and control account suspension.
+- **Technician Group Management**: Create departments, adjust workload limits, and allocate technicians to groups.
+- **Form Studio & Routing Matrix**: Visual interface to map issue categories directly to technician groups.
+- **Non-Destructive Audit Compliance**: Enforces an institutional policy where submitted tickets cannot be deleted, preserving a permanent audit trail.
 
-5. **Create Admin User**
-```bash
-python manage.py create_admin <username> <email> <password>
-# Example:
-python manage.py create_admin admin admin@siet.edu.in admin123
-```
+---
 
-6. **Collect Static Files** (for production)
-```bash
-python manage.py collectstatic --noinput
-```
+## 3. User Roles & Access Hierarchy
 
-7. **Run Development Server**
-```bash
-python manage.py runserver
-```
+| Role | Primary Responsibilities & Access Permissions |
+| :--- | :--- |
+| **Normal User** (Students / Faculty / Staff) | Report IT issues, track ticket progress via interactive stepper, reply to technician comments, and access the campus service catalog. |
+| **Technician** (IT Support Staff) | View assigned support queue, update diagnostics, communicate with reporters, upload resolution notes, and close tickets. |
+| **Administrator** (IT Directorate / System Admins) | Complete platform governance: configure dynamic forms, assign technician groups, monitor campus-wide SLAs, manage user roles, and oversee all tickets. |
 
-Access the application at: `http://localhost:8000/accounts/login/`
+---
 
-## Database Models
+## 4. System Architecture & Data Schema
 
-### UserProfile
-- Extended user model with roles (Admin, Technician, Normal User)
-- Activity tracking and suspension status
-- Max ticket allocation limit for technicians
+### 4.1. Entity Relationship Overview
+- **`User` & `UserProfile`**: Extends standard authentication with campus role definitions, suspension states, and capacity limits.
+- **`TechnicianGroup`**: Departmental containers grouping technician accounts with workload quotas.
+- **`Category`**: Root issue classifications linked directly to technician groups for automated routing.
+- **`IssueFormField`**: Schema definition model for dynamic questions, options, field types, conditional branching rules, and max file upload limits.
+- **`Ticket`**: Central entity capturing ticket number, reporter, category, urgency, location, custom dynamic form answers (JSON), problem description, attachment, SLA deadlines, status, and assigned technician/group.
+- **`TicketComment`**: Collaborative communication stream between reporters, technicians, and administrators.
+- **`TicketHistory`**: Read-only timeline recording all status transitions, reassignments, and modifications.
+- **`ServiceCatalogItem`**: Self-service showcase tiles presented on the student/staff home portal.
 
-### TechnicianGroup
-- Group technicians by department
-- Assign specific issue categories to groups
-- Track group-level SLA settings
-
-### Ticket
-- Main ticket model with full tracking
-- Auto-incrementing ticket number (Ticket #1, #2, etc.)
-- SLA response and resolution times
-- Status tracking (Open, In Progress, Resolved, Closed)
-
-### Category
-- Issue types (Network, Electrical, Facility, etc.)
-- Admin-editable list of categories
-- Optional assignment to technician groups
-
-### TicketComment
-- Track all communication on tickets
-- Support for file attachments
-- Audit trail of updates
-
-### TicketHistory
-- Complete audit trail of all changes
-- Track who changed what and when
-- Read-only for compliance
-
-## Auto-Assignment Logic
-
-The system uses intelligent round-robin assignment:
-
-1. **Group-Based**: If category has an assigned technician group:
-   - Assign to technician in group with lowest active tickets
-   - Skip technicians at max capacity
-
-2. **General Pool**: If no group assigned:
-   - Assign to any available technician
-   - Prioritize by workload (lowest active tickets)
-
-3. **Unassigned Queue**: If all technicians at capacity:
-   - Ticket stays unassigned
-   - Admin receives alert
-   - Manual assignment by admin
-
-## File Upload Security
-
-- **Max File Size**: 5MB per file
-- **Allowed Formats**: JPG, JPEG, PNG, GIF (images only)
-- **Storage**: Sandboxed in `/media/` directory
-- **Access**: Only authenticated users can download
-- **Validation**: Server-side validation with MIME type checking
-
-## SLA Tracking
-
-### Response SLA
-- Default: 1 hour from ticket creation
-- Triggered when technician assigned
-
-### Resolution SLA
-- Default: 24 hours from ticket creation
-- Checked on ticket status change
-
-### Breach Alerts
-- Admin notified if SLA breached
-- Dashboard highlights overdue tickets
-- Escalation workflow available
-
-## Admin Interface
-
-Access Django admin at: `http://localhost:8000/admin/`
-
-Features:
-- User and profile management
-- Technician group configuration
-- Category management
-- Ticket status updates (bulk actions available)
-- View complete audit trail
-
-## Configuration
-
-### Database Setup (Optional MySQL)
-
-For MySQL production deployment:
-
-```bash
-pip install mysqlclient
-```
-
-Update `settings.py`:
-```python
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'siet_helpdesk',
-        'USER': 'root',
-        'PASSWORD': 'your_password',
-        'HOST': 'localhost',
-        'PORT': '3306',
-    }
-}
-```
-
-### Email Configuration
-
-Update `settings.py` for email notifications:
-```python
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your_email@gmail.com'
-EMAIL_HOST_PASSWORD = 'your_app_password'
-```
-
-## API Endpoints (Future)
-
-- `POST /api/tickets/` - Create ticket
-- `GET /api/tickets/` - List tickets
-- `GET /api/tickets/{id}/` - Ticket details
-- `PATCH /api/tickets/{id}/` - Update ticket
-- `GET /api/tickets/{id}/comments/` - Ticket comments
-
-## Security Considerations
-
-- ✅ CSRF protection on all forms
-- ✅ SQL injection prevention (ORM)
-- ✅ XSS protection
-- ✅ File upload validation
-- ✅ User authentication required
-- ✅ Role-based access control
-- ✅ Audit trail for compliance
-
-### Recommended for Production
-- Enable HTTPS/SSL
-- Set `DEBUG = False`
-- Use strong `SECRET_KEY`
-- Configure allowed hosts
-- Use environment variables for secrets
-- Regular database backups
-- Log rotation setup
-
-## Troubleshooting
-
-### Migration Errors
-```bash
-python manage.py showmigrations
-python manage.py migrate --fake accounts 0001  # If needed
-```
-
-### Port Already in Use
-```bash
-python manage.py runserver 8001
-```
-
-### Static Files Not Loading
-```bash
-python manage.py collectstatic --clear --noinput
-```
-
-## Development Notes
-
-### Creating Test Data
-```bash
-python manage.py shell
-# In Django shell:
->>> from accounts.models import UserProfile
->>> from django.contrib.auth.models import User
->>> user = User.objects.create_user('techuser', 'tech@siet.edu.in', 'pass123')
->>> user.first_name = 'John'
->>> user.save()
->>> profile = user.profile
->>> profile.role = 'technician'
->>> profile.save()
-```
-
-### Database Reset (Development Only)
-```bash
-# Delete db.sqlite3
-# Remove migration files (keep __init__.py)
-python manage.py makemigrations
-python manage.py migrate
-```
-
-## Support
-
-For issues or feature requests, contact the development team.
-
-## License
-
-This project is proprietary to SIET.
+### 4.2. Security & Integrity Standards
+- **Role-Based Access Control (RBAC)**: Strict view-level and object-level permission enforcement across all endpoints.
+- **Data Protection**: Zero raw secret exposure, encrypted password storage, and environment-based configuration.
+- **Cross-Site Request Forgery (CSRF) Protection**: Strict CSRF token validation across all dynamic and standard form submissions.
+- **SQL Injection & XSS Defense**: Standardized Django ORM query abstraction and template HTML escaping.
+- **Attachment Sandboxing**: Client and server-side file size enforcement with isolated media storage.
