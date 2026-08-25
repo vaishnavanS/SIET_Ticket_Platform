@@ -1,3 +1,4 @@
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -6,10 +7,12 @@ from django.contrib.auth.models import User
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
-from django.db.models import Count
+from django.db.models import Count, Q
 from .forms import AdminUserCreationForm, TechnicianGroupForm, CategoryForm
 from .models import UserProfile, UserRole, TechnicianGroup
 from tickets.models import Category, Ticket, TicketStatus
+
+logger = logging.getLogger(__name__)
 
 
 def admin_required(view_func):
@@ -126,8 +129,61 @@ def admin_create_user(request):
 
 @admin_required
 def admin_users(request):
-    users = User.objects.select_related('profile').order_by('username')
-    return render(request, 'accounts/admin_users.html', {'users': users})
+    users_qs = User.objects.select_related('profile').prefetch_related('technician_groups').order_by('username')
+
+    # Counts for quick filter pills
+    all_users = User.objects.select_related('profile')
+    total_count = all_users.count()
+    admin_count = all_users.filter(profile__role=UserRole.ADMIN).count()
+    tech_count = all_users.filter(profile__role=UserRole.TECHNICIAN).count()
+    user_count = all_users.filter(profile__role=UserRole.NORMAL_USER).count()
+    suspended_count = all_users.filter(profile__is_suspended=True).count()
+
+    selected_role = request.GET.get('role', '').strip()
+    selected_status = request.GET.get('status', '').strip()
+    selected_group = request.GET.get('group', '').strip()
+    search_query = request.GET.get('q', '').strip()
+
+    if selected_role in [UserRole.ADMIN, UserRole.TECHNICIAN, UserRole.NORMAL_USER]:
+        users_qs = users_qs.filter(profile__role=selected_role)
+
+    if selected_status == 'active':
+        users_qs = users_qs.filter(profile__is_suspended=False)
+    elif selected_status == 'suspended':
+        users_qs = users_qs.filter(profile__is_suspended=True)
+
+    if selected_group:
+        try:
+            users_qs = users_qs.filter(technician_groups__id=int(selected_group))
+        except ValueError:
+            pass
+
+    if search_query:
+        from django.db.models import Q
+        users_qs = users_qs.filter(
+            Q(username__icontains=search_query) |
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(email__icontains=search_query)
+        ).distinct()
+
+    technician_groups = TechnicianGroup.objects.all()
+
+    context = {
+        'users': users_qs,
+        'selected_role': selected_role,
+        'selected_status': selected_status,
+        'selected_group': selected_group,
+        'search_query': search_query,
+        'total_count': total_count,
+        'admin_count': admin_count,
+        'tech_count': tech_count,
+        'user_count': user_count,
+        'suspended_count': suspended_count,
+        'technician_groups': technician_groups,
+        'role_choices': UserRole.choices,
+    }
+    return render(request, 'accounts/admin_users.html', context)
 
 
 @admin_required
@@ -474,29 +530,115 @@ def profile_view(request):
     return render(request, 'accounts/profile.html', context)
 
 
-class CustomPasswordResetView(PasswordResetView):
-    """Custom password reset view that dispatches reset link to user email with LAN IP resolution"""
-    template_name = 'accounts/password_reset.html'
-    email_template_name = 'accounts/password_reset_email.html'
-    subject_template_name = 'accounts/password_reset_subject.txt'
-    from_email = settings.DEFAULT_FROM_EMAIL
-    success_url = reverse_lazy('accounts:password_reset_done')
+def mask_email_display(email):
+    """Helper to mask an email address for safe public confirmation displays"""
+    if not email or '@' not in email:
+        return 'your registered email'
+    name, domain = email.split('@', 1)
+    if len(name) <= 2:
+        masked_name = name[0] + '*'
+    elif len(name) <= 5:
+        masked_name = name[0] + '*' * (len(name) - 2) + name[-1]
+    else:
+        masked_name = name[:2] + '*' * (len(name) - 4) + name[-2:]
+    return f"{masked_name}@{domain}"
 
-    def get_extra_email_context(self):
-        from .utils import get_site_base_url
-        from urllib.parse import urlparse
-        base_url = get_site_base_url(self.request)
-        parsed = urlparse(base_url)
-        return {
-            'protocol': parsed.scheme or 'http',
-            'domain': parsed.netloc or parsed.path or 'localhost:8000',
-        }
+
+def password_reset_request_view(request):
+    """
+    Enhanced password reset view allowing username or email input with
+    strict verification and detailed contextual guidance.
+    """
+    error = None
+    identity = ''
+
+    if request.method == 'POST':
+        identity = request.POST.get('identity', '').strip()
+
+        if not identity:
+            error = "Please enter your username or registered email address."
+        else:
+            # Case-insensitive lookup by username OR email
+            user = User.objects.filter(
+                Q(username__iexact=identity) | Q(email__iexact=identity)
+            ).first()
+
+            if not user:
+                error = "No account found with this username or email address. Please check your spelling or contact the site administrator."
+            elif getattr(user, 'profile', None) and user.profile.is_suspended:
+                error = "Your account is currently suspended. Please contact the site administrator."
+            elif not user.email or not user.email.strip():
+                error = "Your account exists, but no email address is registered. Please contact the site administrator to reset your password."
+            elif getattr(user, 'profile', None) and not user.profile.is_email_verified:
+                error = "Your account exists, but your email is not verified. Please contact the site administrator."
+            else:
+                # Valid user with registered & verified email -> Dispatch password reset token
+                from django.utils.http import urlsafe_base64_encode
+                from django.utils.encoding import force_bytes
+                from django.contrib.auth.tokens import default_token_generator
+                from django.template.loader import render_to_string
+                from django.core.mail import EmailMessage
+                from .utils import get_site_email_connection, get_site_base_url
+
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                token = default_token_generator.make_token(user)
+                base_url = get_site_base_url(request)
+                reset_link = f"{base_url}/accounts/password-reset/{uid}/{token}/"
+
+                conn, from_email, site_name = get_site_email_connection()
+                subject = f"[{site_name}] Password Reset Request"
+                context = {
+                    'user': user,
+                    'reset_link': reset_link,
+                    'site_name': site_name,
+                }
+                body = render_to_string('accounts/password_reset_email.html', context)
+
+                try:
+                    email_msg = EmailMessage(
+                        subject=subject,
+                        body=body,
+                        from_email=from_email,
+                        to=[user.email],
+                        connection=conn,
+                    )
+                    email_msg.send(fail_silently=False)
+                    logger.info(f"Password reset link sent to {user.email} for user {user.username}")
+                except Exception as e:
+                    logger.error(f"Failed to dispatch password reset email to {user.email}: {e}")
+
+                request.session['reset_email_masked'] = mask_email_display(user.email)
+                return redirect('accounts:password_reset_done')
+
+    return render(request, 'accounts/password_reset.html', {
+        'error': error,
+        'identity': identity
+    })
+
+
+def password_reset_done_view(request):
+    """Displays confirmation of dispatched password reset link with masked email address"""
+    masked_email = request.session.pop('reset_email_masked', 'your registered email')
+    return render(request, 'accounts/password_reset_done.html', {
+        'masked_email': masked_email
+    })
 
 
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
-    """Custom password reset confirm view that updates user password in DB"""
+    """Custom password reset confirm view that updates user password in DB and redirects directly to login"""
     template_name = 'accounts/password_reset_confirm.html'
-    success_url = reverse_lazy('accounts:password_reset_complete')
+    success_url = reverse_lazy('accounts:login')
+
+    def form_valid(self, form):
+        user = form.save()
+        if hasattr(user, 'profile'):
+            user.profile.is_email_verified = True
+            user.profile.save(update_fields=['is_email_verified', 'updated_at'])
+        messages.success(
+            self.request,
+            "Your password has been successfully reset! You can now log in with your new password."
+        )
+        return redirect(self.success_url)
 
 
 

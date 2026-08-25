@@ -64,7 +64,10 @@ def get_site_email_connection():
         from_header = f"{email_cfg.site_name} <{email_cfg.from_email}>"
 
         if email_cfg.smtp_backend == 'console':
-            conn = get_connection('django.core.mail.backends.console.EmailBackend')
+            if getattr(settings, 'EMAIL_BACKEND', '') == 'django.core.mail.backends.locmem.EmailBackend':
+                conn = get_connection('django.core.mail.backends.locmem.EmailBackend')
+            else:
+                conn = get_connection('django.core.mail.backends.console.EmailBackend')
             return conn, from_header, email_cfg.site_name
 
         use_ssl = bool(email_cfg.smtp_use_ssl)

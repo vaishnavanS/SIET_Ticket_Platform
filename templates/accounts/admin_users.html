@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Users - SIET Helpdesk</title>
-    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=2.7">
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=2.9">
 </head>
 <body>
 <header class="topbar">
@@ -70,10 +70,66 @@
         <div>
             <p class="eyebrow">USER MANAGEMENT</p>
             <h1>Users</h1>
-            <p>Create accounts and review assigned roles.</p>
+            <p>Filter, search, and manage platform accounts and support roles.</p>
         </div>
         <a class="primary-button" href="{% url 'accounts:admin_create_user' %}">+ Create User</a>
     </div>
+
+    <!-- Detailed Filter & Search Card -->
+    <div class="user-filter-panel">
+        <form method="get" action="{% url 'accounts:admin_users' %}" class="user-filter-form">
+            <!-- Keyword Search -->
+            <div class="user-search-input-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Search by username, name, or email...">
+            </div>
+
+            <!-- Role Filter Dropdown -->
+            <select name="role" class="user-filter-select">
+                <option value="">-- All Roles --</option>
+                {% for value, label in role_choices %}
+                <option value="{{ value }}" {% if selected_role == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Status Filter Dropdown -->
+            <select name="status" class="user-filter-select">
+                <option value="">-- All Statuses --</option>
+                <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+                <option value="suspended" {% if selected_status == 'suspended' %}selected{% endif %}>Suspended</option>
+            </select>
+
+            <!-- Technician Group Filter (If exists) -->
+            {% if technician_groups %}
+            <select name="group" class="user-filter-select">
+                <option value="">-- All Technician Groups --</option>
+                {% for grp in technician_groups %}
+                <option value="{{ grp.id }}" {% if selected_group == grp.id|stringformat:"s" %}selected{% endif %}>{{ grp.name }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
+
+            <div class="user-filter-actions">
+                <button type="submit" class="primary-button" style="min-height: 40px; padding: 0 16px;">Apply Filters</button>
+                {% if selected_role or selected_status or selected_group or search_query %}
+                <a href="{% url 'accounts:admin_users' %}" class="secondary-button" style="min-height: 40px; padding: 0 14px; text-decoration: none;">✕ Clear</a>
+                {% endif %}
+            </div>
+        </form>
+
+        <div class="user-filter-badge-bar">
+            <span>Showing <strong>{{ users|length }}</strong> of <strong>{{ total_count }}</strong> registered users</span>
+            {% if selected_role or selected_status or selected_group or search_query %}
+            <span>Filtered by:
+                {% if selected_role %}<strong>Role: {{ selected_role|title }}</strong> {% endif %}
+                {% if selected_status %}<strong>Status: {{ selected_status|title }}</strong> {% endif %}
+                {% if search_query %}<strong>Query: "{{ search_query }}"</strong> {% endif %}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Users Table -->
     <section class="panel">
         <div class="table-responsive">
             <table>
@@ -83,6 +139,7 @@
                         <th>Name</th>
                         <th>Email</th>
                         <th>Role</th>
+                        <th>Group / Assignments</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -90,17 +147,35 @@
                 <tbody>
                     {% for item in users %}
                     <tr>
-                        <td><strong>{{ item.username }}</strong></td>
+                        <td>
+                            <strong>{{ item.username }}</strong>
+                            {% if item == request.user %}
+                            <small class="badge" style="background:#edf7ee; color:#1b5e20; font-size:10px; margin-top:2px;">You</small>
+                            {% endif %}
+                        </td>
                         <td>{{ item.get_full_name|default:'-' }}</td>
                         <td>{{ item.email|default:'-' }}</td>
-                        <td><span class="badge">{{ item.profile.get_role_display }}</span></td>
+                        <td>
+                            <span class="badge {% if item.profile.role == 'admin' %}badge-admin{% elif item.profile.role == 'technician' %}badge-tech{% endif %}">
+                                {{ item.profile.get_role_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if item.technician_groups.all %}
+                                {% for grp in item.technician_groups.all %}
+                                <span class="badge" style="background:#e8f4fd; color:#0d47a1; font-size:11px; margin:2px;">{{ grp.name }}</span>
+                                {% endfor %}
+                            {% elif item.profile.role == 'technician' %}
+                                <span class="muted" style="font-size:12px;">Unassigned Group</span>
+                            {% else %}
+                                <span class="muted" style="font-size:12px;">—</span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% if item.profile.is_suspended %}
                             <span class="status suspended">Suspended</span>
-                            {% elif item.profile.is_active %}
-                            <span class="status active">Active</span>
                             {% else %}
-                            <span class="status">Inactive</span>
+                            <span class="status active">Active</span>
                             {% endif %}
                         </td>
                         <td>
@@ -108,12 +183,15 @@
                             <div class="row-actions">
                                 {% if item.profile.is_suspended %}
                                 <form method="post" action="{% url 'accounts:admin_user_action' item.id 'activate' %}">
+                                    {% csrf_token %}
+                                    <button class="text-button" type="submit">Activate</button>
+                                </form>
                                 {% else %}
                                 <form method="post" action="{% url 'accounts:admin_user_action' item.id 'suspend' %}">
-                                {% endif %}
                                     {% csrf_token %}
-                                    <button class="text-button" type="submit">{% if item.profile.is_suspended %}Activate{% else %}Suspend{% endif %}</button>
+                                    <button class="text-button" type="submit">Suspend</button>
                                 </form>
+                                {% endif %}
                                 <button class="text-button" type="button" onclick="openResetModal('{{ item.id }}', '{{ item.username }}')">Reset Pwd</button>
                                 <form method="post" action="{% url 'accounts:admin_user_action' item.id 'delete' %}" onsubmit="return confirm('Delete this user permanently?');">
                                     {% csrf_token %}
@@ -126,7 +204,15 @@
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="6">No users found.</td></tr>
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 36px 20px;">
+                            <div class="empty-state" style="align-items: center;">
+                                <strong style="font-size: 16px; color: #165c20;">No users found matching your filters</strong>
+                                <span>Try adjusting your search query, role selection, or status filters.</span>
+                                <a href="{% url 'accounts:admin_users' %}" class="primary-button" style="margin-top: 10px; text-decoration: none;">Clear All Filters</a>
+                            </div>
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>

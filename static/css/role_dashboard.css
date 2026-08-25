@@ -630,6 +630,84 @@ h1 { margin-bottom: 6px; color: #123d18; font-size: 30px; font-weight: 700; }
     border-color: #4caf50 !important;
 }
 
+/* USER MANAGEMENT FILTER BAR */
+.user-filter-panel {
+    background: #ffffff;
+    border: 1px solid #deebdc;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(22, 70, 28, 0.04);
+}
+
+.user-filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.user-search-input-wrap {
+    flex: 1 1 240px;
+    position: relative;
+}
+
+.user-search-input-wrap input {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 12px 8px 36px;
+    border: 1px solid #c8ddc5;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #ffffff;
+    color: #173b1c;
+    box-sizing: border-box;
+}
+
+.user-search-input-wrap .search-icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #69806c;
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.user-filter-select {
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid #c8ddc5;
+    border-radius: 6px;
+    font-size: 13.5px;
+    background: #ffffff;
+    color: #173b1c;
+    font-weight: 500;
+    min-width: 150px;
+}
+
+.user-filter-select:focus, .user-search-input-wrap input:focus {
+    outline: 2px solid #9fda9f;
+    border-color: #4caf50;
+}
+
+.user-filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-filter-badge-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2ede0;
+    font-size: 13px;
+    color: #557259;
+}
+
 .my-tickets-stack {
     display: flex;
     flex-direction: column;

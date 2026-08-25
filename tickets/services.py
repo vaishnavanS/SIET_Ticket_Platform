@@ -17,7 +17,7 @@ def send_ticket_assigned_email(ticket, technician=None):
     reporter_name = ticket.reporter.get_full_name() or ticket.reporter.username if ticket.reporter else "User"
     reporter_email = ticket.reporter.email if ticket.reporter else "Not specified"
     category_name = ticket.category.name if ticket.category else "General IT"
-    priority_name = ticket.get_priority_display() if hasattr(ticket, 'get_priority_display') else str(ticket.priority)
+    priority_name = ticket.get_urgency_display()
 
     base_url = get_site_base_url()
     ticket_url = f"{base_url}/tickets/{ticket.pk}/"
