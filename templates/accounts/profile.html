@@ -1,0 +1,401 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - {{ request.user.get_full_name|default:request.user.username }} | SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=2.8">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-left">
+            <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <strong>SIET Helpdesk</strong>
+        </div>
+        {% if user_role == 'admin' or request.user.is_staff %}
+        <nav class="admin-nav">
+            <a href="{% url 'accounts:admin_dashboard' %}">Overview</a>
+            <div class="dropdown">
+                <button class="dropdown-btn" type="button">Administration ▾</button>
+                <div class="dropdown-menu">
+                    <a href="{% url 'accounts:admin_users' %}">Users</a>
+                    <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
+                    <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                    <a href="{% url 'accounts:admin_email_settings' %}">Email & SMTP Settings</a>
+                </div>
+            </div>
+            <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
+            <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
+            <div class="user-profile-menu">
+                <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
+                    <span class="avatar-circle">{{ profile.get_initials }}</span>
+                    <span class="user-dropdown-arrow">▾</span>
+                </button>
+                <div class="profile-dropdown-card" id="profileDropdownCard">
+                    <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'accounts:logout' %}" class="dropdown-item">Log out</a>
+                </div>
+            </div>
+        </nav>
+        {% elif user_role == 'technician' %}
+        <nav>
+            <a href="{% url 'accounts:technician_dashboard' %}">Home</a>
+            <a href="{% url 'accounts:technician_dashboard' %}?scope=my_resolved">My Resolved Tickets</a>
+            <a href="{% url 'accounts:technician_dashboard' %}?scope=team">All Team Tickets</a>
+            <a href="{% url 'accounts:technician_dashboard' %}?scope=unassigned">Unassigned Pool</a>
+            <div class="user-profile-menu">
+                <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
+                    <span class="avatar-circle">{{ profile.get_initials }}</span>
+                    <span class="user-dropdown-arrow">▾</span>
+                </button>
+                <div class="profile-dropdown-card" id="profileDropdownCard">
+                    <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'accounts:logout' %}" class="dropdown-item">Log out</a>
+                </div>
+            </div>
+        </nav>
+        {% else %}
+        <nav>
+            <a href="{% url 'accounts:user_dashboard' %}">Home</a>
+            <a href="{% url 'tickets:user_catalog' %}">Service Catalog</a>
+            <a href="{% url 'tickets:my_tickets' %}">My Tickets & History</a>
+            <a href="{% url 'tickets:create' %}">Report an Issue</a>
+            <div class="user-profile-menu">
+                <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
+                    <span class="avatar-circle">{{ profile.get_initials }}</span>
+                    <span class="user-dropdown-arrow">▾</span>
+                </button>
+                <div class="profile-dropdown-card" id="profileDropdownCard">
+                    <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'accounts:logout' %}" class="dropdown-item">Log out</a>
+                </div>
+            </div>
+        </nav>
+        {% endif %}
+    </header>
+
+    <!-- Mobile Sidebar Drawer -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+    <aside id="mobileSidebar" class="mobile-sidebar">
+        <div class="sidebar-header">
+            <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close Menu">✕</button>
+            <div class="sidebar-brand">
+                <strong>SIET Helpdesk</strong>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            {% if user_role == 'admin' or request.user.is_staff %}
+                <a href="{% url 'accounts:admin_dashboard' %}" class="sidebar-link">Overview</a>
+                <a href="{% url 'accounts:admin_users' %}" class="sidebar-link">Users</a>
+                <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link">Technician Groups</a>
+                <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+                <a href="{% url 'accounts:admin_email_settings' %}" class="sidebar-link">Email & SMTP Settings</a>
+                <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
+                <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link">Issue Reports</a>
+                <a href="{% url 'accounts:profile' %}" class="sidebar-link active">My Profile</a>
+                <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+            {% elif user_role == 'technician' %}
+                <a href="{% url 'accounts:technician_dashboard' %}" class="sidebar-link">Home (Active Tickets)</a>
+                <a href="{% url 'accounts:technician_dashboard' %}?scope=my_resolved" class="sidebar-link">My Resolved Tickets</a>
+                <a href="{% url 'accounts:technician_dashboard' %}?scope=team" class="sidebar-link">All Team Tickets</a>
+                <a href="{% url 'accounts:technician_dashboard' %}?scope=unassigned" class="sidebar-link">Unassigned Pool</a>
+                <a href="{% url 'accounts:profile' %}" class="sidebar-link active">My Profile</a>
+                <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+            {% else %}
+                <a href="{% url 'accounts:user_dashboard' %}" class="sidebar-link">Home</a>
+                <a href="{% url 'tickets:user_catalog' %}" class="sidebar-link">Service Catalog</a>
+                <a href="{% url 'tickets:my_tickets' %}" class="sidebar-link">My Tickets & History</a>
+                <a href="{% url 'tickets:create' %}" class="sidebar-link">Report an Issue</a>
+                <a href="{% url 'accounts:profile' %}" class="sidebar-link active">My Profile</a>
+                <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+            {% endif %}
+        </nav>
+    </aside>
+
+    <main class="page-shell">
+        {% if messages %}
+        <div class="alert-messages" style="margin-bottom: 20px;">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- LMS Style Hero Section -->
+        <div class="lms-profile-hero">
+            <div class="lms-hero-avatar">
+                {{ profile.get_initials }}
+            </div>
+            <div class="lms-hero-info">
+                <h1>{{ request.user.get_full_name|default:request.user.username }}</h1>
+                <div class="lms-hero-tags">
+                    <span class="role-pill {{ profile.role }}">{{ profile.get_role_display }}</span>
+                    <span class="lms-meta-tag">@{{ request.user.username }}</span>
+                    {% if profile.is_email_verified %}
+                        <span class="lms-verified-badge">Verified Account</span>
+                    {% else %}
+                        <span class="lms-unverified-badge">Email Unverified</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="lms-hero-actions">
+                <button type="button" class="btn-lms-edit" onclick="openEditModal()">Edit Profile</button>
+            </div>
+        </div>
+
+        <!-- LMS Multi-Card Grid -->
+        <div class="lms-cards-grid">
+            
+            <!-- Card 1: User details -->
+            <div class="lms-card">
+                <div class="lms-card-header">
+                    <h3>User details</h3>
+                    <button type="button" class="lms-card-action" onclick="openEditModal()">Edit profile</button>
+                </div>
+                <div class="lms-card-body">
+                    <div class="lms-detail-row">
+                        <span class="lms-label">Email address</span>
+                        <div class="lms-value" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <span>{{ request.user.email|default:"No email configured" }}</span>
+                            {% if profile.is_email_verified %}
+                                <span class="lms-verified-badge">Verified</span>
+                            {% else %}
+                                <span class="lms-unverified-badge">Unverified</span>
+                                {% if request.user.email %}
+                                    <form action="{% url 'accounts:profile' %}" method="post" style="display: inline-block;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="send_verification">
+                                        <button type="submit" class="lms-verify-btn">Send verification link</button>
+                                    </form>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="lms-detail-row">
+                        <span class="lms-label">Phone / Mobile</span>
+                        <span class="lms-value">{{ profile.phone_number|default:"Not specified" }}</span>
+                    </div>
+                    <div class="lms-detail-row">
+                        <span class="lms-label">Department / Program</span>
+                        <span class="lms-value">{{ profile.department|default:"General / Student" }}</span>
+                    </div>
+                    <div class="lms-detail-row">
+                        <span class="lms-label">Timezone & Location</span>
+                        <span class="lms-value">India (Asia/Kolkata)</span>
+                    </div>
+                    <div class="lms-detail-row">
+                        <span class="lms-label">Account Member Since</span>
+                        <span class="lms-value">{{ request.user.date_joined|date:"F d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Role Details & Activity Profile -->
+            <div class="lms-card">
+                <div class="lms-card-header">
+                    <h3>
+                        {% if user_role == 'technician' %}Technician Assignment Profile
+                        {% elif user_role == 'admin' %}Administrative Overview
+                        {% else %}Ticket Activity & Records{% endif %}
+                    </h3>
+                </div>
+                <div class="lms-card-body">
+                    {% if user_role == 'normal_user' %}
+                        <div class="lms-detail-row">
+                            <span class="lms-label">Total Tickets Raised</span>
+                            <span class="lms-value"><strong>{{ total_tickets }}</strong></span>
+                        </div>
+                        <div class="lms-detail-row">
+                            <span class="lms-label">Open / In Progress Issues</span>
+                            <span class="lms-value" style="color: #16a34a;"><strong>{{ open_tickets }}</strong></span>
+                        </div>
+                        <div class="lms-detail-row">
+                            <span class="lms-label">Resolved / Closed Issues</span>
+                            <span class="lms-value"><strong>{{ resolved_tickets }}</strong></span>
+                        </div>
+                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+                            <a href="{% url 'tickets:my_tickets' %}" class="lms-link">View all my tickets &rarr;</a>
+                        </div>
+                    {% elif user_role == 'technician' %}
+                        <div class="lms-detail-row">
+                            <span class="lms-label">Assigned Groups</span>
+                            <span class="lms-value">
+                                {% for g in assigned_groups %}
+                                    <span class="badge" style="background:#e0f2fe; color:#0369a1; margin-right: 4px;">{{ g.name }}</span>
+                                {% empty %}
+                                    <span class="muted">General Technical Pool</span>
+                                {% endfor %}
+                            </span>
+                        </div>
+                        <div class="lms-detail-row">
+                            <span class="lms-label">Active Assigned Queue</span>
+                            <span class="lms-value" style="color: #16a34a;"><strong>{{ active_assigned }}</strong></span>
+                        </div>
+                        <div class="lms-detail-row">
+                            <span class="lms-label">Total Resolved Issues</span>
+                            <span class="lms-value"><strong>{{ resolved_assigned }}</strong></span>
+                        </div>
+                        <div class="lms-detail-row">
+                            <span class="lms-label">SLA Breach Incidents</span>
+                            <span class="lms-value" style="color: {% if sla_breached_count > 0 %}#dc2626{% else %}#16a34a{% endif %};">
+                                <strong>{{ sla_breached_count }}</strong>
+                            </span>
+                        </div>
+                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+                            <a href="{% url 'accounts:technician_dashboard' %}" class="lms-link">Open Technician Workspace &rarr;</a>
+                        </div>
+                    {% elif user_role == 'admin' %}
+                        <div class="lms-detail-row">
+                            <span class="lms-label">Administrative Status</span>
+                            <span class="lms-value" style="color: #15803d;"><strong>System Administrator (Full Privileges)</strong></span>
+                        </div>
+                        <div class="lms-detail-row">
+                            <span class="lms-label">Total Registered Users</span>
+                            <span class="lms-value"><strong>{{ total_system_users }}</strong></span>
+                        </div>
+                        <div class="lms-detail-row">
+                            <span class="lms-label">Service Categories</span>
+                            <span class="lms-value"><strong>{{ total_categories }}</strong></span>
+                        </div>
+                        <div class="lms-detail-row">
+                            <span class="lms-label">Total System Tickets</span>
+                            <span class="lms-value"><strong>{{ total_system_tickets }}</strong></span>
+                        </div>
+                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+                            <a href="{% url 'accounts:admin_dashboard' %}" class="lms-link">Go to Admin Overview &rarr;</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Card 3: Account Status & Session Info -->
+            <div class="lms-card">
+                <div class="lms-card-header">
+                    <h3>Account Status & Activity</h3>
+                </div>
+                <div class="lms-card-body">
+                    <div class="lms-detail-row">
+                        <span class="lms-label">Account Username</span>
+                        <span class="lms-value">{{ request.user.username }}</span>
+                    </div>
+                    <div class="lms-detail-row">
+                        <span class="lms-label">Account Status</span>
+                        <span class="lms-value" style="color: #15803d; font-weight: 600;">
+                            {% if profile.is_suspended %}Suspended{% else %}Active &bull; Operational{% endif %}
+                        </span>
+                    </div>
+                    <div class="lms-detail-row">
+                        <span class="lms-label">Last Logged In</span>
+                        <span class="lms-value">{{ request.user.last_login|date:"F d, Y \a\t h:i A"|default:"Current Session" }}</span>
+                    </div>
+                    <div class="lms-detail-row">
+                        <span class="lms-label">Role Authorization</span>
+                        <span class="lms-value">{{ profile.get_role_display }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Email & Notification Routing -->
+            <div class="lms-card">
+                <div class="lms-card-header">
+                    <h3>Notification & Routing Preferences</h3>
+                </div>
+                <div class="lms-card-body">
+                    <div class="lms-detail-row">
+                        <span class="lms-label">Email Notification Channel</span>
+                        <span class="lms-value" style="color: {% if profile.is_email_verified %}#15803d{% else %}#b45309{% endif %};">
+                            {% if profile.is_email_verified %}
+                                Active &bull; Verified ({{ request.user.email }})
+                            {% else %}
+                                Pending Verification &bull; {{ request.user.email|default:"No email set" }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="lms-detail-row">
+                        <span class="lms-label">Ticket Allocation Alerts</span>
+                        <span class="lms-value">Direct dispatch to allotted technician from main site email</span>
+                    </div>
+                    <div class="lms-detail-row">
+                        <span class="lms-label">Resolution Confirmations</span>
+                        <span class="lms-value">Instant alert sent to issue reporter upon resolution</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal: Edit Profile Information -->
+    <div id="editProfileModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Edit Profile Information</h3>
+                <button type="button" class="modal-close" onclick="closeEditModal()">✕</button>
+            </div>
+            <form action="{% url 'accounts:profile' %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_profile">
+                <div class="modal-body">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                        <div class="field">
+                            <label for="id_first_name">First Name</label>
+                            <input type="text" name="first_name" id="id_first_name" value="{{ request.user.first_name }}" placeholder="First Name">
+                        </div>
+                        <div class="field">
+                            <label for="id_last_name">Last Name</label>
+                            <input type="text" name="last_name" id="id_last_name" value="{{ request.user.last_name }}" placeholder="Last Name">
+                        </div>
+                    </div>
+                    <div class="field" style="margin-bottom: 14px;">
+                        <label for="id_email">Email Address *</label>
+                        <input type="email" name="email" id="id_email" value="{{ request.user.email }}" required placeholder="user@siet.edu.in">
+                        <small class="field-help" style="color:#64748b; font-size: 12px; display: block; margin-top: 4px;">
+                            Saving or changing your email address will immediately send a verification link to this email.
+                        </small>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                        <div class="field">
+                            <label for="id_phone_number">Phone / Mobile</label>
+                            <input type="text" name="phone_number" id="id_phone_number" value="{{ profile.phone_number }}" placeholder="+91 98765 43210">
+                        </div>
+                        <div class="field">
+                            <label for="id_department">Department / Program</label>
+                            <input type="text" name="department" id="id_department" value="{{ profile.department }}" placeholder="e.g. Computer Science">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="secondary-button" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="primary-button">Save & Send Verification</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openEditModal() {
+            const modal = document.getElementById('editProfileModal');
+            if (modal) modal.classList.add('open');
+        }
+        function closeEditModal() {
+            const modal = document.getElementById('editProfileModal');
+            if (modal) modal.classList.remove('open');
+        }
+
+        // Close modals on clicking backdrop
+        window.addEventListener('click', function(e) {
+            const editModal = document.getElementById('editProfileModal');
+            if (e.target === editModal) closeEditModal();
+        });
+    </script>
+    <script src="{% static 'js/mobile_nav.js' %}?v=2.8"></script>
+</body>
+</html>

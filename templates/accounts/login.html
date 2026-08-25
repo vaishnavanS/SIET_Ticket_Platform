@@ -21,6 +21,14 @@
 
             <h1>Login to your account</h1>
 
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}error{% else %}{{ message.tags|default:'error' }}{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
             {% if form.non_field_errors %}
                 <div class="alert alert-error">
                     {{ form.non_field_errors }}

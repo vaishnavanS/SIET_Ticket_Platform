@@ -1,3 +1,15 @@
+// Global profile dropdown toggle function
+window.toggleProfileDropdown = function (e) {
+    if (e) {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+    }
+    const profileDropdown = document.getElementById('profileDropdownCard');
+    if (profileDropdown) {
+        profileDropdown.classList.toggle('open');
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function () {
     const hamburger = document.getElementById('hamburgerBtn');
     const sidebar = document.getElementById('mobileSidebar');
@@ -32,9 +44,30 @@ document.addEventListener('DOMContentLoaded', function () {
         backdrop.addEventListener('click', closeSidebar);
     }
 
+    // Close on escape key
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && sidebar && sidebar.classList.contains('open')) {
-            closeSidebar();
+        if (e.key === 'Escape') {
+            if (sidebar && sidebar.classList.contains('open')) {
+                closeSidebar();
+            }
+            const profileDropdown = document.getElementById('profileDropdownCard');
+            if (profileDropdown && profileDropdown.classList.contains('open')) {
+                profileDropdown.classList.remove('open');
+            }
+        }
+    });
+
+    // Click outside handler to dismiss profile dropdown
+    document.addEventListener('click', function (e) {
+        const avatarBtn = document.getElementById('userAvatarBtn');
+        const profileDropdown = document.getElementById('profileDropdownCard');
+        if (profileDropdown && profileDropdown.classList.contains('open')) {
+            if (avatarBtn && avatarBtn.contains(e.target)) {
+                return;
+            }
+            if (!profileDropdown.contains(e.target)) {
+                profileDropdown.classList.remove('open');
+            }
         }
     });
 });

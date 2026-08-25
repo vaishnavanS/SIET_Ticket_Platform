@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Technician Dashboard - SIET Helpdesk</title>
-    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=2.8">
 </head>
 <body>
     <header class="topbar">
@@ -18,8 +18,21 @@
             <strong>SIET Helpdesk</strong>
         </div>
         <nav>
-            <a href="{% url 'accounts:technician_dashboard' %}" class="active">Assigned Tickets</a>
-            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+            <a href="{% url 'accounts:technician_dashboard' %}" class="{% if scope == 'my_active' or not scope %}active{% endif %}">Home</a>
+            <a href="{% url 'accounts:technician_dashboard' %}?scope=my_resolved" class="{% if scope == 'my_resolved' %}active{% endif %}">My Resolved Tickets</a>
+            <a href="{% url 'accounts:technician_dashboard' %}?scope=team" class="{% if scope == 'team' %}active{% endif %}">All Team Tickets</a>
+            <a href="{% url 'accounts:technician_dashboard' %}?scope=unassigned" class="{% if scope == 'unassigned' %}active{% endif %}">Unassigned Pool</a>
+            <div class="user-profile-menu">
+                <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
+                    <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
+                    <span class="user-dropdown-arrow">▾</span>
+                </button>
+                <div class="profile-dropdown-card" id="profileDropdownCard">
+                    <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'accounts:logout' %}" class="dropdown-item">Log out</a>
+                </div>
+            </div>
         </nav>
     </header>
 
@@ -33,7 +46,11 @@
             </div>
         </div>
         <nav class="sidebar-nav">
-            <a href="{% url 'accounts:technician_dashboard' %}" class="sidebar-link active">Assigned Tickets</a>
+            <a href="{% url 'accounts:technician_dashboard' %}" class="sidebar-link {% if scope == 'my_active' or not scope %}active{% endif %}">Home (Active: {{ my_active_count }})</a>
+            <a href="{% url 'accounts:technician_dashboard' %}?scope=my_resolved" class="sidebar-link {% if scope == 'my_resolved' %}active{% endif %}">My Resolved Tickets ({{ my_resolved_count }})</a>
+            <a href="{% url 'accounts:technician_dashboard' %}?scope=team" class="sidebar-link {% if scope == 'team' %}active{% endif %}">All Team Tickets ({{ team_total_count }})</a>
+            <a href="{% url 'accounts:technician_dashboard' %}?scope=unassigned" class="sidebar-link {% if scope == 'unassigned' %}active{% endif %}">Unassigned Pool ({{ unassigned_count }})</a>
+            <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
             <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
         </nav>
     </aside>
@@ -50,44 +67,77 @@
         <div class="page-heading">
             <div>
                 <p class="eyebrow">TECHNICIAN WORKSPACE</p>
-                <h1>My assigned tickets</h1>
-                <p>Review issue details, track SLAs, and update ticket statuses in real time.</p>
+                <h1>
+                    {% if scope == 'my_resolved' %}
+                        My Resolved Tickets
+                    {% elif scope == 'team' %}
+                        All Team / Department Tickets
+                    {% elif scope == 'unassigned' %}
+                        Unassigned Pool
+                    {% else %}
+                        Home &bull; My Active Tickets
+                    {% endif %}
+                </h1>
+                <p>
+                    {% if scope == 'my_resolved' %}
+                        Tickets you have marked as resolved or that have been confirmed and closed by the client.
+                    {% elif scope == 'team' %}
+                        Overview of all technical tickets across campus to see what each technician is allotted to do.
+                    {% elif scope == 'unassigned' %}
+                        Incoming tickets in the queue waiting for assignment.
+                    {% else %}
+                        Your active assigned tickets requiring diagnostic action, updates, and resolution.
+                    {% endif %}
+                </p>
             </div>
         </div>
 
+        <!-- Metric Summary Cards -->
         <section class="stats-grid">
-            <div class="stat-card">
-                <span>Active tickets</span>
-                <strong>{{ active_count }}</strong>
-                <small>Open & in-progress</small>
+            <div class="stat-card {% if scope == 'my_active' or not scope %}active-card{% endif %}">
+                <span>My Active</span>
+                <strong>{{ my_active_count }}</strong>
+                <small>Open & In Progress</small>
             </div>
-            <div class="stat-card">
-                <span>In progress</span>
-                <strong>{{ in_progress_count }}</strong>
-                <small>Currently being worked on</small>
+            <div class="stat-card {% if scope == 'my_resolved' %}active-card{% endif %}">
+                <span>My Resolved</span>
+                <strong>{{ my_resolved_count }}</strong>
+                <small>Resolved & Closed</small>
             </div>
-            <div class="stat-card">
-                <span>Resolved</span>
-                <strong>{{ resolved_count }}</strong>
-                <small>Completed assignments</small>
+            <div class="stat-card {% if scope == 'team' %}active-card{% endif %}">
+                <span>All Team Tickets</span>
+                <strong>{{ team_total_count }}</strong>
+                <small>Across all staff</small>
             </div>
-            <div class="stat-card danger">
-                <span>SLA Breached</span>
-                <strong>{{ sla_breached_count }}</strong>
-                <small>Require immediate attention</small>
+            <div class="stat-card {% if unassigned_count > 0 %}danger{% endif %}">
+                <span>Unassigned Pool</span>
+                <strong>{{ unassigned_count }}</strong>
+                <small>Awaiting assignment</small>
             </div>
         </section>
 
-        <div class="filter-pills">
-            <a class="filter-pill {% if not selected_status %}active{% endif %}" href="{% url 'accounts:technician_dashboard' %}">All ({{ tickets|length }})</a>
+        <!-- Status Filter Sub-Pills -->
+        <div class="filter-pills" style="margin-bottom: 22px;">
+            <a class="filter-pill {% if not selected_status %}active{% endif %}" href="?scope={{ scope }}">All ({{ tickets|length }})</a>
             {% for value, label in status_choices %}
-            <a class="filter-pill {% if selected_status == value %}active{% endif %}" href="?status={{ value }}">{{ label }}</a>
+            <a class="filter-pill {% if selected_status == value %}active{% endif %}" href="?scope={{ scope }}&status={{ value }}">{{ label }}</a>
             {% endfor %}
         </div>
 
+        <!-- Tickets Table Panel -->
         <section class="panel">
             <div class="panel-heading">
-                <h2>Assigned tickets queue</h2>
+                <h2>
+                    {% if scope == 'team' %}
+                        All Team / Department Tickets Queue
+                    {% elif scope == 'my_resolved' %}
+                        My Resolved & Closed Tickets History
+                    {% elif scope == 'unassigned' %}
+                        Unassigned Pool Queue
+                    {% else %}
+                        My Active Assigned Tickets ({{ tickets|length }})
+                    {% endif %}
+                </h2>
             </div>
             <div class="table-responsive">
                 <table>
@@ -97,6 +147,9 @@
                             <th>Reporter</th>
                             <th>Category</th>
                             <th>Urgency</th>
+                            {% if scope == 'team' or scope == 'unassigned' %}
+                            <th>Assigned To</th>
+                            {% endif %}
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -116,28 +169,51 @@
 
                             <td>
                                 <strong>{{ ticket.reporter.get_full_name|default:ticket.reporter.username }}</strong>
-                                <small>{{ ticket.reporter.email }}</small>
+                                <small>{{ ticket.reporter.email|default:"No email" }}</small>
                             </td>
                             <td><span class="badge">{{ ticket.category.name }}</span></td>
                             <td><span class="urgency {{ ticket.urgency }}">{{ ticket.get_urgency_display }}</span></td>
+                            {% if scope == 'team' or scope == 'unassigned' %}
                             <td>
+                                {% if ticket.assigned_technician %}
+                                    <strong style="color: {% if ticket.assigned_technician == request.user %}#16a34a{% else %}#1f2937{% endif %};">
+                                        {{ ticket.assigned_technician.get_full_name|default:ticket.assigned_technician.username }}
+                                        {% if ticket.assigned_technician == request.user %}<span style="font-size: 11px; background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 10px;">(You)</span>{% endif %}
+                                    </strong>
+                                    {% if ticket.assigned_group %}
+                                    <small style="display: block; color: #64748b;">{{ ticket.assigned_group.name }}</small>
+                                    {% endif %}
+                                {% elif ticket.assigned_group %}
+                                    <span style="color: #ca8a04; font-weight: 600;">Queue: {{ ticket.assigned_group.name }}</span>
+                                {% else %}
+                                    <span style="color: #dc2626; font-weight: 600;">Unassigned</span>
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                            <td>
+                                {% if ticket.status == 'resolved' %}
+                                <span class="badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 700;">Resolved (Awaiting Confirmation)</span>
+                                {% elif ticket.status == 'closed' %}
+                                <span class="badge" style="background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; font-weight: 700;">Closed (Confirmed)</span>
+                                {% else %}
                                 <span class="status status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+                                {% endif %}
                                 {% if ticket.is_sla_breached %}
-                                <small class="field-error" style="display: block; margin: 2px 0 0;">SLA Breached</small>
+                                <small class="field-error" style="display: block; margin: 2px 0 0; color: #b91c1c; font-weight: 700;">SLA Breached</small>
                                 {% endif %}
                             </td>
                             <td>
                                 <div class="row-actions">
-                                    <a href="{% url 'tickets:detail' ticket.pk %}" class="text-button">View details</a>
+                                    <a href="{% url 'tickets:detail' ticket.pk %}" class="primary-button" style="padding: 6px 14px; font-size: 12.5px; text-decoration: none;">View & Process &rarr;</a>
                                 </div>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="6">
+                            <td colspan="{% if scope == 'team' or scope == 'unassigned' %}7{% else %}6{% endif %}">
                                 <div class="empty-state">
                                     <strong>No tickets found.</strong>
-                                    <span>No assigned tickets match the current status filter.</span>
+                                    <span>No tickets match the current view and filter criteria.</span>
                                 </div>
                             </td>
                         </tr>
@@ -149,6 +225,6 @@
 
     </main>
 
-    <script src="{% static 'js/mobile_nav.js' %}"></script>
+    <script src="{% static 'js/mobile_nav.js' %}?v=2.8"></script>
 </body>
 </html>

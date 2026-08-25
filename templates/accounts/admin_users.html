@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Users - SIET Helpdesk</title>
-    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=2.7">
 </head>
 <body>
 <header class="topbar">
@@ -25,11 +25,22 @@
                 <a class="active" href="{% url 'accounts:admin_users' %}">Users</a>
                 <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
                 <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                <a href="{% url 'accounts:admin_email_settings' %}">Email & SMTP Settings</a>
             </div>
         </div>
         <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
         <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
-        <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+        <div class="user-profile-menu">
+            <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
+                <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
+                <span class="user-dropdown-arrow">▾</span>
+            </button>
+            <div class="profile-dropdown-card" id="profileDropdownCard">
+                <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                <div class="dropdown-divider"></div>
+                <a href="{% url 'accounts:logout' %}" class="dropdown-item">Log out</a>
+            </div>
+        </div>
     </nav>
 </header>
 
@@ -47,6 +58,7 @@
         <a href="{% url 'accounts:admin_users' %}" class="sidebar-link active">Users</a>
         <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link">Technician Groups</a>
         <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+        <a href="{% url 'accounts:admin_email_settings' %}" class="sidebar-link">Email & SMTP Settings</a>
         <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
         <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link">Issue Reports</a>
         <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
@@ -102,6 +114,7 @@
                                     {% csrf_token %}
                                     <button class="text-button" type="submit">{% if item.profile.is_suspended %}Activate{% else %}Suspend{% endif %}</button>
                                 </form>
+                                <button class="text-button" type="button" onclick="openResetModal('{{ item.id }}', '{{ item.username }}')">Reset Pwd</button>
                                 <form method="post" action="{% url 'accounts:admin_user_action' item.id 'delete' %}" onsubmit="return confirm('Delete this user permanently?');">
                                     {% csrf_token %}
                                     <button class="text-button delete-button" type="submit">Delete</button>
@@ -120,7 +133,53 @@
         </div>
     </section>
 
+    <!-- Admin Password Reset Modal -->
+    <div id="adminResetModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Reset User Password</h3>
+                <button type="button" class="modal-close" onclick="closeResetModal()">✕</button>
+            </div>
+            <form id="adminResetForm" method="post" action="">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p style="margin-bottom: 14px; color: #475569; font-size: 13.5px;">
+                        Set a new password for <strong id="resetTargetUsername">User</strong>:
+                    </p>
+                    <div class="field">
+                        <label for="id_admin_new_password">New Password *</label>
+                        <input type="password" name="new_password" id="id_admin_new_password" required minlength="8" placeholder="Enter at least 8 characters">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="secondary-button" onclick="closeResetModal()">Cancel</button>
+                    <button type="submit" class="primary-button" style="background: #15803d;">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </main>
-<script src="{% static 'js/mobile_nav.js' %}"></script>
+<script>
+    function openResetModal(userId, username) {
+        const modal = document.getElementById('adminResetModal');
+        const form = document.getElementById('adminResetForm');
+        const nameSpan = document.getElementById('resetTargetUsername');
+        if (modal && form && nameSpan) {
+            form.action = `/accounts/admin/users/${userId}/reset_password/`;
+            nameSpan.textContent = username;
+            modal.classList.add('open');
+        }
+    }
+    function closeResetModal() {
+        const modal = document.getElementById('adminResetModal');
+        if (modal) modal.classList.remove('open');
+    }
+    window.addEventListener('click', function(e) {
+        const modal = document.getElementById('adminResetModal');
+        if (e.target === modal) closeResetModal();
+    });
+</script>
+<script src="{% static 'js/mobile_nav.js' %}?v=2.8"></script>
 </body>
 </html>

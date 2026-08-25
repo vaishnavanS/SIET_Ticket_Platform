@@ -5,7 +5,106 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ticket #{{ ticket.ticket_number }} - SIET Helpdesk</title>
-    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=2.8">
+    <style>
+        /* EMBEDDED BULLETPROOF TAB STYLING */
+        .ticket-nav-tabs-container {
+            margin-bottom: 24px;
+            border-bottom: 2px solid #e2ece0;
+            background: #ffffff;
+            border-radius: 8px 8px 0 0;
+            padding: 8px 12px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .ticket-nav-tabs-list {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 0;
+            margin: 0;
+            list-style: none;
+        }
+        .ticket-nav-tab-button {
+            padding: 12px 20px;
+            border: none;
+            border-bottom: 3px solid transparent;
+            background: transparent;
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #55725a;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            border-radius: 6px 6px 0 0;
+            transition: all 0.15s ease;
+            outline: none;
+        }
+        .ticket-nav-tab-button:hover {
+            color: #165c20;
+            background: #f0f7ef;
+        }
+        .ticket-nav-tab-button.active {
+            color: #165c20;
+            background: #ffffff;
+            border-bottom-color: #2e7d32;
+            box-shadow: 0 -2px 6px rgba(0,0,0,0.04);
+        }
+        .tab-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #e8f4e6;
+            color: #286331;
+        }
+        .ticket-nav-tab-button.active .tab-badge {
+            background: #2e7d32;
+            color: #ffffff;
+        }
+        .ticket-tab-pane {
+            display: none !important;
+        }
+        .ticket-tab-pane.active {
+            display: block !important;
+            animation: fadeInTab 0.2s ease;
+        }
+        @keyframes fadeInTab {
+            from { opacity: 0; transform: translateY(3px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* TICKET INFO KEY-VALUE GRID */
+        .info-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .info-card-item {
+            background: #fbfdfb;
+            border: 1px solid #dcebda;
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+        .info-card-item .label {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .info-card-item .val {
+            font-size: 14px;
+            font-weight: 700;
+            color: #123d18;
+            word-break: break-word;
+        }
+    </style>
 </head>
 <body>
     <header class="topbar">
@@ -26,16 +125,40 @@
                     <a href="{% url 'accounts:admin_users' %}">Users</a>
                     <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
                     <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                    <a href="{% url 'accounts:admin_email_settings' %}">Email & SMTP Settings</a>
                 </div>
             </div>
             <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
             <a class="active" href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
-            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+            <div class="user-profile-menu">
+                <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
+                    <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
+                    <span class="user-dropdown-arrow">▾</span>
+                </button>
+                <div class="profile-dropdown-card" id="profileDropdownCard">
+                    <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'accounts:logout' %}" class="dropdown-item">Log out</a>
+                </div>
+            </div>
         </nav>
         {% elif is_technician %}
         <nav>
-            <a href="{% url 'accounts:technician_dashboard' %}" class="active">Assigned Tickets</a>
-            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+            <a href="{% url 'accounts:technician_dashboard' %}">Home</a>
+            <a href="{% url 'accounts:technician_dashboard' %}?scope=my_resolved">My Resolved Tickets</a>
+            <a href="{% url 'accounts:technician_dashboard' %}?scope=team">All Team Tickets</a>
+            <a href="{% url 'accounts:technician_dashboard' %}?scope=unassigned">Unassigned Pool</a>
+            <div class="user-profile-menu">
+                <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
+                    <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
+                    <span class="user-dropdown-arrow">▾</span>
+                </button>
+                <div class="profile-dropdown-card" id="profileDropdownCard">
+                    <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'accounts:logout' %}" class="dropdown-item">Log out</a>
+                </div>
+            </div>
         </nav>
         {% else %}
         <nav>
@@ -43,7 +166,17 @@
             <a href="{% url 'tickets:user_catalog' %}">Service Catalog</a>
             <a href="{% url 'tickets:my_tickets' %}" class="active">My Tickets & History</a>
             <a href="{% url 'tickets:create' %}">Report an Issue</a>
-            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+            <div class="user-profile-menu">
+                <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
+                    <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
+                    <span class="user-dropdown-arrow">▾</span>
+                </button>
+                <div class="profile-dropdown-card" id="profileDropdownCard">
+                    <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'accounts:logout' %}" class="dropdown-item">Log out</a>
+                </div>
+            </div>
         </nav>
         {% endif %}
     </header>
@@ -65,22 +198,25 @@
                 <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
                 <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
                 <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link active">Issue Reports</a>
+                <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
                 <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
             {% elif is_technician %}
-                <a href="{% url 'accounts:technician_dashboard' %}" class="sidebar-link active">Assigned Tickets</a>
+                <a href="{% url 'accounts:technician_dashboard' %}" class="sidebar-link">Home (Active Tickets)</a>
+                <a href="{% url 'accounts:technician_dashboard' %}?scope=my_resolved" class="sidebar-link">My Resolved Tickets</a>
+                <a href="{% url 'accounts:technician_dashboard' %}?scope=team" class="sidebar-link">All Team Tickets</a>
+                <a href="{% url 'accounts:technician_dashboard' %}?scope=unassigned" class="sidebar-link">Unassigned Pool</a>
+                <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
                 <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
             {% else %}
                 <a href="{% url 'accounts:user_dashboard' %}" class="sidebar-link">Home</a>
                 <a href="{% url 'tickets:user_catalog' %}" class="sidebar-link">Service Catalog</a>
                 <a href="{% url 'tickets:my_tickets' %}" class="sidebar-link active">My Tickets & History</a>
                 <a href="{% url 'tickets:create' %}" class="sidebar-link">Report an Issue</a>
+                <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
                 <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
             {% endif %}
         </nav>
     </aside>
-
-
-
 
     <main class="page-shell">
         {% if messages %}
@@ -93,7 +229,7 @@
 
         <div class="page-heading">
             <div>
-                <p class="eyebrow">TICKET #{{ ticket.ticket_number }} / PROCESS TIMELINE</p>
+                <p class="eyebrow">TICKET #{{ ticket.ticket_number }} / WORKFLOW DETAIL</p>
                 <h1>{{ ticket.title }}</h1>
                 <p>Reported on {{ ticket.created_at|date:"M d, Y H:i" }} by <strong>{{ ticket.reporter.get_full_name|default:ticket.reporter.username }}</strong></p>
             </div>
@@ -108,257 +244,493 @@
             </div>
         </div>
 
-        <div class="management-grid">
-            <!-- Left Main Column -->
-            <div class="detail-main-flow">
-                <!-- Overview & Visual Process Pipeline Panel -->
-                <section class="panel form-panel" style="margin-bottom: 22px;">
-                    <div class="detail-header-tags" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
-                        <span class="badge">{{ ticket.category.name }}</span>
-                        <span class="urgency {{ ticket.urgency }}">{{ ticket.get_urgency_display }} urgency</span>
-                        <span class="badge status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
-                        {% if ticket.is_sla_breached %}
-                            <span class="badge danger-badge">SLA Breached ({{ ticket.get_sla_breach_type_display }})</span>
-                        {% elif ticket.is_overdue %}
-                            <span class="badge warning-badge">Overdue</span>
-                        {% else %}
-                            <span class="badge success-badge">SLA On Track</span>
-                        {% endif %}
-                    </div>
-
-                    <!-- Live Visual Progress Stepper -->
-                    <div style="margin-bottom: 24px;">
-                        <h3 style="font-size: 15px; color: #165c20; margin-bottom: 12px;">Live Request Progress</h3>
-                        <div class="ticket-process-stepper-wrapper">
-                            <div class="ticket-process-stepper">
-                                <!-- Step 1: Submitted -->
-                                <div class="stepper-step completed">
-                                    <div class="stepper-circle">✓</div>
-                                    <div class="stepper-content">
-                                        <span class="stepper-title">Submitted</span>
-                                        <small class="stepper-subtitle">{{ ticket.created_at|date:"M d, H:i" }}</small>
-                                    </div>
-                                </div>
-                                <div class="stepper-connector {% if step_assigned %}completed{% endif %}"></div>
-
-                                <!-- Step 2: Assigned -->
-                                <div class="stepper-step {% if step_assigned %}completed{% else %}pending{% endif %}">
-                                    <div class="stepper-circle">{% if step_assigned %}✓{% else %}2{% endif %}</div>
-                                    <div class="stepper-content">
-                                        <span class="stepper-title">Assigned</span>
-                                        <small class="stepper-subtitle">
-                                            {% if ticket.assigned_technician %}
-                                                {{ ticket.assigned_technician.username }}
-                                            {% elif ticket.assigned_group %}
-                                                {{ ticket.assigned_group.name }}
-                                            {% else %}
-                                                Pending
-                                            {% endif %}
-                                        </small>
-                                    </div>
-                                </div>
-                                <div class="stepper-connector {% if step_in_progress %}completed{% endif %}"></div>
-
-                                <!-- Step 3: In Progress -->
-                                <div class="stepper-step {% if ticket.status == 'in_progress' %}active{% elif step_resolved %}completed{% else %}pending{% endif %}">
-                                    <div class="stepper-circle">{% if step_resolved %}✓{% else %}3{% endif %}</div>
-                                    <div class="stepper-content">
-                                        <span class="stepper-title">In Progress</span>
-                                        <small class="stepper-subtitle">{% if ticket.assigned_at %}{{ ticket.assigned_at|date:"M d, H:i" }}{% else %}Diagnostics{% endif %}</small>
-                                    </div>
-                                </div>
-                                <div class="stepper-connector {% if step_resolved %}completed{% endif %}"></div>
-
-                                <!-- Step 4: Resolved -->
-                                <div class="stepper-step {% if step_resolved %}completed{% else %}pending{% endif %}">
-                                    <div class="stepper-circle">{% if step_resolved %}✓{% else %}4{% endif %}</div>
-                                    <div class="stepper-content">
-                                        <span class="stepper-title">Resolved</span>
-                                        <small class="stepper-subtitle">{% if ticket.resolved_at %}{{ ticket.resolved_at|date:"M d, H:i" }}{% else %}Solution{% endif %}</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <div class="field-group" style="margin-bottom: 20px; padding: 16px 20px; background: #fbfdfb; border: 1px solid #dcebda; border-radius: 8px; border-left: 4px solid #4caf50;">
-                        <h3 style="margin: 0 0 10px; color: #165c20; font-size: 15px;">Problem Description</h3>
-                        <div class="description-text" style="line-height: 1.6; color: #2b492f; font-size: 14px;">{{ ticket.description|linebreaks }}</div>
-                    </div>
-
-
-                    {% if ticket.attachment %}
-                    <div class="field-group attachment-box" style="margin-bottom: 20px; padding: 16px 20px; background: #f7faf7; border: 1px solid #dcebda; border-radius: 8px; border-left: 4px solid #2e7d32;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <h3 style="margin: 0; font-size: 15px; color: #165c20;">Attached Screenshot / Document</h3>
-                            <a href="{{ ticket.attachment.url }}" target="_blank" download class="primary-button" style="padding: 6px 14px; font-size: 12.5px; text-decoration: none;">Download File</a>
-                        </div>
-                        <div style="margin-top: 10px;">
-                            <a href="{{ ticket.attachment.url }}" target="_blank" style="display: inline-block; max-width: 520px; border-radius: 6px; overflow: hidden; border: 1px solid #dcebda;">
-                                <img src="{{ ticket.attachment.url }}" alt="Attachment Preview" style="width: 100%; max-height: 340px; display: block; object-fit: contain; background: #fff;" onerror="this.style.display='none'">
-                            </a>
-                            <p style="margin: 8px 0 0; font-size: 13px; color: #2b492f;">
-                                <strong>File:</strong> <a href="{{ ticket.attachment.url }}" target="_blank" style="color: #1e7e34; font-weight: 600; text-decoration: underline;">{{ ticket.attachment.name }}</a>
-                            </p>
-                        </div>
-                    </div>
-                    {% endif %}
-
-
-                    {% if ticket.custom_answers %}
-                    <div class="field-group custom-answers-box" style="padding: 14px 18px; background: #f7faf7; border: 1px solid #deebdc; border-radius: 6px;">
-                        <h3 style="margin: 0 0 10px; font-size: 14px; color: #165c20;">Custom Form Responses</h3>
-                        <ul class="custom-answers-list" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px;">
-                            {% for label, answer in ticket.custom_answers.items %}
-                            <li style="font-size: 13px; color: #2b492f;">
-                                <strong style="color: #165c20;">{{ label }}:</strong>
-                                <span>{{ answer }}</span>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    {% endif %}
-                </section>
-
-                <!-- Comments & Discussion Timeline Panel -->
-                <section class="panel timeline-panel">
-                    <div class="panel-heading">
-                        <h2>Activity & Communication ({{ comments|length }})</h2>
-                    </div>
-                    <div class="comments-list">
-                        {% for comment in comments %}
-                        <div class="comment-card">
-                            <div class="comment-header">
-                                <strong>{{ comment.author.get_full_name|default:comment.author.username }}</strong>
-                                <small>{{ comment.created_at|date:"M d, Y H:i" }}</small>
-                            </div>
-                            <div class="comment-body">
-                                <p>{{ comment.content|linebreaks }}</p>
-                                {% if comment.attachment %}
-                                <a href="{{ comment.attachment.url }}" target="_blank" class="attachment-link small">
-                                    Attachment: {{ comment.attachment.name }}
-                                </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% empty %}
-                        <div class="empty-state">
-                            <strong>No comments posted yet.</strong>
-                            <span>Use the form below to post a response or question.</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-
-                    <!-- Add Comment Form -->
-                    <div class="add-comment-section">
-                        <h3>Post an update or reply</h3>
-                        <form action="{% url 'tickets:add_comment' ticket.pk %}" method="post" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <div class="field">
-                                <textarea name="content" rows="4" placeholder="Write your message or inquiry here..." required></textarea>
-                            </div>
-                            <div class="field">
-                                <label for="id_comment_attachment">Attach file / screenshot (optional):</label>
-                                <input type="file" name="attachment" id="id_comment_attachment">
-                            </div>
-                            <div class="form-actions">
-                                <button type="submit" class="primary-button">Post Message</button>
-                            </div>
-                        </form>
-                    </div>
-                </section>
+        <!-- 1. Client Confirmation Action Alert (if ticket is Resolved and viewer is Client) -->
+        {% if awaiting_client_confirmation %}
+        <section class="resolution-confirm-card" style="margin-bottom: 22px;">
+            <div class="resolution-confirm-header">
+                <div class="icon-circle">✓</div>
+                <div>
+                    <h3>Technician Marked Issue as Resolved</h3>
+                    <p style="margin: 2px 0 0; font-size: 13px; color: #15803d;">Action Required: Please test and verify if your issue is resolved.</p>
+                </div>
             </div>
 
-            <!-- Right Sidebar Column -->
-            <div class="detail-sidebar-flow">
-                {% if can_update_status %}
-                <section class="panel form-panel status-action-card" style="margin-bottom: 22px;">
-                    <h2>Manage Workflow Status</h2>
-                    <form action="{% url 'tickets:update_status' ticket.pk %}" method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <div class="field">
-                            <label for="id_status_select">Ticket Status</label>
-                            <select name="status" id="id_status_select">
-                                {% for code, label in status_choices %}
-                                <option value="{{ code }}" {% if ticket.status == code %}selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="field">
-                            <label for="id_status_comment">Progress Note / Explanation (optional)</label>
-                            <textarea name="comment" id="id_status_comment" rows="3" placeholder="Explain status update..."></textarea>
-                        </div>
-                        <div class="field">
-                            <label for="id_status_attachment">Attach file (optional)</label>
-                            <input type="file" name="attachment" id="id_status_attachment">
-                        </div>
-                        <button type="submit" class="primary-button full-width">Update Status</button>
-                    </form>
-                </section>
+            <div class="resolution-confirm-body">
+                <p>The assigned technician has marked this ticket as resolved. Please confirm that your issue has been completely fixed to close the ticket. If you are still experiencing difficulties, you can reopen the ticket with your feedback.</p>
+                
+                {% if latest_resolution_comment %}
+                <div class="resolution-note-box">
+                    <strong>Technician Note:</strong>
+                    <p style="margin: 4px 0 0; font-style: italic;">"{{ latest_resolution_comment.content }}"</p>
+                </div>
                 {% endif %}
 
-                <!-- Meta Details Card -->
-                <section class="panel form-panel metadata-card" style="margin-bottom: 22px;">
-                    <h2>Ticket Information</h2>
-                    <ul class="meta-list">
-                        <li>
-                            <span>Reporter:</span>
-                            <strong>{{ ticket.reporter.username }} ({{ ticket.reporter.email|default:"No email" }})</strong>
-                        </li>
-                        <li>
-                            <span>Category:</span>
-                            <strong>{{ ticket.category.name }}</strong>
-                        </li>
-                        <li>
-                            <span>Location:</span>
-                            <strong>{{ ticket.location }}</strong>
-                        </li>
-                        <li>
-                            <span>Assigned Tech:</span>
-                            <strong>{% if ticket.assigned_technician %}{{ ticket.assigned_technician.username }}{% else %}Unassigned{% endif %}</strong>
-                        </li>
-                        <li>
-                            <span>Technician Group:</span>
-                            <strong>{% if ticket.assigned_group %}{{ ticket.assigned_group.name }}{% else %}General Pool{% endif %}</strong>
-                        </li>
-                        <li>
-                            <span>Created At:</span>
-                            <strong>{{ ticket.created_at|date:"Y-m-d H:i" }}</strong>
-                        </li>
-                        {% if ticket.assigned_at %}
-                        <li>
-                            <span>Assigned At:</span>
-                            <strong>{{ ticket.assigned_at|date:"Y-m-d H:i" }}</strong>
-                        </li>
-                        {% endif %}
-                        {% if ticket.resolved_at %}
-                        <li>
-                            <span>Resolved At:</span>
-                            <strong>{{ ticket.resolved_at|date:"Y-m-d H:i" }}</strong>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </section>
+                <div class="resolution-actions">
+                    <form action="{% url 'tickets:confirm_resolution' ticket.pk %}" method="post" style="display: inline-block;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="confirm_close">
+                        <button type="submit" class="btn-confirm-close">
+                            <span>✔</span> Yes, Confirm & Close Ticket
+                        </button>
+                    </form>
 
-                <!-- History Audit Trail Card -->
-                <section class="panel form-panel history-card">
-                    <h2>Audit History (Immutable)</h2>
+                    <button type="button" class="btn-reopen-toggle" id="toggleReopenBtn" onclick="toggleReopenForm()">
+                        <span>↺</span> Issue Not Resolved / Reopen
+                    </button>
+                </div>
+
+                <div class="reopen-drawer" id="reopenFormDrawer">
+                    <form action="{% url 'tickets:confirm_resolution' ticket.pk %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reopen">
+                        <div class="field" style="margin-bottom: 12px;">
+                            <label for="id_reopen_reason" style="color: #991b1b; font-size: 13px; font-weight: 700;">Please explain why the issue is not resolved *</label>
+                            <textarea name="reopen_reason" id="id_reopen_reason" rows="3" placeholder="Describe what is still not working or what problem you encountered..." required style="border-color: #fca5a5;"></textarea>
+                        </div>
+                        <div class="field" style="margin-bottom: 14px;">
+                            <label for="id_reopen_attachment" style="color: #4b5563; font-size: 12.5px;">Attach screenshot or photo (optional):</label>
+                            <input type="file" name="reopen_attachment" id="id_reopen_attachment">
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button type="submit" class="btn-confirm-close" style="background: #dc2626;">
+                                Submit Reopen Request
+                            </button>
+                            <button type="button" class="secondary-button" onclick="toggleReopenForm()" style="padding: 8px 16px; font-size: 13px;">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- TAB NAVIGATION BAR (Ticket Information is FIRST tab) -->
+        <div class="ticket-nav-tabs-container">
+            <div class="ticket-nav-tabs-list" role="tablist">
+                <button class="ticket-nav-tab-button active" type="button" onclick="showTicketTab('info', this)" id="tabBtn-info">
+                    Ticket Information
+                </button>
+                <button class="ticket-nav-tab-button" type="button" onclick="showTicketTab('progress', this)" id="tabBtn-progress">
+                    Live Request Progress
+                </button>
+                <button class="ticket-nav-tab-button" type="button" onclick="showTicketTab('status', this)" id="tabBtn-status">
+                    Manage Workflow Status
+                    {% if awaiting_client_confirmation %}
+                    <span class="tab-badge" style="background: #f59e0b; color: #fff;">Action</span>
+                    {% endif %}
+                </button>
+                <button class="ticket-nav-tab-button" type="button" onclick="showTicketTab('activity', this)" id="tabBtn-activity">
+                    Activity & Communication
+                    <span class="tab-badge">{{ comments|length }}</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TAB 1: TICKET INFORMATION (FIRST TAB)                                    -->
+        <!-- ========================================================================= -->
+        <div class="ticket-tab-pane active" id="tabContent-info">
+            <section class="panel form-panel">
+                <div class="detail-header-tags" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <span class="badge">{{ ticket.category.name }}</span>
+                    <span class="urgency {{ ticket.urgency }}">{{ ticket.get_urgency_display }} urgency</span>
+                    <span class="badge status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+                    {% if ticket.is_sla_breached %}
+                        <span class="badge danger-badge">SLA Breached ({{ ticket.get_sla_breach_type_display }})</span>
+                    {% elif ticket.is_overdue %}
+                        <span class="badge warning-badge">Overdue</span>
+                    {% else %}
+                        <span class="badge success-badge">SLA On Track</span>
+                    {% endif %}
+                </div>
+
+                <!-- Structured Metadata Cards -->
+                <div class="info-cards-grid">
+                    <div class="info-card-item">
+                        <span class="label">Reporter</span>
+                        <span class="val">{{ ticket.reporter.get_full_name|default:ticket.reporter.username }}</span>
+                        <small style="color: #64748b; font-size: 12px;">{{ ticket.reporter.email|default:"No email" }}</small>
+                    </div>
+                    <div class="info-card-item">
+                        <span class="label">Category</span>
+                        <span class="val">{{ ticket.category.name }}</span>
+                    </div>
+                    <div class="info-card-item">
+                        <span class="label">Campus Location</span>
+                        <span class="val">{{ ticket.location }}</span>
+                    </div>
+                    <div class="info-card-item">
+                        <span class="label">Assigned Technician</span>
+                        <span class="val">
+                            {% if ticket.assigned_technician %}
+                                {{ ticket.assigned_technician.get_full_name|default:ticket.assigned_technician.username }}
+                            {% else %}
+                                <span style="color: #dc2626;">Unassigned</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-card-item">
+                        <span class="label">Technician Group</span>
+                        <span class="val">{{ ticket.assigned_group.name|default:"General Support Pool" }}</span>
+                    </div>
+                    <div class="info-card-item">
+                        <span class="label">Submitted At</span>
+                        <span class="val">{{ ticket.created_at|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    {% if ticket.assigned_at %}
+                    <div class="info-card-item">
+                        <span class="label">Assigned At</span>
+                        <span class="val">{{ ticket.assigned_at|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    {% endif %}
+                    {% if ticket.resolved_at %}
+                    <div class="info-card-item">
+                        <span class="label">Resolved At</span>
+                        <span class="val">{{ ticket.resolved_at|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Problem Description -->
+                <div class="field-group" style="margin-bottom: 22px; padding: 16px 20px; background: #fbfdfb; border: 1px solid #dcebda; border-radius: 8px; border-left: 4px solid #4caf50;">
+                    <h3 style="margin: 0 0 10px; color: #165c20; font-size: 15px;">Problem Description</h3>
+                    <div class="description-text" style="line-height: 1.6; color: #2b492f; font-size: 14px;">{{ ticket.description|linebreaks }}</div>
+                </div>
+
+                <!-- Attachment Box (if any) -->
+                {% if ticket.attachment %}
+                <div class="field-group attachment-box" style="margin-bottom: 22px; padding: 16px 20px; background: #f7faf7; border: 1px solid #dcebda; border-radius: 8px; border-left: 4px solid #2e7d32;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="margin: 0; font-size: 15px; color: #165c20;">Attached Screenshot / Document</h3>
+                        <a href="{{ ticket.attachment.url }}" target="_blank" download class="primary-button" style="padding: 6px 14px; font-size: 12.5px; text-decoration: none;">Download File</a>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <a href="{{ ticket.attachment.url }}" target="_blank" style="display: inline-block; max-width: 520px; border-radius: 6px; overflow: hidden; border: 1px solid #dcebda;">
+                            <img src="{{ ticket.attachment.url }}" alt="Attachment Preview" style="width: 100%; max-height: 340px; display: block; object-fit: contain; background: #fff;" onerror="this.style.display='none'">
+                        </a>
+                        <p style="margin: 8px 0 0; font-size: 13px; color: #2b492f;">
+                            <strong>File:</strong> <a href="{{ ticket.attachment.url }}" target="_blank" style="color: #1e7e34; font-weight: 600; text-decoration: underline;">{{ ticket.attachment.name }}</a>
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Custom Form Dynamic Answers (if any) -->
+                {% if ticket.custom_answers %}
+                <div class="field-group custom-answers-box" style="padding: 14px 18px; background: #f7faf7; border: 1px solid #deebdc; border-radius: 6px; margin-bottom: 22px;">
+                    <h3 style="margin: 0 0 10px; font-size: 14px; color: #165c20;">Custom Dynamic Form Details</h3>
+                    <ul class="custom-answers-list" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px;">
+                        {% for label, answer in ticket.custom_answers.items %}
+                        <li style="font-size: 13px; color: #2b492f;">
+                            <strong style="color: #165c20;">{{ label }}:</strong>
+                            <span>{{ answer }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Immutable Audit History Log -->
+                <div style="margin-top: 24px; border-top: 1px solid #e7efe5; padding-top: 20px;">
+                    <h3 style="font-size: 15px; color: #165c20; margin-bottom: 12px;">Audit History (Immutable Log)</h3>
                     <ul class="history-list">
                         {% for item in history %}
                         <li>
-                            <small>{{ item.changed_at|date:"M d, H:i" }}</small>
+                            <small>{{ item.changed_at|date:"M d, Y H:i" }}</small>
                             <p><strong>{{ item.changed_by.username }}</strong> changed <em>{{ item.field_name }}</em> from "{{ item.old_value }}" to "{{ item.new_value }}".</p>
                         </li>
                         {% empty %}
-                        <li class="empty-history">No history recorded yet.</li>
+                        <li class="empty-history">No changes logged yet.</li>
                         {% endfor %}
                     </ul>
-                </section>
-            </div>
+                </div>
+            </section>
         </div>
+
+        <!-- ========================================================================= -->
+        <!-- TAB 2: LIVE REQUEST PROGRESS                                             -->
+        <!-- ========================================================================= -->
+        <div class="ticket-tab-pane" id="tabContent-progress">
+            <section class="panel form-panel">
+                <h2 style="margin-bottom: 8px;">Live Request Progress & Pipeline</h2>
+                <p style="margin: 0 0 24px; font-size: 13.5px; color: #527057;">Visual real-time tracking of the issue lifecycle from initial submission to final client closure.</p>
+
+                <!-- 5-Stage Live Stepper -->
+                <div class="ticket-process-stepper-wrapper" style="margin-bottom: 28px;">
+                    <div class="ticket-process-stepper">
+                        <!-- Step 1: Submitted -->
+                        <div class="stepper-step completed">
+                            <div class="stepper-circle">✓</div>
+                            <div class="stepper-content">
+                                <span class="stepper-title">1. Submitted</span>
+                                <small class="stepper-subtitle">{{ ticket.created_at|date:"M d, H:i" }}</small>
+                            </div>
+                        </div>
+                        <div class="stepper-connector {% if step_assigned %}completed{% endif %}"></div>
+
+                        <!-- Step 2: Assigned -->
+                        <div class="stepper-step {% if step_assigned %}completed{% else %}pending{% endif %}">
+                            <div class="stepper-circle">{% if step_assigned %}✓{% else %}2{% endif %}</div>
+                            <div class="stepper-content">
+                                <span class="stepper-title">2. Assigned</span>
+                                <small class="stepper-subtitle">
+                                    {% if ticket.assigned_technician %}
+                                        {{ ticket.assigned_technician.username }}
+                                    {% elif ticket.assigned_group %}
+                                        {{ ticket.assigned_group.name }}
+                                    {% else %}
+                                        Pending
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="stepper-connector {% if step_in_progress %}completed{% endif %}"></div>
+
+                        <!-- Step 3: In Progress -->
+                        <div class="stepper-step {% if ticket.status == 'in_progress' %}active{% elif step_resolved %}completed{% else %}pending{% endif %}">
+                            <div class="stepper-circle">{% if step_resolved %}✓{% elif ticket.status == 'in_progress' %}⚡{% else %}3{% endif %}</div>
+                            <div class="stepper-content">
+                                <span class="stepper-title">3. In Progress</span>
+                                <small class="stepper-subtitle">{% if ticket.assigned_at %}{{ ticket.assigned_at|date:"M d, H:i" }}{% else %}Diagnosing{% endif %}</small>
+                            </div>
+                        </div>
+                        <div class="stepper-connector {% if step_resolved %}completed{% endif %}"></div>
+
+                        <!-- Step 4: Resolved (Awaiting Confirmation) -->
+                        <div class="stepper-step {% if ticket.status == 'resolved' %}awaiting{% elif step_closed %}completed{% else %}pending{% endif %}">
+                            <div class="stepper-circle">{% if step_closed %}✓{% elif ticket.status == 'resolved' %}⏳{% else %}4{% endif %}</div>
+                            <div class="stepper-content">
+                                <span class="stepper-title">4. Resolved</span>
+                                <small class="stepper-subtitle">{% if ticket.resolved_at %}{{ ticket.resolved_at|date:"M d, H:i" }}{% else %}Awaiting fix{% endif %}</small>
+                            </div>
+                        </div>
+                        <div class="stepper-connector {% if step_closed %}completed{% endif %}"></div>
+
+                        <!-- Step 5: Closed (Client Confirmed) -->
+                        <div class="stepper-step {% if step_closed %}completed{% else %}pending{% endif %}">
+                            <div class="stepper-circle">{% if step_closed %}✓{% else %}5{% endif %}</div>
+                            <div class="stepper-content">
+                                <span class="stepper-title">5. Closed</span>
+                                <small class="stepper-subtitle">{% if step_closed %}Confirmed{% else %}Client sign-off{% endif %}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLA Targets & Milestone Compliance -->
+                <div style="background: #fbfdfb; border: 1px solid #dcebda; border-radius: 8px; padding: 18px 20px;">
+                    <h3 style="margin: 0 0 12px; color: #165c20; font-size: 15px;">SLA Compliance & Response Targets</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+                        <div>
+                            <span class="muted" style="font-size: 12px; display: block;">Response SLA Target:</span>
+                            <strong style="color: #123d18; font-size: 14px;">{{ ticket.category.response_time_minutes }} minutes</strong>
+                        </div>
+                        <div>
+                            <span class="muted" style="font-size: 12px; display: block;">Resolution SLA Target:</span>
+                            <strong style="color: #123d18; font-size: 14px;">{{ ticket.category.resolution_time_minutes }} minutes</strong>
+                        </div>
+                        <div>
+                            <span class="muted" style="font-size: 12px; display: block;">Current SLA Status:</span>
+                            {% if ticket.is_sla_breached %}
+                                <strong style="color: #dc2626; font-size: 14px;">Breached ({{ ticket.get_sla_breach_type_display }})</strong>
+                            {% elif ticket.is_overdue %}
+                                <strong style="color: #d97706; font-size: 14px;">Overdue</strong>
+                            {% else %}
+                                <strong style="color: #16a34a; font-size: 14px;">On Track / Compliant</strong>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TAB 3: MANAGE WORKFLOW STATUS                                            -->
+        <!-- ========================================================================= -->
+        <div class="ticket-tab-pane" id="tabContent-status">
+            <section class="panel form-panel">
+                <h2 style="margin-bottom: 8px;">Manage Workflow Status</h2>
+                <p style="margin: 0 0 20px; font-size: 13.5px; color: #527057;">
+                    {% if is_technician and not is_admin %}
+                        Technicians can record diagnostics and mark issues as <strong>Resolved</strong>. Ticket closure is verified and confirmed by the client.
+                    {% else %}
+                        Update the workflow status and record diagnostic fixes, progress notes, and attachments.
+                    {% endif %}
+                </p>
+
+                {% if awaiting_client_confirmation %}
+                <!-- Client Action Alert -->
+                <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 18px 20px; margin-bottom: 20px;">
+                    <h3 style="color: #166534; font-size: 16px; margin: 0 0 8px;">⚡ Client Confirmation Needed</h3>
+                    <p style="margin: 0 0 14px; font-size: 13.5px; color: #15803d;">The technician has marked this issue as resolved. Please test and confirm if your problem has been fixed.</p>
+                    
+                    <form action="{% url 'tickets:confirm_resolution' ticket.pk %}" method="post" style="display: inline-block;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="confirm_close">
+                        <button type="submit" class="btn-confirm-close">
+                            <span>✔</span> Confirm Resolution & Close Ticket
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+
+                {% if can_update_status %}
+                <form action="{% url 'tickets:update_status' ticket.pk %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="field">
+                        <label for="id_status_select">Select New Status</label>
+                        <select name="status" id="id_status_select">
+                            {% for code, label in status_choices %}
+                            <option value="{{ code }}" {% if ticket.status == code %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="id_status_comment">Resolution / Diagnostic Notes (recommended)</label>
+                        <textarea name="comment" id="id_status_comment" rows="4" placeholder="Explain what diagnostic steps were performed, components replaced, or testing results..."></textarea>
+                    </div>
+                    <div class="field">
+                        <label for="id_status_attachment">Attach proof / documentation (optional)</label>
+                        <input type="file" name="attachment" id="id_status_attachment">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="primary-button" style="padding: 10px 24px;">Update Status & Save Progress</button>
+                    </div>
+                </form>
+                {% elif ticket.status == 'closed' %}
+                <div style="padding: 20px; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px;">
+                    <h3 style="color: #166534; font-size: 16px; margin: 0 0 6px;">✔ Ticket Closed & Verified</h3>
+                    <p style="margin: 0; font-size: 13.5px; color: #15803d;">This request has been successfully resolved and confirmed by the client.</p>
+                </div>
+                {% else %}
+                <div style="padding: 18px 20px; background: #f8faf8; border: 1px solid #e7efe5; border-radius: 8px; font-size: 14px; color: #527057;">
+                    Current Status: <strong style="color: #165c20;">{{ ticket.get_status_display }}</strong>. Status updates are managed by the assigned technician.
+                </div>
+                {% endif %}
+            </section>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TAB 4: ACTIVITY & COMMUNICATION                                          -->
+        <!-- ========================================================================= -->
+        <div class="ticket-tab-pane" id="tabContent-activity">
+            <section class="panel timeline-panel">
+                <div class="panel-heading">
+                    <h2>Activity & Discussion ({{ comments|length }})</h2>
+                </div>
+                <div class="comments-list">
+                    {% for comment in comments %}
+                    <div class="comment-card">
+                        <div class="comment-header">
+                            <div class="comment-author-info">
+                                <strong>{{ comment.author.get_full_name|default:comment.author.username }}</strong>
+                                {% if comment.author == ticket.reporter %}
+                                    <span class="author-role-badge reporter">Reporter</span>
+                                {% elif comment.author == ticket.assigned_technician %}
+                                    <span class="author-role-badge technician">Technician</span>
+                                {% elif comment.author.is_staff or comment.author.profile.role == 'admin' %}
+                                    <span class="author-role-badge admin">Admin</span>
+                                {% endif %}
+                            </div>
+                            <small>{{ comment.created_at|date:"M d, Y H:i" }}</small>
+                        </div>
+                        <div class="comment-body">
+                            <p>{{ comment.content|linebreaks }}</p>
+                            {% if comment.attachment %}
+                            <a href="{{ comment.attachment.url }}" target="_blank" class="attachment-link small" style="display: inline-block; margin-top: 8px; color: #1e7e34; font-weight: 600; text-decoration: underline;">
+                                📎 View Attachment: {{ comment.attachment.name }}
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state">
+                        <strong>No comments posted yet.</strong>
+                        <span>Use the form below to post a response or inquiry.</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Add Comment Form -->
+                {% if ticket.status != 'closed' or is_admin %}
+                <div class="add-comment-section">
+                    <h3>Post an update or reply</h3>
+                    <form action="{% url 'tickets:add_comment' ticket.pk %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="field">
+                            <textarea name="content" rows="3" placeholder="Write your message or inquiry here..." required></textarea>
+                        </div>
+                        <div class="field">
+                            <label for="id_comment_attachment">Attach file / screenshot (optional):</label>
+                            <input type="file" name="attachment" id="id_comment_attachment">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="primary-button">Post Message</button>
+                        </div>
+                    </form>
+                </div>
+                {% else %}
+                <div style="padding: 16px 24px; background: #f8faf8; border-top: 1px solid #e7efe5; font-size: 13px; color: #64748b; text-align: center;">
+                    This ticket is closed. Discussion is archived.
+                </div>
+                {% endif %}
+            </section>
+        </div>
+
     </main>
-    <script src="{% static 'js/mobile_nav.js' %}"></script>
+
+    <script>
+        function showTicketTab(tabKey, clickedButton) {
+            // 1. Hide all tab panes
+            const allPanes = document.querySelectorAll('.ticket-tab-pane');
+            allPanes.forEach(function(pane) {
+                pane.classList.remove('active');
+            });
+
+            // 2. Remove active state from all buttons
+            const allButtons = document.querySelectorAll('.ticket-nav-tab-button');
+            allButtons.forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+
+            // 3. Show targeted pane
+            const targetPane = document.getElementById('tabContent-' + tabKey);
+            if (targetPane) {
+                targetPane.classList.add('active');
+            }
+
+            // 4. Activate button
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            } else {
+                const targetBtn = document.getElementById('tabBtn-' + tabKey);
+                if (targetBtn) targetBtn.classList.add('active');
+            }
+
+            // 5. Update browser URL hash
+            if (history.replaceState) {
+                history.replaceState(null, null, '#' + tabKey);
+            }
+        }
+
+        function toggleReopenForm() {
+            const drawer = document.getElementById('reopenFormDrawer');
+            if (drawer) {
+                drawer.classList.toggle('open');
+                if (drawer.classList.contains('open')) {
+                    const textarea = document.getElementById('id_reopen_reason');
+                    if (textarea) textarea.focus();
+                }
+            }
+        }
+
+        // Initialize active tab from URL hash if given
+        document.addEventListener('DOMContentLoaded', function() {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && ['info', 'progress', 'status', 'activity'].includes(hash)) {
+                showTicketTab(hash);
+            }
+        });
+    </script>
+    <script src="{% static 'js/mobile_nav.js' %}?v=2.8"></script>
 </body>
 </html>
-

@@ -90,8 +90,8 @@ class IssueFormField(models.Model):
 class ServiceCatalogItem(models.Model):
     """Catalog items/services displayed to normal users"""
     title = models.CharField(max_length=150)
-    description = models.TextField(blank=True)
-    icon = models.CharField(max_length=50, default='📌', help_text='Emoji or icon representation')
+    description = models.TextField(blank=True, default='')
+    icon = models.CharField(max_length=50, default='📌', blank=True, help_text='Emoji or icon representation')
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True,
                                 help_text='Optional category linked to this service')
     show_on_homepage = models.BooleanField(default=True, help_text='Display this item on user dashboard homepage')
@@ -197,25 +197,34 @@ class Ticket(models.Model):
         raise PermissionDenied("Tickets cannot be deleted. All ticket records must be preserved for audit and compliance integrity.")
     
     def assign_to_technician(self):
-
-        """Auto-assign ticket to technician using round-robin method"""
+        """Auto-assign ticket to technician using group routing or round-robin method"""
         if self.assigned_technician:
-            return  # Already assigned
+            return self.assigned_technician  # Already assigned
         
+        tech = None
         # Check if category has an assigned group
-        if self.category.assigned_group:
+        if self.category and self.category.assigned_group:
+            self.assigned_group = self.category.assigned_group
             tech = self.category.assigned_group.get_available_technician()
-        else:
-            # Get all active technicians with lowest workload
-            from accounts.models import UserProfile
+        
+        # Fallback to general round-robin if group has no available technician or no group configured
+        if not tech:
             tech = self._get_available_technician_roundrobin()
         
         if tech:
             self.assigned_technician = tech
-            self.assigned_group = self.category.assigned_group
+            if not self.assigned_group and self.category and self.category.assigned_group:
+                self.assigned_group = self.category.assigned_group
             self.assigned_at = timezone.now()
-            self.save()
+            self.save(update_fields=['assigned_technician', 'assigned_group', 'assigned_at', 'updated_at'])
+            try:
+                from .services import send_ticket_assigned_email
+                send_ticket_assigned_email(self, tech)
+            except Exception:
+                pass
             return tech
+        elif self.assigned_group:
+            self.save(update_fields=['assigned_group', 'updated_at'])
         
         return None
     
@@ -306,4 +315,28 @@ class TicketHistory(models.Model):
     
     def __str__(self):
         return f"Ticket #{self.ticket.ticket_number} - {self.field_name} changed"
+
+
+class TicketNotification(models.Model):
+    """In-app notifications for ticket status changes and comments"""
+    class NotificationType(models.TextChoices):
+        RESOLVED = 'resolved', 'Issue Resolved'
+        COMMENT = 'comment', 'New Comment'
+        REOPENED = 'reopened', 'Ticket Reopened'
+        CLOSED = 'closed', 'Ticket Closed'
+        ASSIGNED = 'assigned', 'Ticket Assigned'
+
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ticket_notifications')
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    notification_type = models.CharField(max_length=30, choices=NotificationType.choices, default=NotificationType.COMMENT)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Notification for {self.recipient.username}: {self.title}"
 

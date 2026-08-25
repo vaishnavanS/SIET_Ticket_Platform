@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.http import JsonResponse
+from django.utils import timezone
 from .forms import TicketCreateForm, AdminTicketForm, IssueFormFieldForm, ServiceCatalogItemForm
 from .models import Ticket, IssueFormField, TicketStatus, TicketComment, TicketHistory, ServiceCatalogItem, Category
 from accounts.models import UserRole, TechnicianGroup
@@ -209,15 +210,44 @@ def issue_form_builder(request):
 def service_catalog_manager(request):
 	if request.user.profile.role != UserRole.ADMIN or not request.user.is_staff:
 		return redirect('accounts:dashboard')
-	form = ServiceCatalogItemForm(request.POST or None)
-	if request.method == 'POST' and form.is_valid():
-		form.save()
-		messages.success(request, "Service catalog item added successfully.")
-		return redirect('tickets:catalog_manager')
-	catalog_items = ServiceCatalogItem.objects.select_related('category').all()
+
+	if request.method == 'POST':
+		action = request.POST.get('action')
+		if action == 'edit':
+			item_id = request.POST.get('item_id')
+			item = get_object_or_404(ServiceCatalogItem, pk=item_id)
+			form = ServiceCatalogItemForm(request.POST, instance=item)
+			if form.is_valid():
+				form.save()
+				messages.success(request, f"Service catalog item '{item.title}' updated successfully.")
+				return redirect('tickets:catalog_manager')
+			else:
+				errs = '; '.join([f"{k}: {', '.join(v)}" for k, v in form.errors.items()])
+				messages.error(request, f"Failed to update service catalog item: {errs}")
+		elif action == 'delete':
+			item_id = request.POST.get('item_id')
+			item = get_object_or_404(ServiceCatalogItem, pk=item_id)
+			title = item.title
+			item.delete()
+			messages.success(request, f"Catalog item '{title}' deleted.")
+			return redirect('tickets:catalog_manager')
+		else:
+			form = ServiceCatalogItemForm(request.POST)
+			if form.is_valid():
+				item = form.save()
+				messages.success(request, f"Service catalog item '{item.title}' published successfully.")
+				return redirect('tickets:catalog_manager')
+			else:
+				errs = '; '.join([f"{k}: {', '.join(v)}" for k, v in form.errors.items()])
+				messages.error(request, f"Please correct errors in form: {errs}")
+
+	form = ServiceCatalogItemForm()
+	catalog_items = ServiceCatalogItem.objects.select_related('category').order_by('order', 'id')
+	categories = Category.objects.all()
 	return render(request, 'tickets/service_catalog.html', {
 		'form': form,
 		'catalog_items': catalog_items,
+		'categories': categories,
 	})
 
 
@@ -332,7 +362,7 @@ def ticket_detail(request, pk):
 	
 	is_reporter = (ticket.reporter == request.user)
 	is_technician = (ticket.assigned_technician == request.user)
-	is_admin = (request.user.is_staff or request.user.profile.role == UserRole.ADMIN)
+	is_admin = (request.user.is_staff or (hasattr(request.user, 'profile') and request.user.profile.role == UserRole.ADMIN))
 
 	if not (is_reporter or is_technician or is_admin):
 		messages.error(request, "You do not have permission to view this ticket.")
@@ -340,21 +370,45 @@ def ticket_detail(request, pk):
 
 	ticket.check_sla_breach()
 
-	# Visual Progress Stages
+	# Mark unread notifications for this ticket and user as read
+	from .models import TicketNotification
+	TicketNotification.objects.filter(ticket=ticket, recipient=request.user, is_read=False).update(is_read=True)
+
+	# 5-Stage Visual Progress Pipeline
+	step_submitted = True
 	step_assigned = bool(ticket.assigned_technician or ticket.assigned_group)
 	step_in_progress = (ticket.status in [TicketStatus.IN_PROGRESS, TicketStatus.RESOLVED, TicketStatus.CLOSED])
 	step_resolved = (ticket.status in [TicketStatus.RESOLVED, TicketStatus.CLOSED])
 	step_closed = (ticket.status == TicketStatus.CLOSED)
 
+	# Available status choices: Technicians CANNOT directly mark as Closed (Client confirmation required)
+	if is_admin:
+		status_choices = TicketStatus.choices
+	elif is_technician:
+		status_choices = [
+			(TicketStatus.IN_PROGRESS, 'In Progress'),
+			(TicketStatus.RESOLVED, 'Resolved (Submit for Client Confirmation)'),
+		]
+		if ticket.status == TicketStatus.OPEN:
+			status_choices.insert(0, (TicketStatus.OPEN, 'Open'))
+	else:
+		status_choices = []
+
+	awaiting_client_confirmation = (ticket.status == TicketStatus.RESOLVED and is_reporter)
+	latest_resolution_comment = ticket.comments.filter(content__icontains='Resolved').order_by('-created_at').first()
+
 	context = {
 		'ticket': ticket,
 		'comments': ticket.comments.select_related('author').order_by('created_at'),
 		'history': ticket.history.select_related('changed_by').order_by('-changed_at'),
-		'status_choices': TicketStatus.choices,
-		'can_update_status': is_technician or is_admin,
+		'status_choices': status_choices,
+		'can_update_status': (is_technician or is_admin) and (ticket.status != TicketStatus.CLOSED or is_admin),
 		'is_reporter': is_reporter,
 		'is_technician': is_technician,
 		'is_admin': is_admin,
+		'awaiting_client_confirmation': awaiting_client_confirmation,
+		'latest_resolution_comment': latest_resolution_comment,
+		'step_submitted': step_submitted,
 		'step_assigned': step_assigned,
 		'step_in_progress': step_in_progress,
 		'step_resolved': step_resolved,
@@ -369,7 +423,7 @@ def ticket_detail(request, pk):
 def ticket_update_status(request, pk):
 	ticket = get_object_or_404(Ticket, pk=pk)
 	is_technician = (ticket.assigned_technician == request.user)
-	is_admin = (request.user.is_staff or request.user.profile.role == UserRole.ADMIN)
+	is_admin = (request.user.is_staff or (hasattr(request.user, 'profile') and request.user.profile.role == UserRole.ADMIN))
 
 	if not (is_technician or is_admin):
 		messages.error(request, "You do not have permission to update this ticket's status.")
@@ -379,11 +433,20 @@ def ticket_update_status(request, pk):
 	comment_text = request.POST.get('comment', '').strip()
 	valid_statuses = dict(TicketStatus.choices)
 
+	# Enforce rule: Technicians cannot directly close tickets without client confirmation
+	if not is_admin and new_status == TicketStatus.CLOSED:
+		messages.error(request, "Technicians cannot mark tickets directly as Closed. Mark as 'Resolved' so the client who reported the issue can verify and confirm closure.")
+		return redirect('tickets:detail', pk=ticket.pk)
+
+	from .models import TicketNotification
+
 	if new_status in valid_statuses and new_status != ticket.status:
 		old_display = ticket.get_status_display()
 		new_display = valid_statuses[new_status]
 
 		ticket.status = new_status
+		if new_status == TicketStatus.RESOLVED and not ticket.resolved_at:
+			ticket.resolved_at = timezone.now()
 		ticket.save()
 
 		TicketHistory.objects.create(
@@ -393,23 +456,138 @@ def ticket_update_status(request, pk):
 			old_value=old_display,
 			new_value=new_display,
 		)
-		messages.success(request, f"Ticket #{ticket.ticket_number} status updated to {new_display}.")
+
+		# If technician marked as Resolved, notify reporter to confirm
+		if new_status == TicketStatus.RESOLVED:
+			TicketNotification.objects.create(
+				recipient=ticket.reporter,
+				ticket=ticket,
+				title=f"Ticket #{ticket.ticket_number} Marked as Resolved",
+				message=f"Technician {request.user.get_full_name() or request.user.username} has resolved your ticket '{ticket.title}'. Please verify the fix and confirm closure.",
+				notification_type=TicketNotification.NotificationType.RESOLVED
+			)
+			try:
+				from .services import send_ticket_resolved_email
+				send_ticket_resolved_email(ticket, resolution_notes=comment_text)
+			except Exception as e:
+				import logging
+				logging.getLogger(__name__).error(f"Failed to dispatch resolution email: {e}")
+			messages.success(request, f"Ticket #{ticket.ticket_number} marked as Resolved. The client ({ticket.reporter.username}) has been notified via email and dashboard to verify and confirm closure.")
+		else:
+			if ticket.reporter != request.user:
+				TicketNotification.objects.create(
+					recipient=ticket.reporter,
+					ticket=ticket,
+					title=f"Ticket #{ticket.ticket_number} Status Updated",
+					message=f"Ticket status changed to {new_display}.",
+					notification_type=TicketNotification.NotificationType.COMMENT
+				)
+			messages.success(request, f"Ticket #{ticket.ticket_number} status updated to {new_display}.")
 
 	if comment_text or request.FILES.get('attachment'):
 		attachment = request.FILES.get('attachment')
 		TicketComment.objects.create(
 			ticket=ticket,
 			author=request.user,
-			content=comment_text or f"Updated status to {ticket.get_status_display()}.",
+			content=comment_text or f"Status updated to {ticket.get_status_display()}.",
 			attachment=attachment
 		)
 		if not new_status or new_status == ticket.status:
-			messages.success(request, "Comment added successfully.")
+			messages.success(request, "Status note added successfully.")
 
-	next_url = request.POST.get('next') or request.META.get('HTTP_REFERER')
-	if next_url:
-		return redirect(next_url)
+	return redirect(f"/tickets/{ticket.pk}/#status")
+
+
+
+@login_required(login_url='accounts:login')
+@require_http_methods(['POST'])
+def ticket_confirm_resolution(request, pk):
+	"""Normal user confirmation to either Close the resolved ticket or Reopen it with feedback"""
+	ticket = get_object_or_404(Ticket, pk=pk)
+	is_reporter = (ticket.reporter == request.user)
+	is_admin = (request.user.is_staff or (hasattr(request.user, 'profile') and request.user.profile.role == UserRole.ADMIN))
+
+	if not (is_reporter or is_admin):
+		messages.error(request, "Only the user who reported this ticket (or an admin) can confirm its resolution.")
+		return redirect('tickets:detail', pk=ticket.pk)
+
+	action = request.POST.get('action')
+	from .models import TicketNotification
+
+	if action == 'confirm_close':
+		old_display = ticket.get_status_display()
+		ticket.status = TicketStatus.CLOSED
+		ticket.save()
+
+		TicketHistory.objects.create(
+			ticket=ticket,
+			changed_by=request.user,
+			field_name='status',
+			old_value=old_display,
+			new_value=TicketStatus.CLOSED.label,
+		)
+
+		feedback = request.POST.get('closing_notes', '').strip()
+		comment_body = f"✔ Resolution confirmed by client ({request.user.username}). Ticket closed."
+		if feedback:
+			comment_body += f"\nClient Feedback: {feedback}"
+
+		TicketComment.objects.create(
+			ticket=ticket,
+			author=request.user,
+			content=comment_body
+		)
+
+		if ticket.assigned_technician:
+			TicketNotification.objects.create(
+				recipient=ticket.assigned_technician,
+				ticket=ticket,
+				title=f"Ticket #{ticket.ticket_number} Confirmed & Closed",
+				message=f"Client {request.user.username} has verified the fix and confirmed closure of Ticket #{ticket.ticket_number}.",
+				notification_type=TicketNotification.NotificationType.CLOSED
+			)
+
+		messages.success(request, f"Thank you! You have confirmed the resolution and closed Ticket #{ticket.ticket_number}.")
+
+	elif action == 'reopen':
+		reopen_reason = request.POST.get('reopen_reason', '').strip()
+		if not reopen_reason:
+			messages.error(request, "Please provide an explanation describing why the issue is not yet resolved.")
+			return redirect('tickets:detail', pk=ticket.pk)
+
+		old_display = ticket.get_status_display()
+		ticket.status = TicketStatus.IN_PROGRESS
+		ticket.save()
+
+		TicketHistory.objects.create(
+			ticket=ticket,
+			changed_by=request.user,
+			field_name='status',
+			old_value=old_display,
+			new_value=f"{TicketStatus.IN_PROGRESS.label} (Reopened by client)",
+		)
+
+		attachment = request.FILES.get('reopen_attachment')
+		TicketComment.objects.create(
+			ticket=ticket,
+			author=request.user,
+			content=f"↺ ISSUE REOPENED BY CLIENT ({request.user.username}):\n{reopen_reason}",
+			attachment=attachment
+		)
+
+		if ticket.assigned_technician:
+			TicketNotification.objects.create(
+				recipient=ticket.assigned_technician,
+				ticket=ticket,
+				title=f"Ticket #{ticket.ticket_number} Reopened by Client",
+				message=f"Client {request.user.username} reported that the problem is not resolved: \"{reopen_reason}\"",
+				notification_type=TicketNotification.NotificationType.REOPENED
+			)
+
+		messages.warning(request, f"Ticket #{ticket.ticket_number} has been reopened. Technician {ticket.assigned_technician.username if ticket.assigned_technician else 'Support Team'} has been alerted.")
+
 	return redirect('tickets:detail', pk=ticket.pk)
+
 
 
 @login_required(login_url='accounts:login')
@@ -418,7 +596,7 @@ def ticket_add_comment(request, pk):
 	ticket = get_object_or_404(Ticket, pk=pk)
 	is_reporter = (ticket.reporter == request.user)
 	is_technician = (ticket.assigned_technician == request.user)
-	is_admin = (request.user.is_staff or request.user.profile.role == UserRole.ADMIN)
+	is_admin = (request.user.is_staff or (hasattr(request.user, 'profile') and request.user.profile.role == UserRole.ADMIN))
 
 	if not (is_reporter or is_technician or is_admin):
 		messages.error(request, "You do not have permission to comment on this ticket.")
@@ -434,9 +612,48 @@ def ticket_add_comment(request, pk):
 			content=content,
 			attachment=attachment
 		)
-		messages.success(request, "Comment added successfully.")
-	else:
-		messages.error(request, "Comment content cannot be empty.")
 
-	return redirect('tickets:detail', pk=ticket.pk)
+		# Notify other party
+		from .models import TicketNotification
+		recipient = None
+		if is_reporter and ticket.assigned_technician:
+			recipient = ticket.assigned_technician
+		elif not is_reporter:
+			recipient = ticket.reporter
+
+		if recipient and recipient != request.user:
+			TicketNotification.objects.create(
+				recipient=recipient,
+				ticket=ticket,
+				title=f"New Message on Ticket #{ticket.ticket_number}",
+				message=f"{request.user.username}: {content[:120]}{'...' if len(content) > 120 else ''}",
+				notification_type=TicketNotification.NotificationType.COMMENT
+			)
+
+		messages.success(request, "Message posted successfully.")
+	else:
+		messages.error(request, "Message content cannot be empty.")
+
+	return redirect(f"/tickets/{ticket.pk}/#activity")
+
+
+@login_required(login_url='accounts:login')
+def notification_mark_read(request, pk):
+	from .models import TicketNotification
+	notif = get_object_or_404(TicketNotification, pk=pk, recipient=request.user)
+	notif.is_read = True
+	notif.save()
+	if notif.ticket:
+		return redirect('tickets:detail', pk=notif.ticket.pk)
+	return redirect('accounts:dashboard')
+
+
+@login_required(login_url='accounts:login')
+@require_http_methods(['POST'])
+def notifications_clear_all(request):
+	from .models import TicketNotification
+	TicketNotification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+	messages.success(request, "All notifications marked as read.")
+	return redirect(request.META.get('HTTP_REFERER') or 'accounts:dashboard')
+
 

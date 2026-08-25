@@ -5,7 +5,165 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Technician Groups - SIET Helpdesk</title>
-    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=3.0">
+    <style>
+        .tg-container {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        @media (max-width: 960px) {
+            .tg-container { grid-template-columns: 1fr; }
+        }
+        .tg-form-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        .tg-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px 22px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .tg-card:hover {
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+        }
+        .tg-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .tg-info-row {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+        .tg-team-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: #ecfdf5;
+            color: #047857;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            flex-shrink: 0;
+            border: 1px solid #d1fae5;
+        }
+        .tg-title-box h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 4px 0;
+        }
+        .tg-title-box p {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0;
+            line-height: 1.4;
+        }
+        .tg-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .btn-tg-edit {
+            background: #f1f5f9;
+            color: #0f172a;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 6px 14px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-tg-edit:hover {
+            background: #063b0c;
+            color: #ffffff;
+            border-color: #063b0c;
+        }
+        .btn-tg-delete {
+            background: #ffffff;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-tg-delete:hover {
+            background: #dc2626;
+            color: #ffffff;
+        }
+        .tg-details-grid {
+            display: grid;
+            grid-template-columns: 140px 1fr 1.3fr;
+            gap: 14px;
+            background: #f8fafc;
+            border: 1px solid #f1f5f9;
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+        @media (max-width: 720px) {
+            .tg-details-grid { grid-template-columns: 1fr; }
+        }
+        .tg-col {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .tg-col-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+        }
+        .tg-badge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+        }
+        .tg-pill-cap {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .tg-pill-cat {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .tg-pill-tech {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
 <header class="topbar">
@@ -25,11 +183,22 @@
                 <a href="{% url 'accounts:admin_users' %}">Users</a>
                 <a class="active" href="{% url 'accounts:admin_groups' %}">Technician groups</a>
                 <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                <a href="{% url 'accounts:admin_email_settings' %}">Email & SMTP Settings</a>
             </div>
         </div>
         <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
         <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
-        <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+        <div class="user-profile-menu">
+            <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
+                <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
+                <span class="user-dropdown-arrow">▾</span>
+            </button>
+            <div class="profile-dropdown-card" id="profileDropdownCard">
+                <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                <div class="dropdown-divider"></div>
+                <a href="{% url 'accounts:logout' %}" class="dropdown-item">Log out</a>
+            </div>
+        </div>
     </nav>
 </header>
 
@@ -47,65 +216,257 @@
         <a href="{% url 'accounts:admin_users' %}" class="sidebar-link">Users</a>
         <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link active">Technician Groups</a>
         <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+        <a href="{% url 'accounts:admin_email_settings' %}" class="sidebar-link">Email & SMTP Settings</a>
         <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
         <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link">Issue Reports</a>
+        <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
         <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
     </nav>
 </aside>
 
 <main class="page-shell">
+    {% if messages %}
+    <div class="alert-messages" style="margin-bottom: 20px;">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="page-heading">
         <div>
-            <p class="eyebrow">SUPPORT TEAMS</p>
-            <h1>Technician groups</h1>
-            <p>Organize technicians around the type of issue they handle.</p>
+            <p class="eyebrow">SUPPORT TEAMS & ISSUE ROUTING</p>
+            <h1>Technician Groups Manager</h1>
+            <p>Manage support teams, assign technician members, set workload capacities, and map issue categories.</p>
         </div>
     </div>
-    <section class="management-grid">
-        <div class="panel form-panel">
-            <div class="panel-heading"><h2>Create group</h2></div>
-            <form method="post">
+
+    <div class="tg-container">
+        
+        <!-- Left: Create Group Form -->
+        <div class="tg-form-card">
+            <h2 style="font-size: 16px; margin: 0 0 16px 0; color: #0f172a; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+                Create New Group
+            </h2>
+            <form method="post" action="{% url 'accounts:admin_groups' %}">
                 {% csrf_token %}
-                {% for field in form %}
-                <div class="field">
-                    <label>{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.errors %}
-                    <small class="field-error">{{ field.errors|striptags }}</small>
-                    {% endif %}
+                <input type="hidden" name="action" value="create">
+
+                <div class="field" style="margin-bottom: 14px;">
+                    <label for="id_name">Group Name *</label>
+                    <input type="text" name="name" id="id_name" required placeholder="e.g. Network Support Group">
                 </div>
-                {% endfor %}
-                <button class="primary-button" type="submit">Create group</button>
+
+                <div class="field" style="margin-bottom: 14px;">
+                    <label for="id_description">Description</label>
+                    <textarea name="description" id="id_description" rows="2" placeholder="Summary of responsibility..."></textarea>
+                </div>
+
+                <div class="field" style="margin-bottom: 14px;">
+                    <label for="id_max_tickets">Max Active Tickets / Tech</label>
+                    <input type="number" name="max_tickets_per_tech" id="id_max_tickets" value="8" min="1" max="50">
+                </div>
+
+                <div class="field" style="margin-bottom: 14px;">
+                    <label>Assign Technicians</label>
+                    <div style="max-height: 120px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; background: #fff;">
+                        {% for tech in all_technicians %}
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; cursor: pointer;">
+                            <input type="checkbox" name="technicians" value="{{ tech.id }}">
+                            {{ tech.get_full_name|default:tech.username }} (@{{ tech.username }})
+                        </label>
+                        {% empty %}
+                        <span class="muted" style="font-size: 12px;">No technician accounts found.</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="field" style="margin-bottom: 18px;">
+                    <label>Route Categories to this Group</label>
+                    <div style="max-height: 120px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; background: #fff;">
+                        {% for cat in all_categories %}
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; cursor: pointer;">
+                            <input type="checkbox" name="categories" value="{{ cat.id }}">
+                            {{ cat.name }}
+                        </label>
+                        {% empty %}
+                        <span class="muted" style="font-size: 12px;">No categories configured yet.</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <button class="primary-button full-width" type="submit" style="background: #063b0c;">Create Technician Group</button>
             </form>
         </div>
-        <div class="panel">
-            <div class="panel-heading">
-                <h2>Existing groups</h2>
-                <span class="muted">{{ groups|length }} groups</span>
+
+        <!-- Right: Configured Groups Cards -->
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <h2 style="font-size: 16px; margin: 0; color: #0f172a;">Configured Support Groups</h2>
+                <span class="badge" style="background:#e2e8f0; color:#334155; font-weight: 600;">{{ groups|length }} Groups</span>
             </div>
-            <div class="group-list">
+
+            <div style="display: flex; flex-direction: column;">
                 {% for group in groups %}
-                <article class="group-row">
-                    <div>
-                        <strong>{{ group.name }}</strong>
-                        <small>{{ group.description|default:'No description' }}</small>
+                <article class="tg-card">
+                    <div class="tg-card-header">
+                        <div class="tg-info-row">
+                            <div class="tg-team-avatar">
+                                👥
+                            </div>
+                            <div class="tg-title-box">
+                                <h3>{{ group.name }}</h3>
+                                <p>{{ group.description|default:"No description set." }}</p>
+                            </div>
+                        </div>
+                        <div class="tg-actions">
+                            <button type="button" class="btn-tg-edit" onclick="openEditGroupModal('{{ group.id }}', '{{ group.name|escapejs }}', '{{ group.description|escapejs }}', '{{ group.max_tickets_per_tech }}', [{% for t in group.technicians.all %}'{{ t.id }}',{% endfor %}], [{% for c in group.categories.all %}'{{ c.id }}',{% endfor %}])">
+                                Edit
+                            </button>
+                            <form method="post" action="{% url 'accounts:admin_groups' %}" onsubmit="return confirm('Are you sure you want to delete group \'{{ group.name|escapejs }}\'?');" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="group_id" value="{{ group.id }}">
+                                <button type="submit" class="btn-tg-delete">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                    <div class="group-meta">
-                        <span>{{ group.technicians.count }} technicians</span>
-                        <span>{{ group.categories.count }} categories</span>
-                        <span>Max {{ group.max_tickets_per_tech }} tickets/tech</span>
+
+                    <div class="tg-details-grid">
+                        <div class="tg-col">
+                            <span class="tg-col-title">Workload Limit</span>
+                            <div class="tg-badge-list">
+                                <span class="tg-pill-cap">Max {{ group.max_tickets_per_tech }} / tech</span>
+                            </div>
+                        </div>
+
+                        <div class="tg-col">
+                            <span class="tg-col-title">Mapped Categories</span>
+                            <div class="tg-badge-list">
+                                {% for cat in group.categories.all %}
+                                <span class="tg-pill-cat">{{ cat.name }}</span>
+                                {% empty %}
+                                <span class="muted" style="font-size: 12px;">None</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="tg-col">
+                            <span class="tg-col-title">Assigned Technicians</span>
+                            <div class="tg-badge-list">
+                                {% for tech in group.technicians.all %}
+                                <span class="tg-pill-tech">{{ tech.get_full_name|default:tech.username }}</span>
+                                {% empty %}
+                                <span class="muted" style="font-size: 12px;">No technicians assigned</span>
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
                 </article>
                 {% empty %}
-                <div class="empty-state">
+                <div class="empty-state" style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:30px; text-align:center;">
                     <strong>No technician groups yet</strong>
-                    <span>Create a group and select the technicians who should receive its issues.</span>
+                    <p style="color:#64748b; font-size:13px; margin-top:4px;">Create a group on the left to configure automatic issue routing and technician workload limits.</p>
                 </div>
                 {% endfor %}
             </div>
         </div>
-    </section>
+
+    </div>
 </main>
-<script src="{% static 'js/mobile_nav.js' %}"></script>
+
+<!-- Edit Group Modal -->
+<div id="editGroupModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 540px;">
+        <div class="modal-header">
+            <h3>Edit Technician Group</h3>
+            <button type="button" class="modal-close" onclick="closeEditGroupModal()">✕</button>
+        </div>
+        <form method="post" action="{% url 'accounts:admin_groups' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="group_id" id="edit_group_id">
+            
+            <div class="modal-body">
+                <div class="field" style="margin-bottom: 14px;">
+                    <label for="edit_group_name">Group Name *</label>
+                    <input type="text" name="name" id="edit_group_name" required>
+                </div>
+
+                <div class="field" style="margin-bottom: 14px;">
+                    <label for="edit_group_desc">Description</label>
+                    <textarea name="description" id="edit_group_desc" rows="2"></textarea>
+                </div>
+
+                <div class="field" style="margin-bottom: 14px;">
+                    <label for="edit_group_max">Max Active Tickets per Technician</label>
+                    <input type="number" name="max_tickets_per_tech" id="edit_group_max" min="1" max="50">
+                </div>
+
+                <div class="field" style="margin-bottom: 14px;">
+                    <label>Assigned Technicians</label>
+                    <div id="edit_technicians_container" style="max-height: 120px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; background: #fff;">
+                        {% for tech in all_technicians %}
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; cursor: pointer;">
+                            <input type="checkbox" name="technicians" value="{{ tech.id }}" class="edit-tech-checkbox">
+                            {{ tech.get_full_name|default:tech.username }} (@{{ tech.username }})
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Mapped Issue Categories</label>
+                    <div id="edit_categories_container" style="max-height: 120px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; background: #fff;">
+                        {% for cat in all_categories %}
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; cursor: pointer;">
+                            <input type="checkbox" name="categories" value="{{ cat.id }}" class="edit-cat-checkbox">
+                            {{ cat.name }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="secondary-button" onclick="closeEditGroupModal()">Cancel</button>
+                <button type="submit" class="primary-button" style="background:#063b0c;">Save Group Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openEditGroupModal(id, name, desc, maxTickets, techIds, catIds) {
+    document.getElementById('edit_group_id').value = id;
+    document.getElementById('edit_group_name').value = name;
+    document.getElementById('edit_group_desc').value = desc;
+    document.getElementById('edit_group_max').value = maxTickets;
+
+    const techCheckboxes = document.querySelectorAll('.edit-tech-checkbox');
+    techCheckboxes.forEach(cb => {
+        cb.checked = techIds.includes(cb.value);
+    });
+
+    const catCheckboxes = document.querySelectorAll('.edit-cat-checkbox');
+    catCheckboxes.forEach(cb => {
+        cb.checked = catIds.includes(cb.value);
+    });
+
+    document.getElementById('editGroupModal').classList.add('open');
+}
+
+function closeEditGroupModal() {
+    document.getElementById('editGroupModal').classList.remove('open');
+}
+
+window.addEventListener('click', function(e) {
+    const modal = document.getElementById('editGroupModal');
+    if (e.target === modal) closeEditGroupModal();
+});
+</script>
+<script src="{% static 'js/mobile_nav.js' %}?v=3.0"></script>
 </body>
 </html>

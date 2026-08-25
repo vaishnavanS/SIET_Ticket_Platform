@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Tickets & History - SIET Helpdesk</title>
-    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=2.8">
 </head>
 <body>
     <header class="topbar">
@@ -22,7 +22,17 @@
             <a href="{% url 'tickets:user_catalog' %}">Service Catalog</a>
             <a href="{% url 'tickets:my_tickets' %}" class="active">My Tickets & History</a>
             <a href="{% url 'tickets:create' %}">Report an Issue</a>
-            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+            <div class="user-profile-menu">
+                <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
+                    <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
+                    <span class="user-dropdown-arrow">▾</span>
+                </button>
+                <div class="profile-dropdown-card" id="profileDropdownCard">
+                    <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'accounts:logout' %}" class="dropdown-item">Log out</a>
+                </div>
+            </div>
         </nav>
     </header>
 
@@ -40,6 +50,7 @@
             <a href="{% url 'tickets:user_catalog' %}" class="sidebar-link">Service Catalog</a>
             <a href="{% url 'tickets:my_tickets' %}" class="sidebar-link active">My Tickets & History</a>
             <a href="{% url 'tickets:create' %}" class="sidebar-link">Report an Issue</a>
+            <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
             <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
         </nav>
     </aside>
@@ -152,25 +163,34 @@
 
                         <!-- Step 3: In Progress -->
                         <div class="stepper-step {% if ticket.status == 'in_progress' %}active{% elif ticket.status == 'resolved' or ticket.status == 'closed' %}completed{% else %}pending{% endif %}">
-                            <div class="stepper-circle">{% if ticket.status == 'resolved' or ticket.status == 'closed' %}✓{% else %}3{% endif %}</div>
+                            <div class="stepper-circle">{% if ticket.status == 'resolved' or ticket.status == 'closed' %}✓{% elif ticket.status == 'in_progress' %}⚡{% else %}3{% endif %}</div>
                             <div class="stepper-content">
                                 <span class="stepper-title">In Progress</span>
-                                <small class="stepper-subtitle">{% if ticket.assigned_at %}{{ ticket.assigned_at|date:"M d, H:i" }}{% else %}Diagnostics{% endif %}</small>
+                                <small class="stepper-subtitle">{% if ticket.assigned_at %}{{ ticket.assigned_at|date:"M d, H:i" }}{% else %}Diagnosing{% endif %}</small>
                             </div>
                         </div>
                         <div class="stepper-connector {% if ticket.status == 'resolved' or ticket.status == 'closed' %}completed{% endif %}"></div>
 
                         <!-- Step 4: Resolved -->
-                        <div class="stepper-step {% if ticket.status == 'resolved' or ticket.status == 'closed' %}completed{% else %}pending{% endif %}">
-                            <div class="stepper-circle">{% if ticket.status == 'resolved' or ticket.status == 'closed' %}✓{% else %}4{% endif %}</div>
+                        <div class="stepper-step {% if ticket.status == 'resolved' %}awaiting{% elif ticket.status == 'closed' %}completed{% else %}pending{% endif %}">
+                            <div class="stepper-circle">{% if ticket.status == 'closed' %}✓{% elif ticket.status == 'resolved' %}⏳{% else %}4{% endif %}</div>
                             <div class="stepper-content">
                                 <span class="stepper-title">Resolved</span>
-                                <small class="stepper-subtitle">{% if ticket.resolved_at %}{{ ticket.resolved_at|date:"M d, H:i" }}{% else %}Solution{% endif %}</small>
+                                <small class="stepper-subtitle">{% if ticket.resolved_at %}{{ ticket.resolved_at|date:"M d, H:i" }}{% else %}Awaiting fix{% endif %}</small>
+                            </div>
+                        </div>
+                        <div class="stepper-connector {% if ticket.status == 'closed' %}completed{% endif %}"></div>
+
+                        <!-- Step 5: Closed -->
+                        <div class="stepper-step {% if ticket.status == 'closed' %}completed{% else %}pending{% endif %}">
+                            <div class="stepper-circle">{% if ticket.status == 'closed' %}✓{% else %}5{% endif %}</div>
+                            <div class="stepper-content">
+                                <span class="stepper-title">Closed</span>
+                                <small class="stepper-subtitle">{% if ticket.status == 'closed' %}Confirmed{% else %}Sign-off{% endif %}</small>
                             </div>
                         </div>
                     </div>
                 </div>
-
 
                 <div class="my-ticket-footer">
                     <div>
@@ -181,11 +201,18 @@
                             &bull; <a href="{{ ticket.attachment.url }}" target="_blank" style="color: #1e7e34; font-weight: 600;">Attachment</a>
                             {% endif %}
                         </span>
-
                     </div>
-                    <a href="{% url 'tickets:detail' ticket.pk %}" class="primary-button" style="padding: 0 16px; min-height: 36px; font-size: 13px;">
-                        View Details &rarr;
-                    </a>
+                    <div>
+                        {% if ticket.status == 'resolved' %}
+                        <a href="{% url 'tickets:detail' ticket.pk %}" class="primary-button" style="padding: 0 18px; min-height: 36px; font-size: 13px; background: #16a34a; text-decoration: none;">
+                            ✔ Confirm Resolution &rarr;
+                        </a>
+                        {% else %}
+                        <a href="{% url 'tickets:detail' ticket.pk %}" class="secondary-button" style="padding: 0 16px; min-height: 36px; font-size: 13px; text-decoration: none;">
+                            View Details &rarr;
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
             </article>
             {% empty %}
@@ -200,6 +227,6 @@
         </div>
     </main>
 
-    <script src="{% static 'js/mobile_nav.js' %}"></script>
+    <script src="{% static 'js/mobile_nav.js' %}?v=2.8"></script>
 </body>
 </html>

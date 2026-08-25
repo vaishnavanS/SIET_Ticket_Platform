@@ -141,11 +141,21 @@ db.sqlite3                     # Database file
 
 ## 🔐 Test Credentials
 
-```
+```yaml
 Admin Account:
   Username: admin
   Email: admin@siet.edu.in
-  Password: admin123
+  Password: Password123!
+
+Technician Account:
+  Username: tech
+  Email: tech@siet.edu.in
+  Password: Password123!
+
+Student / User Account:
+  Username: student
+  Email: student@siet.edu.in
+  Password: Password123!
 ```
 
 ## 📱 Key Admin Features

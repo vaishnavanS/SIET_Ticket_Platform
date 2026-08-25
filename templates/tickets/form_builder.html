@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Form Studio - Report an Issue | SIET Helpdesk</title>
-    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=2.7">
 </head>
 <body>
     <header class="topbar">
@@ -25,11 +25,22 @@
                     <a href="{% url 'accounts:admin_users' %}">Users</a>
                     <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
                     <a class="active" href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                    <a href="{% url 'accounts:admin_email_settings' %}">Email & SMTP Settings</a>
                 </div>
             </div>
             <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
             <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
-            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+            <div class="user-profile-menu">
+                <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
+                    <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
+                    <span class="user-dropdown-arrow">▾</span>
+                </button>
+                <div class="profile-dropdown-card" id="profileDropdownCard">
+                    <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'accounts:logout' %}" class="dropdown-item">Log out</a>
+                </div>
+            </div>
         </nav>
     </header>
 
@@ -67,24 +78,14 @@
             <div>
                 <p class="eyebrow">ADMINISTRATION / FORMS</p>
                 <h1>Report an Issue - Dynamic Form Studio</h1>
-                <p>Visually build dynamic question flows, configure GLPI-style "Visible If..." conditional logic, and map automatic technician group routing.</p>
+                <p>Visually build dynamic question flows and configure GLPI-style "Visible If..." conditional branching logic.</p>
             </div>
             <div style="display: flex; gap: 10px;">
                 <button type="button" class="btn-preview" id="open-preview-btn">Live Test Preview</button>
             </div>
         </div>
 
-        <!-- Studio Navigation Tabs -->
-        <nav class="studio-tabs">
-            <button type="button" class="studio-tab-btn active" data-tab="tab-canvas">Form Canvas & Questions ({{ fields|length }})</button>
-            <button type="button" class="studio-tab-btn" data-tab="tab-routing">Technician Group Routing ({{ categories|length }})</button>
-            <button type="button" class="studio-tab-btn" data-tab="tab-catalog">Service Catalog Tiles ({{ catalog_items|length }})</button>
-        </nav>
-
-
-        <!-- TAB 1: FORM CANVAS & QUESTIONS -->
-        <div class="studio-tab-pane active" id="tab-canvas">
-            <div class="management-grid">
+        <div class="management-grid">
                 <!-- Add Question Form Panel -->
                 <div class="panel form-panel">
                     <div class="panel-heading">
@@ -285,110 +286,6 @@
                         </div>
                         {% endfor %}
                     </div>
-                </div>
-            </div>
-        </div>
-
-
-        <!-- TAB 2: TECHNICIAN GROUP ROUTING -->
-        <div class="studio-tab-pane" id="tab-routing">
-            <div class="panel">
-                <div class="panel-heading">
-                    <div>
-                        <h2>Automatic Technician Group Routing</h2>
-                        <p class="muted">Map each primary issue option to a dedicated technician group for automatic round-robin assignment.</p>
-                    </div>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Issue Category / Option</th>
-                            <th>Currently Assigned Technician Group</th>
-                            <th>Active Reports</th>
-                            <th>Assign / Update Group</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for cat in categories %}
-                        <tr>
-                            <td>
-                                <strong>{{ cat.name }}</strong>
-                                <small>{{ cat.description|default:"Auto-mapped issue option" }}</small>
-                            </td>
-                            <td>
-                                {% if cat.assigned_group %}
-                                <span class="badge success-badge">{{ cat.assigned_group.name }}</span>
-                                {% else %}
-                                <span class="badge warning-badge">General Support Queue</span>
-                                {% endif %}
-                            </td>
-                            <td><strong>{{ cat.tickets.count }}</strong></td>
-                            <td>
-                                <form method="post" style="display: flex; gap: 8px; align-items: center;">
-
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="update_routing">
-                                    <input type="hidden" name="category_id" value="{{ cat.id }}">
-                                    <select name="group_id" class="inline-select" style="min-width: 180px;">
-                                        <option value="">-- General Queue (Unassigned) --</option>
-                                        {% for grp in technician_groups %}
-                                        <option value="{{ grp.id }}" {% if cat.assigned_group_id == grp.id %}selected{% endif %}>{{ grp.name }} ({{ grp.technicians.count }} techs)</option>
-                                        {% endfor %}
-                                    </select>
-                                    <button class="text-button" type="submit">Save</button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4">
-                                <div class="empty-state">No categories configured. Create a question with options (e.g. Network, PC, SEB) to auto-generate routing categories.</div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- TAB 3: SERVICE CATALOG TILES -->
-        <div class="studio-tab-pane" id="tab-catalog">
-            <div class="panel">
-                <div class="panel-heading">
-                    <div>
-                        <h2>User Homepage Service Catalog Tiles</h2>
-                        <p class="muted">Control which service cards appear on the normal user portal.</p>
-                    </div>
-                    <a href="{% url 'tickets:catalog_manager' %}" class="primary-button">+ Open Catalog Manager</a>
-                </div>
-                <div class="group-list">
-                    {% for item in catalog_items %}
-                    <article class="group-row">
-                        <div>
-                            <strong>{{ item.icon }} {{ item.title }}</strong>
-                            <small>{{ item.description|default:"No description" }}</small>
-                            {% if item.category %}
-                            <small>Pre-selected Option: <strong>{{ item.category.name }}</strong></small>
-                            {% endif %}
-                        </div>
-                        <div class="row-actions">
-                            {% if item.show_on_homepage %}
-                            <span class="badge success-badge">Visible on Homepage</span>
-                            {% else %}
-                            <span class="badge warning-badge">Hidden from Homepage</span>
-                            {% endif %}
-                            <form method="post" action="{% url 'tickets:catalog_toggle' item.pk %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="toggle_homepage">
-                                <button type="submit" class="text-button">
-                                    {% if item.show_on_homepage %}Hide{% else %}Show{% endif %}
-                                </button>
-                            </form>
-                        </div>
-                    </article>
-                    {% empty %}
-                    <div class="empty-state">No service tiles configured yet. Click "+ Open Catalog Manager" to add tiles.</div>
-                    {% endfor %}
                 </div>
             </div>
         </div>

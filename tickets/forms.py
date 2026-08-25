@@ -5,6 +5,8 @@ from .models import Ticket, TicketStatus, TicketUrgency, IssueFormField, Service
 from django.utils.text import slugify
 
 class TicketCreateForm(forms.ModelForm):
+    category = forms.CharField(required=False, widget=forms.HiddenInput())
+
     class Meta:
         model = Ticket
         fields = ('title', 'description', 'category', 'urgency', 'location', 'attachment')
@@ -14,6 +16,22 @@ class TicketCreateForm(forms.ModelForm):
             'location': forms.TextInput(attrs={'placeholder': 'e.g., Block B - Room 204 / Lab 3'}),
             'category': forms.HiddenInput(),
         }
+
+    def clean_category(self):
+        val = self.cleaned_data.get('category')
+        if not val:
+            return None
+        from .models import Category
+        if isinstance(val, Category):
+            return val
+        if str(val).isdigit():
+            cat = Category.objects.filter(pk=int(val)).first()
+            if cat:
+                return cat
+        cat = Category.objects.filter(name__iexact=str(val).strip()).first()
+        if cat:
+            return cat
+        return None
 
     def __init__(self, *args, issue_fields=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -165,5 +183,17 @@ class ServiceCatalogItemForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['category'].required = False
         self.fields['category'].empty_label = "General / No preselected category"
+        self.fields['description'].required = False
+        self.fields['icon'].required = False
+        self.fields['order'].required = False
+
+    def clean_icon(self):
+        icon = self.cleaned_data.get('icon', '').strip()
+        return icon if icon else '📌'
+
+    def clean_order(self):
+        order = self.cleaned_data.get('order')
+        return order if order is not None else 0
 

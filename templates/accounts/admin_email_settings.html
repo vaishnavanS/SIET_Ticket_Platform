@@ -1,0 +1,212 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email & SMTP Settings - SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=2.8">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-left">
+        <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <strong>SIET Helpdesk</strong>
+    </div>
+    <nav class="admin-nav">
+        <a href="{% url 'accounts:admin_dashboard' %}">Overview</a>
+        <div class="dropdown">
+            <button class="dropdown-btn active" type="button">Administration ▾</button>
+            <div class="dropdown-menu">
+                <a href="{% url 'accounts:admin_users' %}">Users</a>
+                <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
+                <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                <a class="active" href="{% url 'accounts:admin_email_settings' %}">Email & SMTP Settings</a>
+            </div>
+        </div>
+        <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
+        <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
+        <div class="user-profile-menu">
+            <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
+                <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
+                <span class="user-dropdown-arrow">▾</span>
+            </button>
+            <div class="profile-dropdown-card" id="profileDropdownCard">
+                <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                <div class="dropdown-divider"></div>
+                <a href="{% url 'accounts:logout' %}" class="dropdown-item">Log out</a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<!-- Mobile Sidebar Drawer -->
+<div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+<aside id="mobileSidebar" class="mobile-sidebar">
+    <div class="sidebar-header">
+        <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close Menu">✕</button>
+        <div class="sidebar-brand">
+            <strong>SIET Helpdesk</strong>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="{% url 'accounts:admin_dashboard' %}" class="sidebar-link">Overview</a>
+        <a href="{% url 'accounts:admin_users' %}" class="sidebar-link">Users</a>
+        <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link">Technician Groups</a>
+        <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+        <a href="{% url 'accounts:admin_email_settings' %}" class="sidebar-link active">Email & SMTP Settings</a>
+        <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
+        <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link">Issue Reports</a>
+        <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
+        <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+    </nav>
+</aside>
+
+<main class="page-shell">
+    {% if messages %}
+    <div class="alert-messages" style="margin-bottom: 20px;">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">SYSTEM NOTIFICATIONS & OUTGOING MAIL</p>
+            <h1>Site Email & SMTP Configuration</h1>
+            <p>Configure the main system email account used for all notifications, email verification, and password resets.</p>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: start;">
+        
+        <!-- Left: SMTP Form -->
+        <section class="panel" style="padding: 24px;">
+            <h2 style="font-size: 17px; margin-top: 0; margin-bottom: 18px; color: #0f172a; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+                Outgoing Mail Credentials
+            </h2>
+
+            <form method="post" action="{% url 'accounts:admin_email_settings' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="save_settings">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+                    <div class="field">
+                        <label for="id_site_name">Sender Display Name *</label>
+                        <input type="text" name="site_name" id="id_site_name" value="{{ setting.site_name }}" required placeholder="e.g. SIET Helpdesk">
+                    </div>
+                    <div class="field">
+                        <label for="id_from_email">Default From Email *</label>
+                        <input type="email" name="from_email" id="id_from_email" value="{{ setting.from_email }}" required placeholder="helpdesk@siet.edu.in">
+                    </div>
+                </div>
+
+                <div class="field" style="margin-bottom: 16px;">
+                    <label for="id_site_url">Site Public / LAN Base URL</label>
+                    <input type="text" name="site_url" id="id_site_url" value="{{ setting.site_url }}" placeholder="Auto-detected LAN: http://10.10.10.141:8000">
+                    <small class="field-help" style="color: #64748b; font-size: 12px; display: block; margin-top: 4px;">
+                        Leave blank to automatically auto-detect and use your active LAN IP address (e.g. <code>http://10.10.10.141:8000</code>) for all verification and reset links sent to phones/laptops on the network.
+                    </small>
+                </div>
+
+                <div class="field" style="margin-bottom: 16px;">
+                    <label for="id_smtp_backend">Delivery Engine / Mode *</label>
+                    <select name="smtp_backend" id="id_smtp_backend">
+                        <option value="smtp" {% if setting.smtp_backend == 'smtp' %}selected{% endif %}>Live SMTP (Dispatches real emails to inboxes)</option>
+                        <option value="console" {% if setting.smtp_backend == 'console' %}selected{% endif %}>Console / Development (Prints email content to server terminal)</option>
+                    </select>
+                    <small class="field-help" style="color: #64748b; font-size: 12px; display: block; margin-top: 4px;">
+                        Select <strong>Live SMTP</strong> when using Gmail App Password, Microsoft 365, or institutional SMTP.
+                    </small>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 16px;">
+                    <div class="field">
+                        <label for="id_smtp_host">SMTP Server Host</label>
+                        <input type="text" name="smtp_host" id="id_smtp_host" value="{{ setting.smtp_host }}" placeholder="e.g. smtp.gmail.com">
+                    </div>
+                    <div class="field">
+                        <label for="id_smtp_port">Port</label>
+                        <input type="number" name="smtp_port" id="id_smtp_port" value="{{ setting.smtp_port }}" placeholder="587">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 24px; margin-bottom: 16px; align-items: center;">
+                    <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer;">
+                        <input type="checkbox" name="smtp_use_tls" {% if setting.smtp_use_tls %}checked{% endif %}>
+                        Use TLS (STARTTLS &bull; Port 587)
+                    </label>
+                    <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer;">
+                        <input type="checkbox" name="smtp_use_ssl" {% if setting.smtp_use_ssl %}checked{% endif %}>
+                        Use SSL (Port 465)
+                    </label>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;">
+                    <div class="field">
+                        <label for="id_smtp_user">SMTP Username / Email</label>
+                        <input type="text" name="smtp_user" id="id_smtp_user" value="{{ setting.smtp_user }}" placeholder="helpdesk@siet.edu.in">
+                    </div>
+                    <div class="field">
+                        <label for="id_smtp_password">SMTP App Password</label>
+                        <input type="password" name="smtp_password" id="id_smtp_password" placeholder="•••••••••••• (Leave blank to keep unchanged)">
+                    </div>
+                </div>
+
+                <button type="submit" class="primary-button" style="background: #063b0c; width: 100%;">
+                    Save Email & SMTP Settings
+                </button>
+            </form>
+        </section>
+
+        <!-- Right: Test & Info Cards -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            
+            <!-- Live Test Email Card -->
+            <section class="panel" style="padding: 24px;">
+                <h2 style="font-size: 16px; margin-top: 0; margin-bottom: 12px; color: #0f172a;">
+                    Test Outgoing Mail Connection
+                </h2>
+                <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 14px;">
+                    Send a live test message to verify that your SMTP server host, authentication credentials, and TLS handshake are working properly.
+                </p>
+
+                <form method="post" action="{% url 'accounts:admin_email_settings' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="test_email">
+                    <div class="field" style="margin-bottom: 12px;">
+                        <label for="id_test_recipient">Recipient Test Email *</label>
+                        <input type="email" name="test_recipient" id="id_test_recipient" value="{{ request.user.email }}" required placeholder="your.email@gmail.com">
+                    </div>
+                    <button type="submit" class="secondary-button" style="width: 100%; justify-content: center; font-weight: 600;">
+                        Dispatch Test Email &rarr;
+                    </button>
+                </form>
+            </section>
+
+            <!-- Automated System Email Coverage Info -->
+            <section class="panel" style="padding: 24px; background: #ffffff;">
+                <h3 style="font-size: 15px; margin-top: 0; margin-bottom: 12px; color: #0f172a;">
+                    Automated System Email Workflows
+                </h3>
+                <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: #334155; line-height: 1.6;">
+                    <li><strong>User Email Verification:</strong> Sends cryptographic verification link to new/updated email addresses.</li>
+                    <li><strong>Password Reset Links:</strong> Sends secure recovery link to users requesting password change.</li>
+                    <li><strong>Technician Allocation Alerts:</strong> Automatically emails assigned technician with ticket priority and details upon ticket submission.</li>
+                    <li><strong>Resolution Confirmations:</strong> Alerts client when technician marks their ticket as Resolved.</li>
+                </ul>
+            </section>
+
+        </div>
+
+    </div>
+</main>
+
+<script src="{% static 'js/mobile_nav.js' %}?v=2.8"></script>
+</body>
+</html>

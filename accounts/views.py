@@ -138,24 +138,74 @@ def admin_user_action(request, user_id, action):
         return redirect('accounts:admin_users')
     if action == 'delete':
         user.delete()
+        messages.success(request, f"User '{user.username}' was deleted.")
     elif action == 'suspend':
         user.profile.is_suspended = True
         user.profile.save(update_fields=['is_suspended', 'updated_at'])
+        messages.warning(request, f"User '{user.username}' has been suspended.")
     elif action == 'activate':
         user.profile.is_suspended = False
         user.profile.save(update_fields=['is_suspended', 'updated_at'])
+        messages.success(request, f"User '{user.username}' has been activated.")
+    elif action == 'reset_password':
+        new_password = request.POST.get('new_password', '').strip()
+        if len(new_password) < 8:
+            messages.error(request, "Password must be at least 8 characters long.")
+        else:
+            user.set_password(new_password)
+            user.save()
+            messages.success(request, f"Password for user '{user.username}' has been updated.")
     return redirect('accounts:admin_users')
 
 
 @admin_required
 @require_http_methods(['GET', 'POST'])
 def admin_groups(request):
-    form = TechnicianGroupForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        return redirect('accounts:admin_groups')
-    groups = TechnicianGroup.objects.prefetch_related('technicians', 'categories').annotate(ticket_count=Count('ticket'))
-    return render(request, 'accounts/admin_groups.html', {'form': form, 'groups': groups})
+    if request.method == 'POST':
+        action = request.POST.get('action', 'create')
+        if action == 'create':
+            form = TechnicianGroupForm(request.POST)
+            if form.is_valid():
+                group = form.save()
+                cat_ids = request.POST.getlist('categories')
+                if cat_ids:
+                    Category.objects.filter(id__in=cat_ids).update(assigned_group=group)
+                messages.success(request, f"Technician group '{group.name}' created successfully.")
+                return redirect('accounts:admin_groups')
+            else:
+                messages.error(request, "Please correct the errors in the create group form.")
+        elif action == 'edit':
+            group_id = request.POST.get('group_id')
+            group = get_object_or_404(TechnicianGroup, pk=group_id)
+            form = TechnicianGroupForm(request.POST, instance=group)
+            if form.is_valid():
+                form.save()
+                cat_ids = request.POST.getlist('categories')
+                Category.objects.filter(assigned_group=group).update(assigned_group=None)
+                if cat_ids:
+                    Category.objects.filter(id__in=cat_ids).update(assigned_group=group)
+                messages.success(request, f"Technician group '{group.name}' updated successfully.")
+                return redirect('accounts:admin_groups')
+            else:
+                messages.error(request, "Failed to update technician group.")
+        elif action == 'delete':
+            group_id = request.POST.get('group_id')
+            group = get_object_or_404(TechnicianGroup, pk=group_id)
+            name = group.name
+            group.delete()
+            messages.success(request, f"Technician group '{name}' deleted successfully.")
+            return redirect('accounts:admin_groups')
+
+    form = TechnicianGroupForm()
+    groups = TechnicianGroup.objects.prefetch_related('technicians', 'categories').all()
+    all_categories = Category.objects.all()
+    all_technicians = User.objects.filter(profile__role=UserRole.TECHNICIAN, profile__is_active=True)
+    return render(request, 'accounts/admin_groups.html', {
+        'form': form,
+        'groups': groups,
+        'all_categories': all_categories,
+        'all_technicians': all_technicians,
+    })
 
 
 @admin_required
@@ -167,6 +217,70 @@ def admin_categories(request):
         return redirect('accounts:admin_categories')
     categories = Category.objects.select_related('assigned_group').annotate(ticket_count=Count('tickets'))
     return render(request, 'accounts/admin_categories.html', {'form': form, 'categories': categories})
+
+
+@admin_required
+@require_http_methods(['GET', 'POST'])
+def admin_email_settings(request):
+    """Admin configuration for site outgoing email and SMTP connection"""
+    from .models import SiteEmailSetting
+    from .utils import get_site_email_connection
+    from django.core.mail import EmailMessage
+
+    setting = SiteEmailSetting.get_setting()
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'save_settings':
+            setting.site_name = request.POST.get('site_name', 'SIET Helpdesk').strip()
+            setting.from_email = request.POST.get('from_email', 'helpdesk@siet.edu.in').strip()
+            setting.site_url = request.POST.get('site_url', '').strip()
+            setting.smtp_backend = request.POST.get('smtp_backend', 'console')
+            setting.smtp_host = request.POST.get('smtp_host', '').strip()
+            try:
+                setting.smtp_port = int(request.POST.get('smtp_port', 587))
+            except ValueError:
+                setting.smtp_port = 587
+            use_ssl = ('smtp_use_ssl' in request.POST)
+            use_tls = ('smtp_use_tls' in request.POST)
+            if use_ssl:
+                use_tls = False
+
+            setting.smtp_use_tls = use_tls
+            setting.smtp_use_ssl = use_ssl
+            setting.smtp_user = request.POST.get('smtp_user', '').strip()
+
+            pwd = request.POST.get('smtp_password', '').replace(' ', '').strip()
+            if pwd:
+                setting.smtp_password = pwd
+
+            setting.save()
+            messages.success(request, "Site Email & SMTP settings have been updated successfully.")
+            return redirect('accounts:admin_email_settings')
+
+        elif action == 'test_email':
+            test_recipient = request.POST.get('test_recipient', '').strip()
+            if not test_recipient:
+                messages.error(request, "Please specify a test recipient email address.")
+            else:
+                conn, from_str, site_title = get_site_email_connection()
+                try:
+                    msg = EmailMessage(
+                        subject=f"[{site_title}] Outgoing Mail & SMTP Test",
+                        body=f"Hello,\n\nThis is a live test notification from {site_title}.\n\nYour outgoing SMTP email configuration is functioning properly and ready for system notifications, email verification, and password resets!\n\nBest regards,\n{site_title} System",
+                        from_email=from_str,
+                        to=[test_recipient],
+                        connection=conn,
+                    )
+                    msg.send(fail_silently=False)
+                    messages.success(request, f"✔ Test email was successfully dispatched to '{test_recipient}'!")
+                except Exception as e:
+                    messages.error(request, f"❌ Failed to dispatch test email: {str(e)}")
+            return redirect('accounts:admin_email_settings')
+
+    return render(request, 'accounts/admin_email_settings.html', {'setting': setting})
+
 
 
 @admin_required
@@ -184,24 +298,42 @@ def admin_tickets(request):
 
 @login_required(login_url='accounts:login')
 def technician_dashboard(request):
+    scope = request.GET.get('scope', 'my_active')
     status_filter = request.GET.get('status', '')
-    all_tickets = Ticket.objects.filter(assigned_technician=request.user).select_related('category', 'reporter')
-    
+
+    base_tickets = Ticket.objects.select_related('category', 'reporter', 'assigned_technician', 'assigned_group')
+
     # Check SLA breach for active tickets
-    for ticket in all_tickets.filter(status__in=[TicketStatus.OPEN, TicketStatus.IN_PROGRESS]):
+    for ticket in base_tickets.filter(status__in=[TicketStatus.OPEN, TicketStatus.IN_PROGRESS])[:50]:
         ticket.check_sla_breach()
 
-    filtered_tickets = all_tickets
+    my_all_tickets = base_tickets.filter(assigned_technician=request.user)
+    my_active_tickets = my_all_tickets.filter(status__in=[TicketStatus.OPEN, TicketStatus.IN_PROGRESS])
+    my_resolved_tickets = my_all_tickets.filter(status__in=[TicketStatus.RESOLVED, TicketStatus.CLOSED])
+    unassigned_tickets = base_tickets.filter(assigned_technician__isnull=True)
+
+    if scope == 'my_resolved':
+        tickets = my_resolved_tickets
+    elif scope == 'team':
+        tickets = base_tickets.all()
+    elif scope == 'unassigned':
+        tickets = unassigned_tickets
+    else:  # default 'my_active'
+        scope = 'my_active'
+        tickets = my_active_tickets
+
     if status_filter in dict(TicketStatus.choices):
-        filtered_tickets = filtered_tickets.filter(status=status_filter)
+        tickets = tickets.filter(status=status_filter)
 
     context = {
-        'tickets': filtered_tickets,
-        'ticket_answers': [(ticket, ticket.custom_answers.items()) for ticket in filtered_tickets],
-        'active_count': all_tickets.filter(status__in=[TicketStatus.OPEN, TicketStatus.IN_PROGRESS]).count(),
-        'in_progress_count': all_tickets.filter(status=TicketStatus.IN_PROGRESS).count(),
-        'resolved_count': all_tickets.filter(status=TicketStatus.RESOLVED).count(),
-        'sla_breached_count': all_tickets.filter(is_sla_breached=True).count(),
+        'tickets': tickets,
+        'scope': scope,
+        'my_active_count': my_active_tickets.count(),
+        'in_progress_count': my_all_tickets.filter(status=TicketStatus.IN_PROGRESS).count(),
+        'my_resolved_count': my_resolved_tickets.count(),
+        'team_total_count': base_tickets.count(),
+        'unassigned_count': unassigned_tickets.count(),
+        'sla_breached_count': my_all_tickets.filter(is_sla_breached=True).count(),
         'selected_status': status_filter,
         'status_choices': TicketStatus.choices,
     }
@@ -229,16 +361,142 @@ def user_dashboard(request):
 
 
 
+from .utils import send_verification_email, verify_token
+from django.conf import settings
+from django.urls import reverse_lazy
+
+def verify_email_view(request, token):
+    """Verify user's email address from token link"""
+    user_id, email = verify_token(token)
+    if not user_id or not email:
+        messages.error(request, "The email verification link is invalid or has expired. Please request a new verification link from your profile.")
+        if request.user.is_authenticated:
+            return redirect('accounts:profile')
+        return redirect('accounts:login')
+
+    try:
+        target_user = User.objects.get(pk=user_id, email=email)
+        profile, _ = UserProfile.objects.get_or_create(user=target_user)
+        profile.is_email_verified = True
+        profile.save(update_fields=['is_email_verified', 'updated_at'])
+        messages.success(request, f"✔ Your email address '{email}' has been successfully verified!")
+    except User.DoesNotExist:
+        messages.error(request, "User account associated with this verification link could not be found.")
+
+    if request.user.is_authenticated:
+        return redirect('accounts:profile')
+    return redirect('accounts:login')
+
+
+@login_required(login_url='accounts:login')
+def profile_view(request):
+    """User profile view with role-specific data and email verification"""
+    user = request.user
+    profile, created = UserProfile.objects.get_or_create(user=user)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'update_profile':
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
+            email = request.POST.get('email', '').strip()
+            phone_number = request.POST.get('phone_number', '').strip()
+            department = request.POST.get('department', '').strip()
+
+            email_changed = (email.lower() != user.email.lower())
+
+            user.first_name = first_name
+            user.last_name = last_name
+            user.email = email
+            user.save()
+
+            profile.phone_number = phone_number
+            profile.department = department
+            if email_changed:
+                profile.is_email_verified = False
+            profile.save()
+
+            if email_changed and email:
+                success, msg = send_verification_email(request, user)
+                if success:
+                    messages.warning(request, f"Profile updated! A verification link was sent to '{email}'. Please check your inbox to verify.")
+                else:
+                    messages.warning(request, f"Profile updated, but we could not dispatch verification email: {msg}")
+            else:
+                messages.success(request, "Your profile details have been updated successfully.")
+            return redirect('accounts:profile')
+
+        elif action == 'send_verification':
+            if not user.email:
+                messages.error(request, "Please configure your email address in Edit Profile first.")
+            else:
+                success, msg = send_verification_email(request, user)
+                if success:
+                    messages.success(request, f"A fresh verification link was sent to '{user.email}'. Please check your inbox.")
+                else:
+                    messages.error(request, f"Failed to dispatch verification email: {msg}")
+            return redirect('accounts:profile')
+
+    context = {
+        'profile': profile,
+        'user_role': profile.role,
+    }
+
+    if profile.role == UserRole.NORMAL_USER:
+        user_tickets = Ticket.objects.filter(reporter=user)
+        context.update({
+            'total_tickets': user_tickets.count(),
+            'open_tickets': user_tickets.filter(status__in=[TicketStatus.OPEN, TicketStatus.IN_PROGRESS]).count(),
+            'resolved_tickets': user_tickets.filter(status__in=[TicketStatus.RESOLVED, TicketStatus.CLOSED]).count(),
+            'recent_tickets': user_tickets.order_by('-created_at')[:4],
+        })
+    elif profile.role == UserRole.TECHNICIAN:
+        tech_tickets = Ticket.objects.filter(assigned_technician=user)
+        assigned_groups = user.technician_groups.all()
+        context.update({
+            'total_assigned': tech_tickets.count(),
+            'active_assigned': tech_tickets.filter(status__in=[TicketStatus.OPEN, TicketStatus.IN_PROGRESS]).count(),
+            'resolved_assigned': tech_tickets.filter(status__in=[TicketStatus.RESOLVED, TicketStatus.CLOSED]).count(),
+            'sla_breached_count': tech_tickets.filter(is_sla_breached=True).count(),
+            'assigned_groups': assigned_groups,
+            'recent_tickets': tech_tickets.order_by('-created_at')[:4],
+        })
+    elif profile.role == UserRole.ADMIN or user.is_staff:
+        context.update({
+            'total_system_users': User.objects.count(),
+            'total_categories': Category.objects.count(),
+            'total_system_tickets': Ticket.objects.count(),
+            'total_groups': TechnicianGroup.objects.count(),
+            'recent_tickets': Ticket.objects.order_by('-created_at')[:4],
+        })
+
+    return render(request, 'accounts/profile.html', context)
+
+
 class CustomPasswordResetView(PasswordResetView):
-    """Custom password reset view"""
+    """Custom password reset view that dispatches reset link to user email with LAN IP resolution"""
     template_name = 'accounts/password_reset.html'
     email_template_name = 'accounts/password_reset_email.html'
     subject_template_name = 'accounts/password_reset_subject.txt'
-    success_url = '/accounts/password-reset-sent/'
+    from_email = settings.DEFAULT_FROM_EMAIL
+    success_url = reverse_lazy('accounts:password_reset_done')
+
+    def get_extra_email_context(self):
+        from .utils import get_site_base_url
+        from urllib.parse import urlparse
+        base_url = get_site_base_url(self.request)
+        parsed = urlparse(base_url)
+        return {
+            'protocol': parsed.scheme or 'http',
+            'domain': parsed.netloc or parsed.path or 'localhost:8000',
+        }
 
 
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
-    """Custom password reset confirm view"""
+    """Custom password reset confirm view that updates user password in DB"""
     template_name = 'accounts/password_reset_confirm.html'
-    success_url = '/accounts/password-reset-complete/'
+    success_url = reverse_lazy('accounts:password_reset_complete')
+
+
 

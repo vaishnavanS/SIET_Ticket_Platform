@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - SIET Helpdesk</title>
-    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=2.8">
 </head>
 <body>
     <header class="topbar">
@@ -25,11 +25,22 @@
                     <a href="{% url 'accounts:admin_users' %}">Users</a>
                     <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
                     <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                    <a href="{% url 'accounts:admin_email_settings' %}">Email & SMTP Settings</a>
                 </div>
             </div>
             <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
             <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
-            <a class="logout" href="{% url 'accounts:logout' %}">Logout</a>
+            <div class="user-profile-menu">
+                <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
+                    <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
+                    <span class="user-dropdown-arrow">▾</span>
+                </button>
+                <div class="profile-dropdown-card" id="profileDropdownCard">
+                    <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'accounts:logout' %}" class="dropdown-item">Log out</a>
+                </div>
+            </div>
         </nav>
     </header>
 
@@ -47,8 +58,10 @@
             <a href="{% url 'accounts:admin_users' %}" class="sidebar-link">Users</a>
             <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link">Technician Groups</a>
             <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+            <a href="{% url 'accounts:admin_email_settings' %}" class="sidebar-link">Email & SMTP Settings</a>
             <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
             <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link">Issue Reports</a>
+            <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
             <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
         </nav>
     </aside>
@@ -154,7 +167,7 @@
         </section>
 
     </main>
-    <script src="{% static 'js/mobile_nav.js' %}"></script>
+    <script src="{% static 'js/mobile_nav.js' %}?v=2.8"></script>
 </body>
 </html>
 

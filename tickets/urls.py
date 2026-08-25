@@ -17,6 +17,9 @@ urlpatterns = [
     path('<int:pk>/edit/', views.ticket_edit, name='edit'),
     path('<int:pk>/status/', views.ticket_update_status, name='update_status'),
     path('<int:pk>/comment/', views.ticket_add_comment, name='add_comment'),
+    path('<int:pk>/confirm-resolution/', views.ticket_confirm_resolution, name='confirm_resolution'),
+    path('notifications/<int:pk>/read/', views.notification_mark_read, name='notification_read'),
+    path('notifications/clear-all/', views.notifications_clear_all, name='notifications_clear'),
 ]
 
 
