@@ -126,7 +126,7 @@ WSGI_APPLICATION = 'siet_helpdesk.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DB_ENGINE = os.getenv('DB_ENGINE', 'django.db.backends.mysql')
+DB_ENGINE = os.getenv('DB_ENGINE', 'django.db.backends.sqlite3')
 if 'sqlite' in DB_ENGINE:
     DATABASES = {
         'default': {

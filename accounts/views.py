@@ -129,10 +129,10 @@ def admin_create_user(request):
 
 @admin_required
 def admin_users(request):
-    users_qs = User.objects.select_related('profile').prefetch_related('technician_groups').order_by('username')
+    users_qs = User.objects.select_related('profile').prefetch_related('technician_groups').exclude(username='deleted_user').order_by('username')
 
     # Counts for quick filter pills
-    all_users = User.objects.select_related('profile')
+    all_users = User.objects.select_related('profile').exclude(username='deleted_user')
     total_count = all_users.count()
     admin_count = all_users.filter(profile__role=UserRole.ADMIN).count()
     tech_count = all_users.filter(profile__role=UserRole.TECHNICIAN).count()
@@ -191,17 +191,93 @@ def admin_users(request):
 def admin_user_action(request, user_id, action):
     user = get_object_or_404(User.objects.select_related('profile'), pk=user_id)
     if user == request.user:
+        messages.error(request, "You cannot delete or modify your own active admin account.")
         return redirect('accounts:admin_users')
+
     if action == 'delete':
-        user.delete()
-        messages.success(request, f"User '{user.username}' was deleted.")
+        if user.username == 'deleted_user':
+            messages.error(request, "The system archive account '[Deleted User]' cannot be deleted.")
+            return redirect('accounts:admin_users')
+
+        delete_mode = request.POST.get('delete_mode', 'archive')
+        username = user.username
+
+        from django.db import transaction
+        from tickets.models import Ticket, TicketComment, TicketHistory, TicketNotification
+
+        try:
+            with transaction.atomic():
+                # 1. Unassign user from any tickets where they were assigned as technician
+                Ticket.objects.filter(assigned_technician=user).update(assigned_technician=None)
+
+                # 2. Delete user's personal notifications
+                TicketNotification.objects.filter(recipient=user).delete()
+
+                # 3. Clear technician group memberships
+                user.technician_groups.clear()
+
+                if delete_mode == 'purge':
+                    # Full purge: erase user's reported tickets & all associated comments/history
+                    user_tickets = Ticket.objects.filter(reporter=user)
+                    TicketNotification.objects.filter(ticket__in=user_tickets).delete()
+                    TicketComment.objects.filter(ticket__in=user_tickets).delete()
+                    TicketHistory.objects.filter(ticket__in=user_tickets).delete()
+                    user_tickets.delete()
+
+                    # Also delete any comments/history this user created on other tickets
+                    TicketComment.objects.filter(author=user).delete()
+                    TicketHistory.objects.filter(changed_by=user).delete()
+
+                    # Permanently delete user
+                    user.delete()
+                    messages.success(request, f"User '{username}' and all associated ticket records were permanently purged.")
+
+                else:
+                    # Archive mode: Reassign tickets & comments to system '[Deleted User]'
+                    archive_user, _ = User.objects.get_or_create(
+                        username='deleted_user',
+                        defaults={
+                            'first_name': 'Deleted',
+                            'last_name': 'User',
+                            'email': 'deleted@siet.edu.in',
+                            'is_active': False,
+                        }
+                    )
+                    archive_user.set_unusable_password()
+                    archive_user.is_active = False
+                    archive_user.save(update_fields=['password', 'is_active'])
+
+                    if hasattr(archive_user, 'profile'):
+                        archive_user.profile.is_active = False
+                        archive_user.profile.is_suspended = True
+                        archive_user.profile.save(update_fields=['is_active', 'is_suspended', 'updated_at'])
+
+                    Ticket.objects.filter(reporter=user).update(reporter=archive_user)
+                    TicketComment.objects.filter(author=user).update(author=archive_user)
+                    TicketHistory.objects.filter(changed_by=user).update(changed_by=archive_user)
+
+                    # Permanently delete user
+                    user.delete()
+                    messages.success(request, f"User '{username}' was permanently deleted. Any submitted tickets and comments were archived under '[Deleted User]'.")
+
+        except Exception as e:
+            logger.error(f"Error deleting user {username}: {e}", exc_info=True)
+            messages.error(request, f"An error occurred while deleting user '{username}': {str(e)}")
+
+        return redirect('accounts:admin_users')
     elif action == 'suspend':
-        user.profile.is_suspended = True
-        user.profile.save(update_fields=['is_suspended', 'updated_at'])
+        user.is_active = False
+        user.save(update_fields=['is_active'])
+        if hasattr(user, 'profile'):
+            user.profile.is_suspended = True
+            user.profile.save(update_fields=['is_suspended', 'updated_at'])
         messages.warning(request, f"User '{user.username}' has been suspended.")
     elif action == 'activate':
-        user.profile.is_suspended = False
-        user.profile.save(update_fields=['is_suspended', 'updated_at'])
+        user.is_active = True
+        user.save(update_fields=['is_active'])
+        if hasattr(user, 'profile'):
+            user.profile.is_suspended = False
+            user.profile.save(update_fields=['is_suspended', 'updated_at'])
         messages.success(request, f"User '{user.username}' has been activated.")
     elif action == 'reset_password':
         new_password = request.POST.get('new_password', '').strip()

@@ -13,6 +13,10 @@ from accounts.models import UserRole, TechnicianGroup
 @require_http_methods(['GET', 'POST'])
 def ticket_create(request):
 	issue_fields = IssueFormField.objects.filter(is_active=True).select_related('category').order_by('order', 'id')
+	if not issue_fields.exists():
+		from django.core.management import call_command
+		call_command('seed_glpi_workflow')
+		issue_fields = IssueFormField.objects.filter(is_active=True).select_related('category').order_by('order', 'id')
 	
 	# Initial category pre-selection if passed via query string ?category=<id>
 	initial_data = {}
@@ -167,6 +171,11 @@ def issue_form_builder(request):
 			return redirect('tickets:form_builder')
 
 	fields = IssueFormField.objects.select_related('category').all().order_by('order', 'id')
+	if not fields.exists():
+		from django.core.management import call_command
+		call_command('seed_glpi_workflow')
+		fields = IssueFormField.objects.select_related('category').all().order_by('order', 'id')
+	
 	categories = Category.objects.select_related('assigned_group').all()
 	technician_groups = TechnicianGroup.objects.all()
 	catalog_items = ServiceCatalogItem.objects.select_related('category').all().order_by('order', 'id')

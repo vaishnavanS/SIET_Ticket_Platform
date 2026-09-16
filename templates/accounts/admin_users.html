@@ -66,6 +66,14 @@
 </aside>
 
 <main class="page-shell">
+    {% if messages %}
+    <div class="alert-messages" style="margin-bottom: 20px;">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="page-heading">
         <div>
             <p class="eyebrow">USER MANAGEMENT</p>
@@ -193,10 +201,7 @@
                                 </form>
                                 {% endif %}
                                 <button class="text-button" type="button" onclick="openResetModal('{{ item.id }}', '{{ item.username }}')">Reset Pwd</button>
-                                <form method="post" action="{% url 'accounts:admin_user_action' item.id 'delete' %}" onsubmit="return confirm('Delete this user permanently?');">
-                                    {% csrf_token %}
-                                    <button class="text-button delete-button" type="submit">Delete</button>
-                                </form>
+                                <button class="text-button delete-button" type="button" onclick="openDeleteModal('{{ item.id }}', '{{ item.username|escapejs }}', '{{ item.profile.get_role_display|escapejs }}', {{ item.reported_tickets.count }}, {{ item.assigned_tickets.count }})">Delete</button>
                             </div>
                             {% else %}
                             <span class="muted">Current admin</span>
@@ -245,6 +250,65 @@
         </div>
     </div>
 
+    <!-- Admin Permanent User Delete Modal -->
+    <div id="adminDeleteModal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 520px;">
+            <div class="modal-header" style="border-bottom: 1px solid #fee2e2;">
+                <h3 style="color: #b91c1c; display: flex; align-items: center; gap: 8px;">
+                    <span>⚠️</span> Delete User Permanently
+                </h3>
+                <button type="button" class="modal-close" onclick="closeDeleteModal()">✕</button>
+            </div>
+            <form id="adminDeleteForm" method="post" action="">
+                {% csrf_token %}
+                <div class="modal-body" style="padding: 20px;">
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 14px; margin-bottom: 18px;">
+                        <p style="margin: 0 0 6px 0; color: #991b1b; font-size: 14px;">
+                            You are about to permanently delete user account: <strong id="deleteTargetUsername" style="font-size: 15px;"></strong> (<span id="deleteTargetRole"></span>)
+                        </p>
+                        <div id="deleteTargetStats" style="color: #b91c1c; font-size: 13px;"></div>
+                    </div>
+
+                    <p style="font-size: 13.5px; font-weight: 600; color: #1e293b; margin-bottom: 10px;">
+                        Choose how to handle tickets associated with this user:
+                    </p>
+
+                    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                        <!-- Option 1: Archive (Default & Recommended) -->
+                        <label style="display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 2px solid #15803d; border-radius: 8px; background: #f0fdf4; cursor: pointer;">
+                            <input type="radio" name="delete_mode" value="archive" checked style="margin-top: 3px;">
+                            <div>
+                                <strong style="color: #15803d; display: block; font-size: 14px;">Archive & Retain Tickets (Recommended)</strong>
+                                <span style="font-size: 12.5px; color: #475569; display: block; margin-top: 2px;">
+                                    Permanently deletes the user account, but reassigns tickets and comments to <strong>[Deleted User]</strong> so historical audit records and metrics are preserved.
+                                </span>
+                            </div>
+                        </label>
+
+                        <!-- Option 2: Complete Purge -->
+                        <label style="display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; cursor: pointer;">
+                            <input type="radio" name="delete_mode" value="purge" style="margin-top: 3px;">
+                            <div>
+                                <strong style="color: #b91c1c; display: block; font-size: 14px;">Complete Purge (Erase Tickets & User)</strong>
+                                <span style="font-size: 12.5px; color: #64748b; display: block; margin-top: 2px;">
+                                    Permanently deletes the user AND completely erases all tickets and comments created by this user from the system.
+                                </span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <p style="font-size: 12px; color: #64748b; margin: 0;">
+                        ℹ️ Note: If this user was an assigned technician, any tickets assigned to them will be safely unassigned back to the support queue.
+                    </p>
+                </div>
+                <div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="secondary-button" onclick="closeDeleteModal()">Cancel</button>
+                    <button type="submit" class="primary-button" style="background: #dc2626; color: white; border: none;">Permanently Delete User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </main>
 <script>
     function openResetModal(userId, username) {
@@ -261,9 +325,36 @@
         const modal = document.getElementById('adminResetModal');
         if (modal) modal.classList.remove('open');
     }
+
+    function openDeleteModal(userId, username, role, reportedCount, assignedCount) {
+        const modal = document.getElementById('adminDeleteModal');
+        const form = document.getElementById('adminDeleteForm');
+        const nameSpan = document.getElementById('deleteTargetUsername');
+        const roleSpan = document.getElementById('deleteTargetRole');
+        const statsDiv = document.getElementById('deleteTargetStats');
+        if (modal && form && nameSpan) {
+            form.action = `/accounts/admin/users/${userId}/delete/`;
+            nameSpan.textContent = username;
+            if (roleSpan) roleSpan.textContent = role;
+            if (statsDiv) {
+                let statsText = [];
+                if (reportedCount > 0) statsText.push(`${reportedCount} reported ticket(s)`);
+                if (assignedCount > 0) statsText.push(`${assignedCount} assigned ticket(s)`);
+                statsDiv.textContent = statsText.length ? `Associated records: ${statsText.join(', ')}.` : 'No associated tickets found.';
+            }
+            modal.classList.add('open');
+        }
+    }
+    function closeDeleteModal() {
+        const modal = document.getElementById('adminDeleteModal');
+        if (modal) modal.classList.remove('open');
+    }
+
     window.addEventListener('click', function(e) {
-        const modal = document.getElementById('adminResetModal');
-        if (e.target === modal) closeResetModal();
+        const resetModal = document.getElementById('adminResetModal');
+        if (e.target === resetModal) closeResetModal();
+        const deleteModal = document.getElementById('adminDeleteModal');
+        if (e.target === deleteModal) closeDeleteModal();
     });
 </script>
 <script src="{% static 'js/mobile_nav.js' %}?v=2.8"></script>

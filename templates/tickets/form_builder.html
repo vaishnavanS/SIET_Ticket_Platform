@@ -532,6 +532,8 @@
                         </select>`;
                     } else if (field.type === 'textarea') {
                         inputHtml = `<textarea placeholder="${field.help_text || 'Enter details...'}" rows="3" class="preview-input"></textarea>`;
+                    } else if (field.type === 'file') {
+                        inputHtml = `<input type="file" disabled style="background:#fafafa;">`;
                     } else {
                         inputHtml = `<input type="text" placeholder="${field.help_text || 'Enter details...'}" class="preview-input">`;
                     }
@@ -561,15 +563,18 @@
                 `;
                 previewContainer.appendChild(otherBlock);
 
-                // Add Attachment
-                const attachBlock = document.createElement('div');
-                attachBlock.className = 'field';
-                attachBlock.innerHTML = `
-                    <label>Attachment (Optional screenshot / photo)</label>
-                    <input type="file" disabled style="background:#fafafa;">
-                    <small class="field-help">Allowed formats: JPG, PNG, GIF. Max file size: 5MB.</small>
-                `;
-                previewContainer.appendChild(attachBlock);
+                // Add Attachment if not present in schema
+                const hasAttachmentInSchema = fieldsSchema.some(f => f.key === 'attachment' || f.type === 'file');
+                if (!hasAttachmentInSchema) {
+                    const attachBlock = document.createElement('div');
+                    attachBlock.className = 'field';
+                    attachBlock.innerHTML = `
+                        <label>Attachment (Optional screenshot / photo)</label>
+                        <input type="file" disabled style="background:#fafafa;">
+                        <small class="field-help">Allowed formats: JPG, PNG, GIF. Max file size: 5MB.</small>
+                    `;
+                    previewContainer.appendChild(attachBlock);
+                }
 
                 // Attach reactive event listener to preview inputs
                 const previewInputs = previewContainer.querySelectorAll('.preview-input');

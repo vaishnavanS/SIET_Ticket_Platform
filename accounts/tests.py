@@ -216,3 +216,130 @@ class PasswordResetTests(TestCase):
         # Verify user can log in with new password
         login_success = self.client.login(username='user_verified', password='BrandNewPass123!')
         self.assertTrue(login_success)
+
+
+class AdminUserActionTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.admin = User.objects.create_superuser(
+            username='admin_test',
+            email='admin@siet.edu.in',
+            password='Password123!'
+        )
+        self.admin.profile.role = UserRole.ADMIN
+        self.admin.profile.save()
+
+        self.clean_user = User.objects.create_user(
+            username='clean_user',
+            email='clean@siet.edu.in',
+            password='Password123!'
+        )
+
+        self.protected_user = User.objects.create_user(
+            username='protected_user',
+            email='protected@siet.edu.in',
+            password='Password123!'
+        )
+
+        from tickets.models import Category, Ticket, TicketComment, TicketHistory
+        self.category = Category.objects.create(name='Hardware Test')
+        self.ticket = Ticket.objects.create(
+            title='Test Ticket',
+            description='Test Desc',
+            category=self.category,
+            location='Lab 1',
+            reporter=self.protected_user
+        )
+        self.comment = TicketComment.objects.create(
+            ticket=self.ticket,
+            author=self.protected_user,
+            content='User comment'
+        )
+        self.history = TicketHistory.objects.create(
+            ticket=self.ticket,
+            changed_by=self.protected_user,
+            field_name='status',
+            old_value='Open',
+            new_value='In Progress'
+        )
+
+    def test_delete_user_without_tickets_deletes_permanently(self):
+        self.client.login(username='admin_test', password='Password123!')
+        url = reverse('accounts:admin_user_action', kwargs={'user_id': self.clean_user.id, 'action': 'delete'})
+        res = self.client.post(url, {'delete_mode': 'archive'}, follow=True)
+        self.assertEqual(res.status_code, 200)
+        self.assertFalse(User.objects.filter(id=self.clean_user.id).exists())
+        self.assertContains(res, "was permanently deleted")
+
+    def test_delete_user_with_tickets_archive_mode(self):
+        self.client.login(username='admin_test', password='Password123!')
+        url = reverse('accounts:admin_user_action', kwargs={'user_id': self.protected_user.id, 'action': 'delete'})
+        res = self.client.post(url, {'delete_mode': 'archive'}, follow=True)
+        self.assertEqual(res.status_code, 200)
+
+        # User is permanently deleted from auth_user
+        self.assertFalse(User.objects.filter(id=self.protected_user.id).exists())
+
+        # Ticket and comment are preserved under system archive 'deleted_user'
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.reporter.username, 'deleted_user')
+        self.comment.refresh_from_db()
+        self.assertEqual(self.comment.author.username, 'deleted_user')
+        self.history.refresh_from_db()
+        self.assertEqual(self.history.changed_by.username, 'deleted_user')
+
+        self.assertContains(res, "archived under")
+        self.assertContains(res, "[Deleted User]")
+
+    def test_delete_user_with_tickets_purge_mode(self):
+        from tickets.models import Ticket, TicketComment, TicketHistory
+        self.client.login(username='admin_test', password='Password123!')
+        url = reverse('accounts:admin_user_action', kwargs={'user_id': self.protected_user.id, 'action': 'delete'})
+        res = self.client.post(url, {'delete_mode': 'purge'}, follow=True)
+        self.assertEqual(res.status_code, 200)
+
+        # User and tickets are completely wiped
+        self.assertFalse(User.objects.filter(id=self.protected_user.id).exists())
+        self.assertFalse(Ticket.objects.filter(id=self.ticket.id).exists())
+        self.assertFalse(TicketComment.objects.filter(id=self.comment.id).exists())
+        self.assertFalse(TicketHistory.objects.filter(id=self.history.id).exists())
+        self.assertContains(res, "permanently purged")
+
+    def test_delete_technician_unassigns_tickets(self):
+        from tickets.models import Ticket
+        tech = User.objects.create_user(
+            username='tech_to_delete',
+            email='tech.del@siet.edu.in',
+            password='Password123!'
+        )
+        tech.profile.role = UserRole.TECHNICIAN
+        tech.profile.save()
+
+        assigned_ticket = Ticket.objects.create(
+            title='Assigned Tech Ticket',
+            description='Testing technician deletion',
+            category=self.category,
+            location='Lab 2',
+            reporter=self.clean_user,
+            assigned_technician=tech
+        )
+
+        self.client.login(username='admin_test', password='Password123!')
+        url = reverse('accounts:admin_user_action', kwargs={'user_id': tech.id, 'action': 'delete'})
+        res = self.client.post(url, {'delete_mode': 'archive'}, follow=True)
+        self.assertEqual(res.status_code, 200)
+
+        # Technician deleted
+        self.assertFalse(User.objects.filter(id=tech.id).exists())
+
+        # Ticket still exists and assigned_technician is set to None
+        assigned_ticket.refresh_from_db()
+        self.assertIsNone(assigned_ticket.assigned_technician)
+
+    def test_admin_cannot_delete_self(self):
+        self.client.login(username='admin_test', password='Password123!')
+        url = reverse('accounts:admin_user_action', kwargs={'user_id': self.admin.id, 'action': 'delete'})
+        res = self.client.post(url, {'delete_mode': 'purge'}, follow=True)
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(User.objects.filter(id=self.admin.id).exists())
+        self.assertContains(res, "cannot delete or modify your own active admin account")
