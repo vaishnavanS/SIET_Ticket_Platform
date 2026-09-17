@@ -2,9 +2,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon.png' %}">
-    <link rel="apple-touch-icon" href="{% static 'images/favicon.png' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}?v=3">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon.png' %}?v=3">
+    <link rel="apple-touch-icon" href="{% static 'images/favicon.png' %}?v=3">
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Create User - SIET Helpdesk</title><link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}"></head>
 <body>
 <header class="topbar"><strong>SIET Helpdesk</strong><nav class="admin-nav"><a href="{% url 'accounts:admin_dashboard' %}">Overview</a><a class="active" href="{% url 'accounts:admin_users' %}">Users</a><a href="{% url 'accounts:admin_tickets' %}">Issue reports</a><a href="{% url 'accounts:admin_groups' %}">Technician groups</a><a href="{% url 'accounts:admin_categories' %}">Categories</a><a href="{% url 'tickets:form_builder' %}">Issue form</a><a class="logout" href="{% url 'accounts:logout' %}">Logout</a></nav></header>
