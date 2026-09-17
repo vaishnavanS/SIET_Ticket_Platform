@@ -1,6 +1,6 @@
 import os
 from django import forms
-from .models import Ticket, TicketStatus, TicketUrgency, IssueFormField, ServiceCatalogItem
+from .models import Ticket, TicketStatus, TicketUrgency, IssueFormField, ServiceCatalogItem, get_admin_max_upload_size_bytes
 
 
 from django.utils.text import slugify
@@ -83,7 +83,9 @@ class TicketCreateForm(forms.ModelForm):
             if f.field_type == IssueFormField.FieldType.FILE:
                 max_size_map[f.field_key] = f.max_file_size_mb
         
-        global_max_mb = max_size_map.get('attachment', 5)
+        admin_max_bytes = get_admin_max_upload_size_bytes()
+        admin_max_mb = int(admin_max_bytes / (1024 * 1024))
+        global_max_mb = max_size_map.get('attachment', admin_max_mb)
         allowed_ticket_extensions = ['jpg', 'jpeg', 'png', 'gif']
         
         attachment = cleaned_data.get('attachment')

@@ -20,10 +20,16 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
+import os
+import secrets
+
+DEFAULT_ADMIN_PATH = secrets.token_hex(8)
+ADMIN_URL_PATH = os.getenv('ADMIN_URL_PATH', DEFAULT_ADMIN_PATH).strip('/')
+
 urlpatterns = [
     path('', RedirectView.as_view(url='/accounts/login/', permanent=False), name='home'),
     path('favicon.ico', RedirectView.as_view(url=settings.STATIC_URL + 'images/favicon.ico', permanent=True)),
-    path('admin/', admin.site.urls),
+    path(f'{ADMIN_URL_PATH}/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('tickets/', include('tickets.urls')),
 ]

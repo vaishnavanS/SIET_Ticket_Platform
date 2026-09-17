@@ -108,6 +108,18 @@ class ServiceCatalogItem(models.Model):
 
 
 
+def get_admin_max_upload_size_bytes():
+    """Returns max upload size in bytes configured by admin in IssueFormField or settings"""
+    try:
+        field = IssueFormField.objects.filter(field_key__in=['attachment', 'problem_attachment', 'file_upload'], is_active=True).first()
+        if field and field.max_file_size_mb:
+            return field.max_file_size_mb * 1024 * 1024
+    except Exception:
+        pass
+    from django.conf import settings
+    return getattr(settings, 'MAX_UPLOAD_SIZE', 5 * 1024 * 1024)
+
+
 class Ticket(models.Model):
     """Main ticket model for issue tracking"""
     ticket_number = models.PositiveIntegerField(unique=True, editable=False, blank=True)
@@ -157,16 +169,16 @@ class Ticket(models.Model):
     def clean(self):
         """Validate attachment file"""
         if self.attachment:
-            # Check file size
-            max_size = 5 * 1024 * 1024  # 5MB
-            if self.attachment.size > max_size:
-                raise ValidationError(f"File size exceeds {max_size / (1024*1024)}MB limit")
+            max_size = get_admin_max_upload_size_bytes()
+            max_mb = max_size / (1024 * 1024)
+            if hasattr(self.attachment, 'size') and self.attachment.size > max_size:
+                raise ValidationError(f"File size exceeds {max_mb:.0f}MB limit configured by administrator.")
             
-            # Check file extension
             allowed_extensions = ['jpg', 'jpeg', 'png', 'gif']
-            ext = os.path.splitext(self.attachment.name)[1][1:].lower()
+            ext = os.path.splitext(self.attachment.name)[1].lstrip('.').lower()
             if ext not in allowed_extensions:
                 raise ValidationError(f"File type not allowed. Allowed: {', '.join(allowed_extensions)}")
+
     
     def save(self, *args, **kwargs):
         self.clean()
@@ -240,28 +252,31 @@ class Ticket(models.Model):
         return None
     
     def _get_available_technician_roundrobin(self):
-        """Get available technician using round-robin from all technicians"""
+        """Get available technician using round-robin from all technicians with row locking"""
         from accounts.models import UserProfile
         
-        tech_profiles = UserProfile.objects.filter(role='technician', is_active=True, is_suspended=False)
-        available_techs = []
-        
-        for profile in tech_profiles:
-            user = profile.user
-            active_count = Ticket.objects.filter(
-                assigned_technician=user,
-                status__in=['open', 'in_progress']
-            ).count()
+        with transaction.atomic():
+            tech_profiles = UserProfile.objects.select_for_update().filter(
+                role='technician', is_active=True, is_suspended=False
+            ).select_related('user')
+            available_techs = []
             
-            if active_count < profile.max_active_tickets:
-                available_techs.append((user, active_count))
-        
-        if available_techs:
-            # Sort by active count and return the one with least tickets
-            available_techs.sort(key=lambda x: x[1])
-            return available_techs[0][0]
-        
-        return None
+            for profile in tech_profiles:
+                user = profile.user
+                active_count = Ticket.objects.filter(
+                    assigned_technician=user,
+                    status__in=['open', 'in_progress']
+                ).count()
+                
+                if active_count < profile.max_active_tickets:
+                    available_techs.append((user, active_count))
+            
+            if available_techs:
+                # Sort by active count and return the one with least tickets
+                available_techs.sort(key=lambda x: x[1])
+                return available_techs[0][0]
+            
+            return None
     
     def check_sla_breach(self):
         """Check if ticket has breached SLA"""
@@ -313,14 +328,15 @@ class TicketComment(models.Model):
     def clean(self):
         """Validate comment attachment file size and allowed extensions"""
         if self.attachment:
-            max_size = 5 * 1024 * 1024  # 5MB
+            max_size = get_admin_max_upload_size_bytes()
+            max_mb = max_size / (1024 * 1024)
             if hasattr(self.attachment, 'size') and self.attachment.size > max_size:
-                raise ValidationError("Attachment exceeds 5MB size limit.")
+                raise ValidationError(f"Attachment exceeds {max_mb:.0f}MB limit configured by administrator.")
             
-            allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'docx', 'txt', 'zip']
+            allowed_extensions = ['jpg', 'jpeg', 'png', 'gif']
             ext = os.path.splitext(self.attachment.name)[1].lstrip('.').lower()
             if ext not in allowed_extensions:
-                raise ValidationError(f"File type '.{ext}' is not allowed. Allowed formats: {', '.join(allowed_extensions)}")
+                raise ValidationError(f"File type not allowed. Allowed: {', '.join(allowed_extensions)}")
 
     def save(self, *args, **kwargs):
         self.clean()

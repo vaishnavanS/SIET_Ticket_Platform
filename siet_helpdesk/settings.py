@@ -50,16 +50,24 @@ DEBUG = os.getenv('DJANGO_DEBUG', os.getenv('DEBUG', 'False')).lower() in ('true
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', os.getenv('SECRET_KEY'))
 if not SECRET_KEY:
+    raise ValueError(
+        "DJANGO_SECRET_KEY environment variable is missing. "
+        "A secure SECRET_KEY must be set in your .env file or environment."
+    )
+
+# Explicitly require DJANGO_ALLOWED_HOSTS; default to local IPs in debug only
+raw_allowed_hosts = os.getenv('DJANGO_ALLOWED_HOSTS', os.getenv('ALLOWED_HOSTS'))
+if not raw_allowed_hosts:
     if DEBUG:
-        SECRET_KEY = 'django-insecure-dev-only-key-not-for-production-use'
+        ALLOWED_HOSTS = list(LOCAL_IPS)
     else:
         raise ValueError(
-            "DJANGO_SECRET_KEY environment variable is required when running with DEBUG=False. "
-            "Please set a secure SECRET_KEY in your .env file."
+            "DJANGO_ALLOWED_HOSTS environment variable is required when running with DEBUG=False. "
+            "Please specify allowed hostnames or IPs in your .env file."
         )
+else:
+    ALLOWED_HOSTS = [h.strip() for h in raw_allowed_hosts.split(',') if h.strip()]
 
-# Allow all hosts in LAN / development mode, or configure via env
-ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', os.getenv('ALLOWED_HOSTS', '*')).split(',') if h.strip()]
 
 
 # Dynamic CSRF Trusted Origins for LAN Access (Supports changing IPs across Wi-Fi/Ethernet)
@@ -144,16 +152,23 @@ if 'sqlite' in DB_ENGINE:
         }
     }
 else:
+    db_password = os.getenv('DB_PASSWORD')
+    if not db_password:
+        raise ValueError(
+            "DB_PASSWORD environment variable is required when using MySQL. "
+            "Please configure DB_PASSWORD in your .env file."
+        )
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': os.getenv('DB_NAME', 'siet_ticket_db'),
             'USER': os.getenv('DB_USER', 'siet_user'),
-            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'PASSWORD': db_password,
             'HOST': os.getenv('DB_HOST', '127.0.0.1'),
             'PORT': os.getenv('DB_PORT', '3306'),
         }
     }
+
 
 
 
@@ -229,14 +244,17 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'SIET Helpdesk <helpdesk@si
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Production Security Headers
+# Production Security Settings
 if not DEBUG:
-    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True').lower() in ('true', '1')
+    SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'True').lower() in ('true', '1')
+    CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'True').lower() in ('true', '1')
+    SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
     X_FRAME_OPTIONS = 'DENY'
-    if os.getenv('SECURE_SSL_REDIRECT', 'False').lower() in ('true', '1'):
-        SECURE_SSL_REDIRECT = True
-        SESSION_COOKIE_SECURE = True
-        CSRF_COOKIE_SECURE = True
+
 
 

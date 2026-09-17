@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import User
 from django.core.validators import MinLengthValidator
 from django.utils import timezone
@@ -51,29 +51,35 @@ class TechnicianGroup(models.Model):
     
     def get_available_technician(self):
         """
-        Get the technician in this group with the lowest active ticket count
-        Returns None if all technicians are at max capacity
+        Get the technician in this group with the lowest active ticket count.
+        Uses transaction and row-level locking to prevent concurrent duplicate assignment.
+        Returns None if all technicians are at max capacity.
         """
         from tickets.models import Ticket
         
-        available_techs = []
-        for tech in self.technicians.filter(profile__is_active=True, profile__is_suspended=False):
-            active_count = Ticket.objects.filter(
-                assigned_technician=tech,
-                status__in=['open', 'in_progress']
-            ).count()
+        with transaction.atomic():
+            available_techs = []
+            tech_qs = self.technicians.select_for_update().filter(
+                profile__is_active=True, profile__is_suspended=False
+            ).select_related('profile')
+
+            for tech in tech_qs:
+                active_count = Ticket.objects.filter(
+                    assigned_technician=tech,
+                    status__in=['open', 'in_progress']
+                ).count()
+                
+                max_allowed = tech.profile.max_active_tickets if hasattr(tech, 'profile') else self.max_tickets_per_tech
+                
+                if active_count < max_allowed:
+                    available_techs.append((tech, active_count))
             
-            max_allowed = tech.profile.max_active_tickets if hasattr(tech, 'profile') else self.max_tickets_per_tech
+            if available_techs:
+                # Sort by active count and return the one with least tickets
+                available_techs.sort(key=lambda x: x[1])
+                return available_techs[0][0]
             
-            if active_count < max_allowed:
-                available_techs.append((tech, active_count))
-        
-        if available_techs:
-            # Sort by active count and return the one with least tickets
-            available_techs.sort(key=lambda x: x[1])
-            return available_techs[0][0]
-        
-        return None
+            return None
     
     class Meta:
         ordering = ['name']

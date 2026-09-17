@@ -684,6 +684,7 @@ def password_reset_request_view(request):
                 # To prevent user enumeration, show the generic confirmation even if account is not found
                 request.session['reset_email_masked'] = "your registered email address"
 
+            messages.info(request, "If an account matches, a reset link has been sent.")
             return redirect('accounts:password_reset_done')
 
     return render(request, 'accounts/password_reset.html', {
