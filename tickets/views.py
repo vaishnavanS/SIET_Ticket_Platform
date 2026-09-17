@@ -5,6 +5,7 @@ from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 from .forms import TicketCreateForm, AdminTicketForm, IssueFormFieldForm, ServiceCatalogItemForm
 from .models import Ticket, IssueFormField, TicketStatus, TicketComment, TicketHistory, ServiceCatalogItem, Category
 from accounts.models import UserRole, TechnicianGroup
@@ -326,7 +327,8 @@ def my_tickets(request):
 	all_tickets = Ticket.objects.filter(reporter=request.user).select_related('category', 'assigned_technician', 'assigned_group').order_by('-created_at')
 	
 	for t in all_tickets:
-		t.check_sla_breach()
+		if not t.is_sla_breached and t.status not in [TicketStatus.RESOLVED, TicketStatus.CLOSED]:
+			t.check_sla_breach()
 	
 	filtered_tickets = all_tickets
 	if status_filter in dict(TicketStatus.choices):
@@ -495,14 +497,20 @@ def ticket_update_status(request, pk):
 
 	if comment_text or request.FILES.get('attachment'):
 		attachment = request.FILES.get('attachment')
-		TicketComment.objects.create(
-			ticket=ticket,
-			author=request.user,
-			content=comment_text or f"Status updated to {ticket.get_status_display()}.",
-			attachment=attachment
-		)
-		if not new_status or new_status == ticket.status:
-			messages.success(request, "Status note added successfully.")
+		try:
+			comment = TicketComment(
+				ticket=ticket,
+				author=request.user,
+				content=comment_text or f"Status updated to {ticket.get_status_display()}.",
+				attachment=attachment
+			)
+			comment.full_clean()
+			comment.save()
+			if not new_status or new_status == ticket.status:
+				messages.success(request, "Status note added successfully.")
+		except ValidationError as e:
+			err_msg = "; ".join(e.messages) if hasattr(e, 'messages') else str(e)
+			messages.error(request, f"Attachment error: {err_msg}")
 
 	return redirect(f"/tickets/{ticket.pk}/#status")
 
@@ -577,12 +585,19 @@ def ticket_confirm_resolution(request, pk):
 		)
 
 		attachment = request.FILES.get('reopen_attachment')
-		TicketComment.objects.create(
-			ticket=ticket,
-			author=request.user,
-			content=f"↺ ISSUE REOPENED BY CLIENT ({request.user.username}):\n{reopen_reason}",
-			attachment=attachment
-		)
+		try:
+			comment = TicketComment(
+				ticket=ticket,
+				author=request.user,
+				content=f"↺ ISSUE REOPENED BY CLIENT ({request.user.username}):\n{reopen_reason}",
+				attachment=attachment
+			)
+			comment.full_clean()
+			comment.save()
+		except ValidationError as e:
+			err_msg = "; ".join(e.messages) if hasattr(e, 'messages') else str(e)
+			messages.error(request, f"Attachment error: {err_msg}")
+			return redirect('tickets:detail', pk=ticket.pk)
 
 		if ticket.assigned_technician:
 			TicketNotification.objects.create(
@@ -615,12 +630,19 @@ def ticket_add_comment(request, pk):
 	attachment = request.FILES.get('attachment')
 
 	if content or attachment:
-		TicketComment.objects.create(
-			ticket=ticket,
-			author=request.user,
-			content=content,
-			attachment=attachment
-		)
+		try:
+			comment = TicketComment(
+				ticket=ticket,
+				author=request.user,
+				content=content,
+				attachment=attachment
+			)
+			comment.full_clean()
+			comment.save()
+		except ValidationError as e:
+			err_msg = "; ".join(e.messages) if hasattr(e, 'messages') else str(e)
+			messages.error(request, f"Attachment error: {err_msg}")
+			return redirect('tickets:detail', pk=ticket.pk)
 
 		# Notify other party
 		from .models import TicketNotification

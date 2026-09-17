@@ -11,16 +11,16 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+import socket
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from .env if present
+load_dotenv(BASE_DIR / '.env')
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
-import os
-import socket
 
 # Dynamic LAN IP detection for local network and multi-device access
 def get_local_lan_ips():
@@ -44,14 +44,23 @@ def get_local_lan_ips():
 
 LOCAL_IPS = get_local_lan_ips()
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-09-=+gl^$63bv3_zhl!h=znr)y&ji)rs*15wy33f$d^j5&m=y9')
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
+DEBUG = os.getenv('DJANGO_DEBUG', os.getenv('DEBUG', 'False')).lower() in ('true', '1', 'yes')
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', os.getenv('SECRET_KEY'))
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-dev-only-key-not-for-production-use'
+    else:
+        raise ValueError(
+            "DJANGO_SECRET_KEY environment variable is required when running with DEBUG=False. "
+            "Please set a secure SECRET_KEY in your .env file."
+        )
 
 # Allow all hosts in LAN / development mode, or configure via env
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '*').split(',') if os.getenv('DJANGO_ALLOWED_HOSTS') else ['*']
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', os.getenv('ALLOWED_HOSTS', '*')).split(',') if h.strip()]
+
 
 # Dynamic CSRF Trusted Origins for LAN Access (Supports changing IPs across Wi-Fi/Ethernet)
 CSRF_TRUSTED_ORIGINS = [
@@ -140,11 +149,12 @@ else:
             'ENGINE': 'django.db.backends.mysql',
             'NAME': os.getenv('DB_NAME', 'siet_ticket_db'),
             'USER': os.getenv('DB_USER', 'siet_user'),
-            'PASSWORD': os.getenv('DB_PASSWORD', 'Password123!'),
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
             'HOST': os.getenv('DB_HOST', '127.0.0.1'),
             'PORT': os.getenv('DB_PORT', '3306'),
         }
     }
+
 
 
 
@@ -218,4 +228,15 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'SIET Helpdesk <helpdesk@si
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Production Security Headers
+if not DEBUG:
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    if os.getenv('SECURE_SSL_REDIRECT', 'False').lower() in ('true', '1'):
+        SECURE_SSL_REDIRECT = True
+        SESSION_COOKIE_SECURE = True
+        CSRF_COOKIE_SECURE = True
+
 

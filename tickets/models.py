@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction, IntegrityError
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -171,11 +171,6 @@ class Ticket(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         
-        # Generate ticket_number if not set
-        if not self.ticket_number:
-            last_ticket = Ticket.objects.all().order_by('-ticket_number').first()
-            self.ticket_number = (last_ticket.ticket_number + 1) if last_ticket else 1
-        
         # Set assigned_at when status changes to in_progress
         if self.status == TicketStatus.IN_PROGRESS and not self.assigned_at:
             self.assigned_at = timezone.now()
@@ -188,7 +183,23 @@ class Ticket(models.Model):
                 self.is_sla_breached = True
                 self.sla_breach_type = 'resolution'
         
-        super().save(*args, **kwargs)
+        # Generate ticket_number atomically with retry to prevent concurrent collision
+        if not self.ticket_number:
+            for attempt in range(5):
+                try:
+                    with transaction.atomic():
+                        max_ticket = Ticket.objects.select_for_update().order_by('-ticket_number').first()
+                        self.ticket_number = (max_ticket.ticket_number + 1) if (max_ticket and max_ticket.ticket_number) else 1
+                        super().save(*args, **kwargs)
+                        return
+                except IntegrityError:
+                    if attempt == 4:
+                        raise
+                    self.ticket_number = None
+                    continue
+        else:
+            super().save(*args, **kwargs)
+
 
 
     
@@ -298,6 +309,23 @@ class TicketComment(models.Model):
     
     def __str__(self):
         return f"Comment by {self.author.username} on Ticket #{self.ticket.ticket_number}"
+
+    def clean(self):
+        """Validate comment attachment file size and allowed extensions"""
+        if self.attachment:
+            max_size = 5 * 1024 * 1024  # 5MB
+            if hasattr(self.attachment, 'size') and self.attachment.size > max_size:
+                raise ValidationError("Attachment exceeds 5MB size limit.")
+            
+            allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'docx', 'txt', 'zip']
+            ext = os.path.splitext(self.attachment.name)[1].lstrip('.').lower()
+            if ext not in allowed_extensions:
+                raise ValidationError(f"File type '.{ext}' is not allowed. Allowed formats: {', '.join(allowed_extensions)}")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
 
 
 class TicketHistory(models.Model):

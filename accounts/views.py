@@ -639,16 +639,12 @@ def password_reset_request_view(request):
                 Q(username__iexact=identity) | Q(email__iexact=identity)
             ).first()
 
-            if not user:
-                error = "No account found with this username or email address. Please check your spelling or contact the site administrator."
-            elif getattr(user, 'profile', None) and user.profile.is_suspended:
-                error = "Your account is currently suspended. Please contact the site administrator."
-            elif not user.email or not user.email.strip():
-                error = "Your account exists, but no email address is registered. Please contact the site administrator to reset your password."
-            elif getattr(user, 'profile', None) and not user.profile.is_email_verified:
-                error = "Your account exists, but your email is not verified. Please contact the site administrator."
-            else:
-                # Valid user with registered & verified email -> Dispatch password reset token
+            # Only dispatch reset email if user exists, not suspended, has email, and is verified
+            profile = getattr(user, 'profile', None) if user else None
+            is_suspended = profile.is_suspended if profile else False
+            is_verified = profile.is_email_verified if profile else True
+
+            if user and not is_suspended and user.email and is_verified:
                 from django.utils.http import urlsafe_base64_encode
                 from django.utils.encoding import force_bytes
                 from django.contrib.auth.tokens import default_token_generator
@@ -684,7 +680,11 @@ def password_reset_request_view(request):
                     logger.error(f"Failed to dispatch password reset email to {user.email}: {e}")
 
                 request.session['reset_email_masked'] = mask_email_display(user.email)
-                return redirect('accounts:password_reset_done')
+            else:
+                # To prevent user enumeration, show the generic confirmation even if account is not found
+                request.session['reset_email_masked'] = "your registered email address"
+
+            return redirect('accounts:password_reset_done')
 
     return render(request, 'accounts/password_reset.html', {
         'error': error,

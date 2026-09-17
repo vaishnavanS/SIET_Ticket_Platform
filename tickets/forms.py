@@ -1,3 +1,4 @@
+import os
 from django import forms
 from .models import Ticket, TicketStatus, TicketUrgency, IssueFormField, ServiceCatalogItem
 
@@ -83,20 +84,31 @@ class TicketCreateForm(forms.ModelForm):
                 max_size_map[f.field_key] = f.max_file_size_mb
         
         global_max_mb = max_size_map.get('attachment', 5)
+        allowed_ticket_extensions = ['jpg', 'jpeg', 'png', 'gif']
         
         attachment = cleaned_data.get('attachment')
-        if attachment and hasattr(attachment, 'size'):
-            limit_bytes = global_max_mb * 1024 * 1024
-            if attachment.size > limit_bytes:
-                self.add_error('attachment', f"File size ({attachment.size / (1024*1024):.1f} MB) exceeds maximum allowed limit of {global_max_mb} MB.")
+        if attachment:
+            if hasattr(attachment, 'size'):
+                limit_bytes = global_max_mb * 1024 * 1024
+                if attachment.size > limit_bytes:
+                    self.add_error('attachment', f"File size ({attachment.size / (1024*1024):.1f} MB) exceeds maximum allowed limit of {global_max_mb} MB.")
+            
+            ext = os.path.splitext(attachment.name)[1].lstrip('.').lower()
+            if ext not in allowed_ticket_extensions:
+                self.add_error('attachment', f"File type '.{ext}' is not allowed. Allowed image formats: {', '.join(allowed_ticket_extensions)}.")
 
         for key, max_mb in max_size_map.items():
             if key != 'attachment':
                 file_obj = cleaned_data.get(key)
-                if file_obj and hasattr(file_obj, 'size'):
-                    limit_bytes = max_mb * 1024 * 1024
-                    if file_obj.size > limit_bytes:
-                        self.add_error(key, f"File size ({file_obj.size / (1024*1024):.1f} MB) exceeds maximum allowed limit of {max_mb} MB.")
+                if file_obj:
+                    if hasattr(file_obj, 'size'):
+                        limit_bytes = max_mb * 1024 * 1024
+                        if file_obj.size > limit_bytes:
+                            self.add_error(key, f"File size ({file_obj.size / (1024*1024):.1f} MB) exceeds maximum allowed limit of {max_mb} MB.")
+                    allowed_doc_extensions = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'docx', 'txt', 'zip']
+                    doc_ext = os.path.splitext(file_obj.name)[1].lstrip('.').lower()
+                    if doc_ext not in allowed_doc_extensions:
+                        self.add_error(key, f"File type '.{doc_ext}' is not allowed. Allowed formats: {', '.join(allowed_doc_extensions)}.")
 
         return cleaned_data
 

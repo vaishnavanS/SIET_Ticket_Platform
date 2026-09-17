@@ -505,6 +505,73 @@ class FormBuilderTests(TestCase):
         self.assertContains(res, 'IT Service Catalog')
 
 
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.exceptions import ValidationError
+from tickets.forms import TicketCreateForm
+
+class SecurityAndConcurrencyTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='sec_user', password='Password123!')
+        self.category = Category.objects.create(name='Hardware')
+        self.ticket = Ticket.objects.create(
+            title='Test Ticket',
+            description='Testing security',
+            category=self.category,
+            reporter=self.user,
+            location='Lab 1'
+        )
+
+    def test_comment_attachment_rejects_dangerous_extensions(self):
+        """Comment attachment should reject executables and scripts"""
+        bad_file = SimpleUploadedFile("malware.exe", b"binary content", content_type="application/octet-stream")
+        comment = TicketComment(
+            ticket=self.ticket,
+            author=self.user,
+            content="Check this tool",
+            attachment=bad_file
+        )
+        with self.assertRaises(ValidationError):
+            comment.clean()
+
+    def test_comment_attachment_accepts_valid_extensions(self):
+        """Comment attachment should allow safe images and documents"""
+        good_img = SimpleUploadedFile("screenshot.png", b"fake image bytes", content_type="image/png")
+        comment = TicketComment(
+            ticket=self.ticket,
+            author=self.user,
+            content="Screenshot of error",
+            attachment=good_img
+        )
+        comment.clean()  # Should not raise
+        comment.save()
+        self.assertIsNotNone(comment.pk)
+
+    def test_ticket_form_rejects_non_image_extension_with_form_error(self):
+        """Ticket creation form should reject non-image attachments gracefully without 500 error"""
+        pdf_file = SimpleUploadedFile("doc.pdf", b"%PDF-1.4 dummy", content_type="application/pdf")
+        form = TicketCreateForm(
+            data={
+                'title': 'Broken Printer',
+                'description': 'Needs toner',
+                'urgency': TicketUrgency.MEDIUM,
+                'location': 'Staff room'
+            },
+            files={'attachment': pdf_file}
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn('attachment', form.errors)
+        self.assertIn('File type \'.pdf\' is not allowed', form.errors['attachment'][0])
+
+    def test_ticket_number_generation_sequential_and_unique(self):
+        """Sequential ticket number generation should produce unique incrementing numbers"""
+        t1 = Ticket.objects.create(title='T1', category=self.category, reporter=self.user, location='L1')
+        t2 = Ticket.objects.create(title='T2', category=self.category, reporter=self.user, location='L2')
+        t3 = Ticket.objects.create(title='T3', category=self.category, reporter=self.user, location='L3')
+        self.assertTrue(t1.ticket_number < t2.ticket_number < t3.ticket_number)
+        self.assertEqual(len({t1.ticket_number, t2.ticket_number, t3.ticket_number}), 3)
+
+
+
 
 
 

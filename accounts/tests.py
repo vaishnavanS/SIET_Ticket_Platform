@@ -147,24 +147,32 @@ class PasswordResetTests(TestCase):
         self.assertContains(res, "Please enter your username or registered email address")
 
     def test_reset_non_existent_account(self):
-        res = self.client.post(reverse('accounts:password_reset'), {'identity': 'unknown_person'})
+        mail.outbox = []
+        res = self.client.post(reverse('accounts:password_reset'), {'identity': 'unknown_person'}, follow=True)
         self.assertEqual(res.status_code, 200)
-        self.assertContains(res, "No account found with this username or email address")
+        self.assertTemplateUsed(res, 'accounts/password_reset_done.html')
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_reset_suspended_account(self):
-        res = self.client.post(reverse('accounts:password_reset'), {'identity': 'user_suspended'})
+        mail.outbox = []
+        res = self.client.post(reverse('accounts:password_reset'), {'identity': 'user_suspended'}, follow=True)
         self.assertEqual(res.status_code, 200)
-        self.assertContains(res, "Your account is currently suspended")
+        self.assertTemplateUsed(res, 'accounts/password_reset_done.html')
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_reset_no_email_account(self):
-        res = self.client.post(reverse('accounts:password_reset'), {'identity': 'user_no_email'})
+        mail.outbox = []
+        res = self.client.post(reverse('accounts:password_reset'), {'identity': 'user_no_email'}, follow=True)
         self.assertEqual(res.status_code, 200)
-        self.assertContains(res, "no email address is registered")
+        self.assertTemplateUsed(res, 'accounts/password_reset_done.html')
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_reset_unverified_email_account(self):
-        res = self.client.post(reverse('accounts:password_reset'), {'identity': 'user_unverified'})
+        mail.outbox = []
+        res = self.client.post(reverse('accounts:password_reset'), {'identity': 'user_unverified'}, follow=True)
         self.assertEqual(res.status_code, 200)
-        self.assertContains(res, "your email is not verified")
+        self.assertTemplateUsed(res, 'accounts/password_reset_done.html')
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_reset_valid_username_success(self):
         mail.outbox = []
