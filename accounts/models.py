@@ -42,12 +42,35 @@ class TechnicianGroup(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
     max_tickets_per_tech = models.IntegerField(default=8, help_text="Max tickets per technician in this group")
+    location_condition = models.CharField(
+        max_length=255, 
+        blank=True, 
+        default='', 
+        help_text="Comma-separated campus location keywords, e.g. 'Hostel, Boys Hostel' or 'Tech Park, Lab'"
+    )
+    campus_locations = models.ManyToManyField('tickets.CampusLocation', related_name='technician_groups', blank=True)
     technicians = models.ManyToManyField(User, related_name='technician_groups', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
         return self.name
+
+    def matches_location(self, location_str, campus_loc=None):
+        """Check if this group matches the specified ticket campus location or keyword"""
+        if campus_loc and self.campus_locations.filter(pk=campus_loc.pk).exists():
+            return True
+        if location_str:
+            loc_str = location_str.lower()
+            for cl in self.campus_locations.all():
+                if cl.name.lower() in loc_str:
+                    return True
+            if self.location_condition:
+                keywords = [k.strip().lower() for k in self.location_condition.split(',') if k.strip()]
+                for kw in keywords:
+                    if kw in loc_str:
+                        return True
+        return False
     
     def get_available_technician(self):
         """

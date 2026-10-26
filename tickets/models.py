@@ -36,7 +36,21 @@ class Category(models.Model):
     
     class Meta:
         verbose_name_plural = "Categories"
+class CampusLocation(models.Model):
+    """Admin-managed campus locations / buildings / blocks"""
+    name = models.CharField(max_length=100, unique=True, help_text="e.g. Admin Block, Tech Park, Academic Block, Boys Hostel")
+    code = models.CharField(max_length=30, blank=True, default='', help_text="Short identifier e.g. TECH_PARK, ADMIN_BLOCK")
+    description = models.TextField(blank=True, default='', help_text="Description of this campus zone")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Campus Locations"
         ordering = ['name']
+
+    def __str__(self):
+        return self.name
 
 
 class IssueFormField(models.Model):
@@ -127,6 +141,8 @@ class Ticket(models.Model):
     description = models.TextField()
     urgency = models.CharField(max_length=20, choices=TicketUrgency.choices, default=TicketUrgency.MEDIUM)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='tickets')
+    campus_location = models.ForeignKey(CampusLocation, on_delete=models.SET_NULL, null=True, blank=True, related_name='tickets')
+    location_details = models.CharField(max_length=200, blank=True, default='', help_text="Room / Lab / Specific location e.g. VLSI Lab")
     location = models.CharField(max_length=200)
     attachment = models.FileField(upload_to='ticket_attachments/%Y/%m/%d/', blank=True, null=True)
     custom_answers = models.JSONField(default=dict, blank=True)
@@ -181,6 +197,13 @@ class Ticket(models.Model):
 
     
     def save(self, *args, **kwargs):
+        # Auto-compose location string from campus_location + location_details
+        if self.campus_location:
+            if self.location_details:
+                self.location = f"{self.campus_location.name} - {self.location_details}"
+            elif not self.location:
+                self.location = self.campus_location.name
+
         self.clean()
         
         # Set assigned_at when status changes to in_progress
@@ -212,31 +235,65 @@ class Ticket(models.Model):
         else:
             super().save(*args, **kwargs)
 
-
-
     
     def delete(self, *args, **kwargs):
         from django.core.exceptions import PermissionDenied
         raise PermissionDenied("Tickets cannot be deleted. All ticket records must be preserved for audit and compliance integrity.")
     
     def assign_to_technician(self):
-        """Auto-assign ticket to technician using group routing or round-robin method"""
+        """Auto-assign ticket to technician using location routing, category group routing, or round-robin method"""
         if self.assigned_technician:
             return self.assigned_technician  # Already assigned
         
         tech = None
-        # Check if category has an assigned group
-        if self.category and self.category.assigned_group:
-            self.assigned_group = self.category.assigned_group
-            tech = self.category.assigned_group.get_available_technician()
+        target_group = None
+
+        # 1. Location-based group routing (e.g. Tech Park -> Tech Park tech, Hostel -> Hostel tech)
+        if self.campus_location or self.location:
+            from accounts.models import TechnicianGroup
+            groups_with_loc = list(TechnicianGroup.objects.prefetch_related('campus_locations', 'categories', 'technicians'))
+            matching_groups = []
+            for g in groups_with_loc:
+                if self.campus_location and g.campus_locations.filter(pk=self.campus_location.pk).exists():
+                    matching_groups.append(g)
+                elif self.location and g.matches_location(self.location, self.campus_location):
+                    matching_groups.append(g)
+
+            if matching_groups:
+                # Prioritize group that also matches ticket's category if one exists
+                if self.category:
+                    cat_match = next((g for g in matching_groups if self.category in g.categories.all()), None)
+                    if cat_match:
+                        candidate = cat_match.get_available_technician()
+                        if candidate:
+                            tech = candidate
+                            target_group = cat_match
+
+                if not tech:
+                    for g in matching_groups:
+                        candidate = g.get_available_technician()
+                        if candidate:
+                            tech = candidate
+                            target_group = g
+                            break
+
+                if not target_group:
+                    target_group = matching_groups[0]
+
+        # 2. Category-based group routing fallback
+        if not tech and self.category and self.category.assigned_group:
+            target_group = self.category.assigned_group
+            tech = target_group.get_available_technician()
         
-        # Fallback to general round-robin if group has no available technician or no group configured
+        # 3. Fallback to general round-robin if group has no available technician or no group configured
         if not tech:
             tech = self._get_available_technician_roundrobin()
         
         if tech:
             self.assigned_technician = tech
-            if not self.assigned_group and self.category and self.category.assigned_group:
+            if target_group:
+                self.assigned_group = target_group
+            elif not self.assigned_group and self.category and self.category.assigned_group:
                 self.assigned_group = self.category.assigned_group
             self.assigned_at = timezone.now()
             self.save(update_fields=['assigned_technician', 'assigned_group', 'assigned_at', 'updated_at'])
@@ -246,7 +303,9 @@ class Ticket(models.Model):
             except Exception:
                 pass
             return tech
-        elif self.assigned_group:
+        elif target_group or self.assigned_group:
+            if target_group and not self.assigned_group:
+                self.assigned_group = target_group
             self.save(update_fields=['assigned_group', 'updated_at'])
         
         return None
@@ -383,4 +442,65 @@ class TicketNotification(models.Model):
 
     def __str__(self):
         return f"Notification for {self.recipient.username}: {self.title}"
+
+
+class SolutionArticle(models.Model):
+    """Self-help diagnostic & resolution guide for common campus issues (Wi-Fi, LAN, SEB, etc.)"""
+    class TargetCategory(models.TextChoices):
+        WIFI_LAN = 'wifi_lan', 'Wi-Fi & LAN Network'
+        SEB = 'seb', 'Safe Exam Browser (SEB)'
+        HARDWARE = 'hardware', 'PC & Hardware'
+        HOSTEL = 'hostel', 'Hostel Facilities'
+        GENERAL = 'general', 'General IT'
+
+    title = models.CharField(max_length=200)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='solutions', help_text="Linked category for automated ticket pre-filling")
+    target_category = models.CharField(max_length=30, choices=TargetCategory.choices, default=TargetCategory.WIFI_LAN)
+    summary = models.CharField(max_length=300, help_text="Short 1-sentence summary of the symptom/problem")
+    symptoms = models.TextField(blank=True, help_text="Key indicators to confirm this is the problem (one per line)")
+    solution_steps = models.TextField(help_text="Step-by-step resolution instructions (one step per line)")
+    verification_checklist = models.TextField(blank=True, help_text="Checklist items to verify before raising a ticket (one per line)")
+    helpful_count = models.PositiveIntegerField(default=0, help_text="Times students confirmed this solved their issue (deflected tickets)")
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order', 'id']
+        verbose_name = "Solution Article"
+        verbose_name_plural = "Solution Articles"
+
+    def __str__(self):
+        return self.title
+
+    def get_symptoms_list(self):
+        return [s.strip() for s in self.symptoms.splitlines() if s.strip()]
+
+    def get_steps_list(self):
+        return [s.strip() for s in self.solution_steps.splitlines() if s.strip()]
+
+    def get_solution_steps_list(self):
+        return self.get_steps_list()
+
+    def get_checklist(self):
+        return [s.strip() for s in self.verification_checklist.splitlines() if s.strip()]
+
+    def get_checklist_list(self):
+        return self.get_checklist()
+
+    def category_badge_class(self):
+        mapping = {
+            self.TargetCategory.WIFI_LAN: 'badge-wifi',
+            self.TargetCategory.SEB: 'badge-seb',
+            self.TargetCategory.HARDWARE: 'badge-hw',
+            self.TargetCategory.HOSTEL: 'badge-hostel',
+            self.TargetCategory.GENERAL: 'badge-gen',
+        }
+        return mapping.get(self.target_category, 'badge-gen')
+
+
+TargetCategory = SolutionArticle.TargetCategory
+
 

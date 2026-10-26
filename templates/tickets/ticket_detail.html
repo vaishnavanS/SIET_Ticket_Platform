@@ -12,7 +12,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ticket #{{ ticket.ticket_number }} - SIET Helpdesk</title>
-    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=2.8">
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=4.0">
     <style>
         /* EMBEDDED BULLETPROOF TAB STYLING */
         .ticket-nav-tabs-container {
@@ -131,12 +131,15 @@
                 <div class="dropdown-menu">
                     <a href="{% url 'accounts:admin_users' %}">Users</a>
                     <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
+                    <a href="{% url 'tickets:admin_locations' %}">Campus Locations</a>
                     <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                    <a href="{% url 'tickets:admin_solutions' %}">Solutions & Quick Fixes</a>
                     <a href="{% url 'accounts:admin_email_settings' %}">Email & SMTP Settings</a>
                 </div>
             </div>
             <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
             <a class="active" href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
+            {% include 'includes/notification_bell.html' %}
             <div class="user-profile-menu">
                 <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
                     <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
@@ -155,6 +158,8 @@
             <a href="{% url 'accounts:technician_dashboard' %}?scope=my_resolved">My Resolved Tickets</a>
             <a href="{% url 'accounts:technician_dashboard' %}?scope=team">All Team Tickets</a>
             <a href="{% url 'accounts:technician_dashboard' %}?scope=unassigned">Unassigned Pool</a>
+            <a href="{% url 'tickets:admin_solutions' %}">Solutions Manager</a>
+            {% include 'includes/notification_bell.html' %}
             <div class="user-profile-menu">
                 <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
                     <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
@@ -170,9 +175,11 @@
         {% else %}
         <nav>
             <a href="{% url 'accounts:user_dashboard' %}">Home</a>
+            <a href="{% url 'tickets:solutions' %}">Solutions & Quick Fixes</a>
             <a href="{% url 'tickets:user_catalog' %}">Service Catalog</a>
             <a href="{% url 'tickets:my_tickets' %}" class="active">My Tickets & History</a>
             <a href="{% url 'tickets:create' %}">Report an Issue</a>
+            {% include 'includes/notification_bell.html' %}
             <div class="user-profile-menu">
                 <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
                     <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
@@ -202,9 +209,12 @@
                 <a href="{% url 'accounts:admin_dashboard' %}" class="sidebar-link">Overview</a>
                 <a href="{% url 'accounts:admin_users' %}" class="sidebar-link">Users</a>
                 <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link">Technician Groups</a>
+                <a href="{% url 'tickets:admin_locations' %}" class="sidebar-link">Campus Locations</a>
                 <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+                <a href="{% url 'tickets:admin_solutions' %}" class="sidebar-link">Solutions & Quick Fixes</a>
                 <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
                 <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link active">Issue Reports</a>
+                {% include 'includes/sidebar_notifications.html' %}
                 <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
                 <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
             {% elif is_technician %}
@@ -212,13 +222,17 @@
                 <a href="{% url 'accounts:technician_dashboard' %}?scope=my_resolved" class="sidebar-link">My Resolved Tickets</a>
                 <a href="{% url 'accounts:technician_dashboard' %}?scope=team" class="sidebar-link">All Team Tickets</a>
                 <a href="{% url 'accounts:technician_dashboard' %}?scope=unassigned" class="sidebar-link">Unassigned Pool</a>
+                <a href="{% url 'tickets:admin_solutions' %}" class="sidebar-link">Solutions Manager</a>
+                {% include 'includes/sidebar_notifications.html' %}
                 <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
                 <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
             {% else %}
                 <a href="{% url 'accounts:user_dashboard' %}" class="sidebar-link">Home</a>
+                <a href="{% url 'tickets:solutions' %}" class="sidebar-link">Solutions & Quick Fixes</a>
                 <a href="{% url 'tickets:user_catalog' %}" class="sidebar-link">Service Catalog</a>
                 <a href="{% url 'tickets:my_tickets' %}" class="sidebar-link active">My Tickets & History</a>
                 <a href="{% url 'tickets:create' %}" class="sidebar-link">Report an Issue</a>
+                {% include 'includes/sidebar_notifications.html' %}
                 <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
                 <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
             {% endif %}
@@ -240,8 +254,11 @@
                 <h1>{{ ticket.title }}</h1>
                 <p>Reported on {{ ticket.created_at|date:"M d, Y H:i" }} by <strong>{{ ticket.reporter.get_full_name|default:ticket.reporter.username }}</strong></p>
             </div>
-            <div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 {% if is_admin %}
+                <a href="{% url 'tickets:edit' ticket.pk %}" class="primary-button" style="background: #063b0c; padding: 7px 14px; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                    ✏ Edit Specifications
+                </a>
                 <a href="{% url 'accounts:admin_tickets' %}" class="secondary-button">&larr; Back to Issue Reports</a>
                 {% elif is_technician %}
                 <a href="{% url 'accounts:technician_dashboard' %}" class="secondary-button">&larr; Back to Workspace</a>
@@ -362,8 +379,22 @@
                         <span class="val">{{ ticket.category.name }}</span>
                     </div>
                     <div class="info-card-item">
-                        <span class="label">Campus Location</span>
-                        <span class="val">{{ ticket.location }}</span>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="label">Campus Location</span>
+                            {% if is_admin %}
+                            <a href="{% url 'tickets:edit' ticket.pk %}" style="font-size: 11.5px; font-weight: 700; color: #166534; text-decoration: underline;" title="Edit Location">✏ Edit</a>
+                            {% endif %}
+                        </div>
+                        <span class="val">
+                            {% if ticket.campus_location %}
+                                <strong>{{ ticket.campus_location.name }}</strong>
+                                {% if ticket.location_details %}
+                                    <span style="color: #475569; font-weight: normal; margin-left: 4px;">({{ ticket.location_details }})</span>
+                                {% endif %}
+                            {% else %}
+                                {{ ticket.location }}
+                            {% endif %}
+                        </span>
                     </div>
                     <div class="info-card-item">
                         <span class="label">Assigned Technician</span>
@@ -738,6 +769,6 @@
             }
         });
     </script>
-    <script src="{% static 'js/mobile_nav.js' %}?v=2.8"></script>
+    <script src="{% static 'js/mobile_nav.js' %}?v=4.0"></script>
 </body>
 </html>

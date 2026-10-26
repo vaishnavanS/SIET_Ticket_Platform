@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon.png' %}?v=3">
     <link rel="apple-touch-icon" href="{% static 'images/favicon.png' %}?v=3">
 
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Create User - SIET Helpdesk</title><link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}"></head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Create User - SIET Helpdesk</title><link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=4.0"></head>
 <body>
 <header class="topbar"><strong>SIET Helpdesk</strong><nav class="admin-nav"><a href="{% url 'accounts:admin_dashboard' %}">Overview</a><a class="active" href="{% url 'accounts:admin_users' %}">Users</a><a href="{% url 'accounts:admin_tickets' %}">Issue reports</a><a href="{% url 'accounts:admin_groups' %}">Technician groups</a><a href="{% url 'accounts:admin_categories' %}">Categories</a><a href="{% url 'tickets:form_builder' %}">Issue form</a><a class="logout" href="{% url 'accounts:logout' %}">Logout</a></nav></header>
 <main class="page-shell narrow-shell"><div class="page-heading"><div><p class="eyebrow">USER MANAGEMENT</p><h1>Create user</h1><p>Create an account and assign its role in one step.</p></div></div>

@@ -8,13 +8,211 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon.png' %}?v=3">
     <link rel="apple-touch-icon" href="{% static 'images/favicon.png' %}?v=3">
 
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report an Issue - SIET Helpdesk</title>
-    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=2.7">
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=4.0">
+    <style>
+        .report-hero-card {
+            background: linear-gradient(135deg, #063b0c 0%, #15803d 100%);
+            color: #ffffff;
+            padding: 24px 28px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 16px rgba(6, 59, 12, 0.16);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .report-hero-content h1 {
+            margin: 4px 0 6px 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .report-hero-content p {
+            margin: 0;
+            font-size: 14px;
+            color: #e2f1e4;
+            max-width: 580px;
+            line-height: 1.45;
+        }
+        .report-hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            color: #f0fdf4;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Form Visual Section Cards */
+        .form-step-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 22px 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: border-color 0.15s ease;
+        }
+        .form-step-card:hover {
+            border-color: #cbd5e1;
+        }
+        .form-step-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .form-step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: #eef7ee;
+            color: #15803d;
+            border: 1px solid #c9dec7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .form-step-title {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .form-step-desc {
+            margin: 2px 0 0 0;
+            font-size: 12.5px;
+            color: #64748b;
+        }
+
+        /* Location Quick Chips */
+        .location-chips-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+            align-items: center;
+        }
+        .location-chip-btn {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            border-radius: 14px;
+            padding: 3px 10px;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .location-chip-btn:hover {
+            background: #15803d;
+            color: #ffffff;
+            border-color: #15803d;
+        }
+
+        .location-composite-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 640px) {
+            .location-composite-grid { grid-template-columns: 1fr; }
+        }
+        .location-preview-pill {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 8px;
+            padding: 8px 14px;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .preview-tag {
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: #063b0c;
+            color: #ffffff;
+            padding: 2px 7px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+        .preview-val {
+            font-size: 13px;
+            font-weight: 700;
+            color: #065f46;
+        }
+
+        /* Dynamic Questionnaire Card Styling */
+        .diagnostic-card {
+            background: #fcfdfc;
+            border: 1px solid #dcebda;
+            border-left: 4px solid #16a34a;
+            border-radius: 10px;
+            padding: 22px 24px;
+            margin-bottom: 20px;
+        }
+
+        /* Modern Attachment Dropzone styling */
+        .attachment-drop-box {
+            border: 1.5px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 16px;
+            background: #f8fafc;
+            text-align: center;
+            transition: border-color 0.15s ease;
+        }
+        .attachment-drop-box:hover {
+            border-color: #15803d;
+        }
+        .attachment-drop-box input[type="file"] {
+            margin-top: 6px;
+            font-size: 13px;
+        }
+
+        /* Submit Action Button */
+        .btn-submit-issue {
+            background: linear-gradient(135deg, #063b0c 0%, #15803d 100%);
+            color: #ffffff;
+            border: none;
+            padding: 11px 26px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(6, 59, 12, 0.2);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-submit-issue:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(6, 59, 12, 0.28);
+        }
+    </style>
 </head>
 <body>
+    <!-- Role-Aware Topbar -->
     <header class="topbar">
         <div class="topbar-left">
             <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
@@ -25,10 +223,36 @@
             <strong>SIET Helpdesk</strong>
         </div>
         <nav>
-            <a href="{% url 'accounts:user_dashboard' %}">Home</a>
-            <a href="{% url 'tickets:user_catalog' %}">Service Catalog</a>
-            <a href="{% url 'tickets:my_tickets' %}">My Tickets & History</a>
-            <a href="{% url 'tickets:create' %}" class="active">Report an Issue</a>
+            {% if request.user.profile.role == 'admin' or request.user.is_staff %}
+                <a href="{% url 'accounts:admin_dashboard' %}">Overview</a>
+                <div class="dropdown">
+                    <button class="dropdown-btn" type="button">Administration ▾</button>
+                    <div class="dropdown-menu">
+                        <a href="{% url 'accounts:admin_users' %}">Users</a>
+                        <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
+                        <a href="{% url 'tickets:admin_locations' %}">Campus Locations</a>
+                        <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                        <a href="{% url 'tickets:admin_solutions' %}">Solutions & Quick Fixes</a>
+                        <a href="{% url 'accounts:admin_email_settings' %}">Email & SMTP Settings</a>
+                    </div>
+                </div>
+                <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
+                <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
+            {% elif request.user.profile.role == 'technician' %}
+                <a href="{% url 'accounts:technician_dashboard' %}">Home</a>
+                <a href="{% url 'tickets:solutions_list' %}">Solutions</a>
+                <a href="{% url 'tickets:admin_solutions' %}">Solutions Manager</a>
+                <a href="{% url 'tickets:my_tickets' %}">My Tickets</a>
+                <a href="{% url 'tickets:create' %}" class="active">Report Issue</a>
+            {% else %}
+                <a href="{% url 'accounts:user_dashboard' %}">Home</a>
+                <a href="{% url 'tickets:solutions_list' %}">Solutions</a>
+                <a href="{% url 'tickets:user_catalog' %}">Service Catalog</a>
+                <a href="{% url 'tickets:my_tickets' %}">My Tickets & History</a>
+                <a href="{% url 'tickets:create' %}" class="active">Report an Issue</a>
+            {% endif %}
+
+            {% include 'includes/notification_bell.html' %}
             <div class="user-profile-menu">
                 <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
                     <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
@@ -43,7 +267,7 @@
         </nav>
     </header>
 
-    <!-- Mobile Sidebar Drawer -->
+    <!-- Role-Aware Mobile Sidebar Drawer -->
     <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
     <aside id="mobileSidebar" class="mobile-sidebar">
         <div class="sidebar-header">
@@ -53,118 +277,285 @@
             </div>
         </div>
         <nav class="sidebar-nav">
-            <a href="{% url 'accounts:user_dashboard' %}" class="sidebar-link">Home</a>
-            <a href="{% url 'tickets:user_catalog' %}" class="sidebar-link">Service Catalog</a>
-            <a href="{% url 'tickets:my_tickets' %}" class="sidebar-link">My Tickets & History</a>
-            <a href="{% url 'tickets:create' %}" class="sidebar-link active">Report an Issue</a>
+            {% if request.user.profile.role == 'admin' or request.user.is_staff %}
+                <a href="{% url 'accounts:admin_dashboard' %}" class="sidebar-link">Overview</a>
+                <a href="{% url 'accounts:admin_users' %}" class="sidebar-link">Users</a>
+                <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link">Technician Groups</a>
+                <a href="{% url 'tickets:admin_locations' %}" class="sidebar-link">Campus Locations</a>
+                <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+                <a href="{% url 'tickets:admin_solutions' %}" class="sidebar-link">Solutions & Quick Fixes</a>
+                <a href="{% url 'accounts:admin_email_settings' %}" class="sidebar-link">Email & SMTP Settings</a>
+                <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
+                <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link">Issue Reports</a>
+            {% elif request.user.profile.role == 'technician' %}
+                <a href="{% url 'accounts:technician_dashboard' %}" class="sidebar-link">Home</a>
+                <a href="{% url 'tickets:solutions_list' %}" class="sidebar-link">Solutions</a>
+                <a href="{% url 'tickets:admin_solutions' %}" class="sidebar-link">Solutions Manager</a>
+                <a href="{% url 'tickets:my_tickets' %}" class="sidebar-link">My Tickets</a>
+                <a href="{% url 'tickets:create' %}" class="sidebar-link active">Report an Issue</a>
+            {% else %}
+                <a href="{% url 'accounts:user_dashboard' %}" class="sidebar-link">Home</a>
+                <a href="{% url 'tickets:solutions_list' %}" class="sidebar-link">Solutions</a>
+                <a href="{% url 'tickets:user_catalog' %}" class="sidebar-link">Service Catalog</a>
+                <a href="{% url 'tickets:my_tickets' %}" class="sidebar-link">My Tickets & History</a>
+                <a href="{% url 'tickets:create' %}" class="sidebar-link active">Report an Issue</a>
+            {% endif %}
+            {% include 'includes/sidebar_notifications.html' %}
             <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
             <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
         </nav>
     </aside>
 
-
-
     <main class="page-shell narrow-shell">
-        <div class="page-heading">
-            <div>
-                <p class="eyebrow">HELP DESK / ISSUE SUBMISSION</p>
+        <!-- Elevated Hero Banner -->
+        <div class="report-hero-card">
+            <div class="report-hero-content">
+                <span class="report-hero-badge">📍 SMART CAMPUS DISPATCH</span>
                 <h1>Report an Issue</h1>
-                <p>Fill in the details below to submit your request.</p>
+                <p>Submit technical, classroom, laboratory, or network requests. Your issue is automatically dispatched to the allocated campus team based on category and location.</p>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-end;">
+                <span style="font-size: 12px; color: #d1fae5; font-weight: 600;">⚡ 1-Hour SLA Target Response</span>
+                <span style="font-size: 11.5px; color: #a7f3d0;">Campus Technicians on Duty</span>
             </div>
         </div>
 
+        <!-- Quick Fix Banner -->
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+            <div style="font-size: 13.5px; color: #166534;">
+                <strong>Experiencing a Wi-Fi, LAN, or SEB issue?</strong> Try checking our self-help solutions before submitting to solve it immediately.
+            </div>
+            <a href="{% url 'tickets:solutions_list' %}" target="_blank" style="font-size: 13px; font-weight: 700; color: #15803d; text-decoration: none; background: #ffffff; padding: 5px 12px; border-radius: 6px; border: 1px solid #86efac; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+                View Quick Fixes &nearr;
+            </a>
+        </div>
 
-
-
-        <section class="panel form-panel">
+        <section class="panel form-panel" style="background: transparent; border: none; padding: 0; box-shadow: none;">
             <form method="post" enctype="multipart/form-data" id="ticket-report-form">
                 {% csrf_token %}
                 {% if form.errors %}
-                <div class="form-errors alert alert-error" style="background: #fde9e7; color: #a03f35; border: 1px solid #f9c9c5; padding: 12px 16px; border-radius: 6px; margin-bottom: 18px; font-weight: 600;">
+                <div class="form-errors alert alert-error" style="background: #fde9e7; color: #a03f35; border: 1px solid #f9c9c5; padding: 12px 16px; border-radius: 8px; margin-bottom: 18px; font-weight: 600;">
                     Please correct the errors in the form before submitting.
                     {% if form.non_field_errors %}<div>{{ form.non_field_errors }}</div>{% endif %}
                 </div>
                 {% endif %}
 
-                <!-- Standard Issue Fields (Title, Urgency, Location) -->
-                {{ form.category }}
-
-                <div class="field">
-                    <label for="{{ form.title.id_for_label }}">Issue Title *</label>
-                    {{ form.title }}
-                    {% if form.title.errors %}<small class="field-error">{{ form.title.errors|striptags }}</small>{% endif %}
+                <!-- Dynamic Problem Deflection Callout -->
+                <div id="dynamic-solution-suggestion" style="display: none; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(22, 101, 52, 0.08);">
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+                        <div>
+                            <strong id="solution-suggestion-title" style="display: block; font-size: 14px; color: #166534; margin-bottom: 4px;">Recommended Self-Fix</strong>
+                            <p id="solution-suggestion-desc" style="margin: 0; font-size: 13px; color: #276738; line-height: 1.5;"></p>
+                        </div>
+                        <a id="solution-suggestion-link" href="#" target="_blank" style="background: #ffffff; border: 1px solid #86efac; color: #15803d; font-size: 13px; font-weight: 700; padding: 7px 16px; border-radius: 6px; text-decoration: none; white-space: nowrap; align-self: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                            Open Solution Guide &nearr;
+                        </a>
+                    </div>
                 </div>
 
-                <div class="field">
-                    <label for="{{ form.urgency.id_for_label }}">Urgency Level *</label>
-                    {{ form.urgency }}
-                    {% if form.urgency.errors %}<small class="field-error">{{ form.urgency.errors|striptags }}</small>{% endif %}
+                <!-- CARD 1: Issue Classification & Campus Location -->
+                <div class="form-step-card">
+                    <div class="form-step-header">
+                        <div class="form-step-number">1</div>
+                        <div>
+                            <h2 class="form-step-title">Classification & Campus Location</h2>
+                            <p class="form-step-desc">Specify what problem you are facing and where on campus you are located.</p>
+                        </div>
+                    </div>
+
+                    {{ form.category }}
+
+                    <div class="field">
+                        <label for="{{ form.title.id_for_label }}">Issue Title *</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}<small class="field-error">{{ form.title.errors|striptags }}</small>{% endif %}
+                    </div>
+
+                    <div class="field">
+                        <label for="{{ form.urgency.id_for_label }}">Urgency Level *</label>
+                        {{ form.urgency }}
+                        {% if form.urgency.errors %}<small class="field-error">{{ form.urgency.errors|striptags }}</small>{% endif %}
+                    </div>
+
+                    <!-- Campus Location Block & Room / Lab Details -->
+                    <div class="location-composite-box" style="background: #fcfdfc; border: 1.5px solid #dcebda; border-radius: 10px; padding: 18px 20px; margin-top: 14px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                            <div>
+                                <strong style="font-size: 13.5px; color: #166534; display: block;">Campus Block & Room / Lab Details</strong>
+                                <small style="color: #64748b; font-size: 12px;">Select the campus building and specify your room, lab, or floor so technicians find you immediately.</small>
+                            </div>
+                            <span style="font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: 700;">AUTO DISPATCH</span>
+                        </div>
+
+                        <div class="location-composite-grid">
+                            <div class="field" style="margin-bottom: 0;">
+                                <label for="{{ form.campus_location.id_for_label }}">Campus Block / Location *</label>
+                                {{ form.campus_location }}
+                                <div class="location-chips-row">
+                                    <span style="font-size: 11px; color: #64748b; font-weight: 600;">Quick Select:</span>
+                                    {% for loc in campus_locations %}
+                                    <button type="button" class="location-chip-btn" onclick="selectCampusLocation('{{ loc.id }}', '{{ loc.name|escapejs }}')">
+                                        🏢 {{ loc.name }}
+                                    </button>
+                                    {% empty %}
+                                    <span class="muted" style="font-size: 11.5px;">All campus blocks</span>
+                                    {% endfor %}
+                                </div>
+                                {% if form.campus_location.errors %}<small class="field-error">{{ form.campus_location.errors|striptags }}</small>{% endif %}
+                            </div>
+
+                            <div class="field" style="margin-bottom: 0;">
+                                <label for="{{ form.location_details.id_for_label }}">Room / Lab / Specific Details *</label>
+                                {{ form.location_details }}
+                                <small class="muted" style="font-size: 11.5px; color: #64748b; margin-top: 5px; display: block;">
+                                    e.g. VLSI Lab, Lab 2 - Table 4, Room 304, Server Room
+                                </small>
+                                {% if form.location_details.errors %}<small class="field-error">{{ form.location_details.errors|striptags }}</small>{% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Live Dispatch Target Preview Pill -->
+                        <div id="location-preview-box" class="location-preview-pill" style="display: none;">
+                            <span class="preview-tag">📍 DISPATCH TARGET</span>
+                            <span id="location-preview-text" class="preview-val"></span>
+                        </div>
+
+                        <input type="hidden" name="location" id="id_location" value="{{ form.location.value|default:'' }}">
+                        {% if form.location.errors %}<small class="field-error">{{ form.location.errors|striptags }}</small>{% endif %}
+                    </div>
                 </div>
 
-                <div class="field">
-                    <label for="{{ form.location.id_for_label }}">Location / Room / Lab *</label>
-                    {{ form.location }}
-                    {% if form.location.errors %}<small class="field-error">{{ form.location.errors|striptags }}</small>{% endif %}
+                <!-- CARD 2: Dynamic Diagnostic Questionnaire -->
+                <div class="diagnostic-card">
+                    <div class="form-step-header" style="border-bottom-color: #dcebda;">
+                        <div class="form-step-number" style="background: #16a34a; color: #ffffff; border-color: #15803d;">2</div>
+                        <div>
+                            <h2 class="form-step-title">Diagnostic Details</h2>
+                            <p class="form-step-desc">Answer a few diagnostic questions to ensure fast assessment and routing.</p>
+                        </div>
+                    </div>
+
+                    {% for field in form %}
+                        {% if field.name not in 'title,description,category,urgency,location,attachment,campus_location,location_details' %}
+                        <div class="field dynamic-field-wrapper" 
+                             id="field-wrapper-{{ field.name }}" 
+                             data-key="{{ field.name }}"
+                             data-cond-type="{{ field.field.condition_type|default:'always' }}"
+                             data-cond-parent="{{ field.field.condition_field_key|default:'' }}"
+                             data-cond-op="{{ field.field.condition_operator|default:'equals' }}"
+                             data-cond-val="{{ field.field.condition_value|default:''|lower }}"
+                             {% if field.field.category_id %}data-category-id="{{ field.field.category_id }}"{% endif %}>
+                            
+                            <label for="{{ field.id_for_label }}">
+                                {{ field.label }}
+                                {% if field.field.required %}<span style="color:#b33e34;">*</span>{% endif %}
+                            </label>
+                            {{ field }}
+                            {% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}
+                            {% if field.errors %}<small class="field-error">{{ field.errors|striptags }}</small>{% endif %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Dynamic "Other" Details Expander -->
+                    <div class="field dynamic-field-wrapper" id="other-details-box" style="display: none; background: #fffcf5; padding: 14px; border: 1px solid #f9e2aa; border-radius: 8px;">
+                        <label for="other_issue_details" style="color: #7a5a0d; font-weight: 700;">Describe other issue details</label>
+                        <textarea id="other_issue_details" name="other_issue_details" rows="3" placeholder="Please explain the details of the other problem..."></textarea>
+                    </div>
                 </div>
 
+                <!-- CARD 3: Description & Evidence -->
+                <div class="form-step-card">
+                    <div class="form-step-header">
+                        <div class="form-step-number">3</div>
+                        <div>
+                            <h2 class="form-step-title">Problem Description & Attachment</h2>
+                            <p class="form-step-desc">Provide detailed symptoms and attach screenshots or error logs if available.</p>
+                        </div>
+                    </div>
 
-                <!-- Dynamic Form Questions Configured by Admin in Form Studio -->
-                {% for field in form %}
-                    {% if field.name not in 'title,description,category,urgency,location,attachment' %}
-                    <div class="field dynamic-field-wrapper" 
-                         id="field-wrapper-{{ field.name }}" 
-                         data-key="{{ field.name }}"
-                         data-cond-type="{{ field.field.condition_type|default:'always' }}"
-                         data-cond-parent="{{ field.field.condition_field_key|default:'' }}"
-                         data-cond-op="{{ field.field.condition_operator|default:'equals' }}"
-                         data-cond-val="{{ field.field.condition_value|default:''|lower }}"
-                         {% if field.field.category_id %}data-category-id="{{ field.field.category_id }}"{% endif %}>
-                        
-                        <label for="{{ field.id_for_label }}">
-                            {{ field.label }}
-                            {% if field.field.required %}<span style="color:#b33e34;">*</span>{% endif %}
-                        </label>
-                        {{ field }}
-                        {% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}
-                        {% if field.errors %}<small class="field-error">{{ field.errors|striptags }}</small>{% endif %}
+                    {% if 'problem_description' not in form.fields %}
+                    <div class="field">
+                        <label for="{{ form.description.id_for_label }}">Detailed Problem Description *</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}<small class="field-error">{{ form.description.errors|striptags }}</small>{% endif %}
                     </div>
                     {% endif %}
-                {% endfor %}
 
-                <!-- Dynamic "Other" Details Expander -->
-                <div class="field dynamic-field-wrapper" id="other-details-box" style="display: none; background: #fffcf5; padding: 14px; border: 1px solid #f9e2aa; border-radius: 6px;">
-                    <label for="other_issue_details" style="color: #7a5a0d;">Describe other issue details</label>
-                    <textarea id="other_issue_details" name="other_issue_details" rows="3" placeholder="Please explain the details of the other problem..."></textarea>
+                    <div class="field">
+                        <label for="{{ form.attachment.id_for_label }}">Attachment (Optional screenshot or error photo)</label>
+                        <div class="attachment-drop-box">
+                            <span style="font-size: 20px; display: block; margin-bottom: 4px;">📎</span>
+                            <span style="font-size: 13px; font-weight: 600; color: #334155;">Upload screenshot or photo</span>
+                            {{ form.attachment }}
+                            <small class="muted" style="display: block; margin-top: 6px; font-size: 11.5px; color: #64748b;">
+                                Allowed: JPG, JPEG, PNG, GIF. Maximum file size: {{ max_attachment_size_mb|default:5 }} MB.
+                            </small>
+                        </div>
+                        {% if form.attachment.errors %}<small class="field-error">{{ form.attachment.errors|striptags }}</small>{% endif %}
+                    </div>
                 </div>
 
-                <!-- Standard Description fallback if problem_description is not a dynamic field -->
-                {% if 'problem_description' not in form.fields %}
-                <div class="field">
-                    <label for="{{ form.description.id_for_label }}">Problem Description *</label>
-                    {{ form.description }}
-                    {% if form.description.errors %}<small class="field-error">{{ form.description.errors|striptags }}</small>{% endif %}
-                </div>
-                {% endif %}
-
-
-                <div class="field">
-                    <label for="{{ form.attachment.id_for_label }}">Attachment (Optional screenshot / photo)</label>
-                    {{ form.attachment }}
-                    <small class="field-help">Allowed formats: JPG, PNG, GIF. Max file size: {{ max_attachment_size_mb|default:5 }} MB.</small>
-                    {% if form.attachment.errors %}<small class="field-error">{{ form.attachment.errors|striptags }}</small>{% endif %}
-                </div>
-
-                <div class="form-actions">
-                    <a class="secondary-button" href="{% url 'tickets:my_tickets' %}">Cancel</a>
-                    <button class="primary-button" type="submit">Submit Issue Report</button>
+                <div class="form-actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px;">
+                    <a class="secondary-button" href="{% url 'tickets:my_tickets' %}" style="padding: 10px 20px;">Cancel</a>
+                    <button class="btn-submit-issue" type="submit">
+                        <span>Submit Issue Report</span>
+                        <span>&rarr;</span>
+                    </button>
                 </div>
             </form>
         </section>
     </main>
 
-    <!-- Reactive Dynamic Condition Engine & File Upload Limits -->
+    <!-- Reactive Dynamic Condition Engine, File Upload Limits & Location Helpers -->
     <script>
         const fieldsSchema = {{ fields_schema_json|safe }};
+
+        function selectCampusLocation(locId, locName) {
+            const sel = document.getElementById('id_campus_location');
+            if (sel) {
+                sel.value = locId;
+                updateLocationPreview();
+                const detailsInput = document.getElementById('id_location_details');
+                if (detailsInput) detailsInput.focus();
+            }
+        }
+
+        function updateLocationPreview() {
+            const sel = document.getElementById('id_campus_location');
+            const detailsInput = document.getElementById('id_location_details');
+            const previewBox = document.getElementById('location-preview-box');
+            const previewText = document.getElementById('location-preview-text');
+            const hiddenLoc = document.getElementById('id_location');
+
+            let blockName = '';
+            if (sel && sel.selectedIndex >= 0 && sel.options[sel.selectedIndex]) {
+                const optText = sel.options[sel.selectedIndex].text.trim();
+                if (sel.value && optText && !optText.startsWith('---')) {
+                    blockName = optText;
+                }
+            }
+            const details = detailsInput ? detailsInput.value.trim() : '';
+
+            if (blockName || details) {
+                let combined = '';
+                if (blockName && details) {
+                    combined = blockName + ' — ' + details;
+                    if (hiddenLoc) hiddenLoc.value = blockName + ' - ' + details;
+                } else if (blockName) {
+                    combined = blockName;
+                    if (hiddenLoc) hiddenLoc.value = blockName;
+                } else {
+                    combined = details;
+                    if (hiddenLoc) hiddenLoc.value = details;
+                }
+                if (previewText) previewText.textContent = combined;
+                if (previewBox) previewBox.style.display = 'flex';
+            } else {
+                if (previewBox) previewBox.style.display = 'none';
+                if (hiddenLoc) hiddenLoc.value = '';
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('ticket-report-form');
@@ -199,7 +590,6 @@
             function evaluateRules() {
                 const values = {};
                 let hasOther = false;
-
 
                 // Collect values from all form inputs
                 const allInputs = form.querySelectorAll('input, select, textarea');
@@ -289,14 +679,49 @@
                 if (otherDetailsBox) {
                     otherDetailsBox.style.display = hasOther ? 'block' : 'none';
                 }
+
+                // Dynamic Problem Deflection for Wi-Fi / LAN and SEB Issues
+                const deflectionBox = document.getElementById('dynamic-solution-suggestion');
+                const deflectionTitle = document.getElementById('solution-suggestion-title');
+                const deflectionDesc = document.getElementById('solution-suggestion-desc');
+                const deflectionLink = document.getElementById('solution-suggestion-link');
+
+                if (deflectionBox && deflectionTitle && deflectionDesc && deflectionLink) {
+                    const issueCat = (Array.isArray(values['facing_issue_in']) ? values['facing_issue_in'].join(' ') : (values['facing_issue_in'] || '')).toLowerCase();
+                    const netType = (Array.isArray(values['network_problem_type']) ? values['network_problem_type'].join(' ') : (values['network_problem_type'] || '')).toLowerCase();
+                    const sebType = (Array.isArray(values['seb_problem_type']) ? values['seb_problem_type'].join(' ') : (values['seb_problem_type'] || '')).toLowerCase();
+                    const titleText = (values['title'] || '').toLowerCase();
+
+                    if (issueCat.includes('network') || netType.includes('wifi') || netType.includes('lan') || titleText.includes('wifi') || titleText.includes('lan') || titleText.includes('network') || titleText.includes('internet')) {
+                        deflectionTitle.textContent = "Wi-Fi & LAN Quick Check Available";
+                        deflectionDesc.textContent = "Before creating this ticket, verify if disabling randomized MAC address or renewing DHCP fixes your connection. 80% of campus connectivity problems are solved immediately.";
+                        deflectionLink.href = "{% url 'tickets:solutions' %}?category=WIFI_LAN";
+                        deflectionLink.textContent = "View Wi-Fi & LAN Solutions →";
+                        deflectionBox.style.display = 'block';
+                    } else if (issueCat.includes('seb') || sebType.length > 0 || titleText.includes('seb') || titleText.includes('exam') || titleText.includes('browser')) {
+                        deflectionTitle.textContent = "Safe Exam Browser (SEB) Quick Fix Available";
+                        deflectionDesc.textContent = "Taking an exam? Terminate background screen recorders, AnyDesk, or Discord to resolve red-screen lockdown errors instantly without waiting for a technician.";
+                        deflectionLink.href = "{% url 'tickets:solutions' %}?category=SEB";
+                        deflectionLink.textContent = "View SEB Solutions →";
+                        deflectionBox.style.display = 'block';
+                    } else {
+                        deflectionBox.style.display = 'none';
+                    }
+                }
             }
 
             form.addEventListener('change', evaluateRules);
             form.addEventListener('input', evaluateRules);
             evaluateRules();
+
+            const campusLocSelect = document.getElementById('id_campus_location');
+            const locationDetailsInput = document.getElementById('id_location_details');
+            if (campusLocSelect) campusLocSelect.addEventListener('change', updateLocationPreview);
+            if (locationDetailsInput) locationDetailsInput.addEventListener('input', updateLocationPreview);
+            updateLocationPreview();
         });
     </script>
 
-    <script src="{% static 'js/mobile_nav.js' %}"></script>
+    <script src="{% static 'js/mobile_nav.js' %}?v=4.0"></script>
 </body>
 </html>

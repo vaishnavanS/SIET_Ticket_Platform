@@ -30,6 +30,8 @@ class AdminUserCreationForm(forms.ModelForm):
             profile.role = self.cleaned_data['role']
             profile.is_active = True
             profile.is_suspended = False
+            if user.email:
+                profile.is_email_verified = True
             profile.save()
         return user
 
@@ -37,8 +39,12 @@ class AdminUserCreationForm(forms.ModelForm):
 class TechnicianGroupForm(forms.ModelForm):
     class Meta:
         model = TechnicianGroup
-        fields = ('name', 'description', 'max_tickets_per_tech', 'technicians')
-        widgets = {'technicians': forms.CheckboxSelectMultiple}
+        fields = ('name', 'description', 'max_tickets_per_tech', 'campus_locations', 'location_condition', 'technicians')
+        widgets = {
+            'campus_locations': forms.CheckboxSelectMultiple,
+            'technicians': forms.CheckboxSelectMultiple,
+            'location_condition': forms.TextInput(attrs={'placeholder': 'e.g. Hostel, Boys Hostel or Tech Park, Lab'}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -47,6 +53,8 @@ class TechnicianGroupForm(forms.ModelForm):
             profile__is_active=True,
             profile__is_suspended=False,
         ).order_by('username')
+        self.fields['campus_locations'].required = False
+        self.fields['location_condition'].required = False
 
 
 class CategoryForm(forms.ModelForm):

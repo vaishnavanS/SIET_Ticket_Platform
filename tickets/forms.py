@@ -1,20 +1,34 @@
 import os
 from django import forms
-from .models import Ticket, TicketStatus, TicketUrgency, IssueFormField, ServiceCatalogItem, get_admin_max_upload_size_bytes
+from .models import Ticket, TicketStatus, TicketUrgency, IssueFormField, ServiceCatalogItem, SolutionArticle, CampusLocation, get_admin_max_upload_size_bytes
 
 
 from django.utils.text import slugify
 
 class TicketCreateForm(forms.ModelForm):
     category = forms.CharField(required=False, widget=forms.HiddenInput())
+    campus_location = forms.ModelChoiceField(
+        queryset=CampusLocation.objects.filter(is_active=True).order_by('name'),
+        required=False,
+        empty_label="-- Select Campus Block / Location * --",
+        widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_campus_location'})
+    )
+    location_details = forms.CharField(
+        required=False,
+        label="Room / Lab / Specific Location *",
+        widget=forms.TextInput(attrs={
+            'placeholder': 'e.g. VLSI Lab, Lab 2 - Table 4, Room 204',
+            'id': 'id_location_details'
+        })
+    )
 
     class Meta:
         model = Ticket
-        fields = ('title', 'description', 'category', 'urgency', 'location', 'attachment')
+        fields = ('title', 'description', 'category', 'urgency', 'campus_location', 'location_details', 'location', 'attachment')
         widgets = {
             'title': forms.TextInput(attrs={'placeholder': 'e.g., WiFi disconnected in CS Lab 2'}),
             'description': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Provide details about what happened...'}),
-            'location': forms.TextInput(attrs={'placeholder': 'e.g., Block B - Room 204 / Lab 3'}),
+            'location': forms.TextInput(attrs={'placeholder': 'e.g., Tech Park - VLSI Lab'}),
             'category': forms.HiddenInput(),
         }
 
@@ -34,10 +48,29 @@ class TicketCreateForm(forms.ModelForm):
             return cat
         return None
 
+    def clean(self):
+        cleaned_data = super().clean()
+        camp_loc = cleaned_data.get('campus_location')
+        loc_det = (cleaned_data.get('location_details') or '').strip()
+        raw_loc = (cleaned_data.get('location') or '').strip()
+
+        if camp_loc:
+            if loc_det:
+                cleaned_data['location'] = f"{camp_loc.name} - {loc_det}"
+            else:
+                cleaned_data['location'] = camp_loc.name
+        elif loc_det:
+            cleaned_data['location'] = loc_det
+        elif raw_loc:
+            cleaned_data['location'] = raw_loc
+
+        return cleaned_data
+
     def __init__(self, *args, issue_fields=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['category'].required = False
         self.fields['description'].required = False
+        self.fields['location'].required = False
 
         self.issue_fields = issue_fields or []
 
@@ -118,14 +151,48 @@ class TicketCreateForm(forms.ModelForm):
 class AdminTicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
-        fields = ('title', 'description', 'category', 'urgency', 'location', 'assigned_group', 'assigned_technician', 'status', 'is_sla_breached')
-        widgets = {'description': forms.Textarea(attrs={'rows': 6})}
+        fields = ('title', 'description', 'category', 'urgency', 'campus_location', 'location_details', 'location', 'assigned_group', 'assigned_technician', 'status', 'is_sla_breached')
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 5}),
+            'location_details': forms.TextInput(attrs={'placeholder': 'e.g. VLSI Lab, Lab 2, Room 204'}),
+            'location': forms.TextInput(attrs={'placeholder': 'Full Location string e.g. Tech Park - VLSI Lab'}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['assigned_technician'].queryset = self.fields['assigned_technician'].queryset.filter(
             profile__role='technician', profile__is_active=True, profile__is_suspended=False
         ).order_by('username')
+        self.fields['location'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        camp_loc = cleaned_data.get('campus_location')
+        loc_det = (cleaned_data.get('location_details') or '').strip()
+        raw_loc = (cleaned_data.get('location') or '').strip()
+
+        if camp_loc:
+            if loc_det:
+                cleaned_data['location'] = f"{camp_loc.name} - {loc_det}"
+            else:
+                cleaned_data['location'] = camp_loc.name
+        elif loc_det:
+            cleaned_data['location'] = loc_det
+        elif raw_loc:
+            cleaned_data['location'] = raw_loc
+
+        return cleaned_data
+
+
+class CampusLocationForm(forms.ModelForm):
+    class Meta:
+        model = CampusLocation
+        fields = ('name', 'code', 'description', 'is_active')
+        widgets = {
+            'name': forms.TextInput(attrs={'placeholder': 'e.g. Admin Block, Tech Park, Academic Block'}),
+            'code': forms.TextInput(attrs={'placeholder': 'e.g. TECH_PARK, ADMIN_BLOCK'}),
+            'description': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Optional details about facilities in this block...'}),
+        }
 
 
 class IssueFormFieldForm(forms.ModelForm):
@@ -210,4 +277,26 @@ class ServiceCatalogItemForm(forms.ModelForm):
     def clean_order(self):
         order = self.cleaned_data.get('order')
         return order if order is not None else 0
+
+
+class SolutionArticleForm(forms.ModelForm):
+    class Meta:
+        model = SolutionArticle
+        fields = ('title', 'target_category', 'category', 'summary', 'symptoms', 'solution_steps', 'verification_checklist', 'order', 'is_active')
+        widgets = {
+            'title': forms.TextInput(attrs={'placeholder': 'e.g., Campus Wi-Fi Connected but No Internet Access'}),
+            'summary': forms.TextInput(attrs={'placeholder': 'Brief description of the problem (1 sentence)'}),
+            'symptoms': forms.Textarea(attrs={'rows': 3, 'placeholder': 'One symptom indicator per line...'}),
+            'solution_steps': forms.Textarea(attrs={'rows': 6, 'placeholder': 'Step 1: Check your Wi-Fi settings\nStep 2: Turn off Private MAC...\nStep 3: ...'}),
+            'verification_checklist': forms.Textarea(attrs={'rows': 3, 'placeholder': 'One verification check per line before submitting a ticket...'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['category'].required = False
+        self.fields['category'].empty_label = "-- Select Category for Ticket Pre-fill (Optional) --"
+        self.fields['symptoms'].required = False
+        self.fields['verification_checklist'].required = False
+        self.fields['order'].required = False
+
 

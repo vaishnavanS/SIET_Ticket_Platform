@@ -12,7 +12,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Technician Groups - SIET Helpdesk</title>
-    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=3.0">
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=4.0">
     <style>
         .tg-container {
             display: grid;
@@ -118,14 +118,14 @@
         }
         .tg-details-grid {
             display: grid;
-            grid-template-columns: 140px 1fr 1.3fr;
+            grid-template-columns: 130px 145px 1fr 1.2fr;
             gap: 14px;
             background: #f8fafc;
             border: 1px solid #f1f5f9;
             border-radius: 8px;
             padding: 14px 16px;
         }
-        @media (max-width: 720px) {
+        @media (max-width: 900px) {
             .tg-details-grid { grid-template-columns: 1fr; }
         }
         .tg-col {
@@ -189,12 +189,15 @@
             <div class="dropdown-menu">
                 <a href="{% url 'accounts:admin_users' %}">Users</a>
                 <a class="active" href="{% url 'accounts:admin_groups' %}">Technician groups</a>
+                <a href="{% url 'tickets:admin_locations' %}">Campus Locations</a>
                 <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                <a href="{% url 'tickets:admin_solutions' %}">Solutions & Quick Fixes</a>
                 <a href="{% url 'accounts:admin_email_settings' %}">Email & SMTP Settings</a>
             </div>
         </div>
         <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
         <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
+        {% include 'includes/notification_bell.html' %}
         <div class="user-profile-menu">
             <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
                 <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
@@ -222,10 +225,13 @@
         <a href="{% url 'accounts:admin_dashboard' %}" class="sidebar-link">Overview</a>
         <a href="{% url 'accounts:admin_users' %}" class="sidebar-link">Users</a>
         <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link active">Technician Groups</a>
+        <a href="{% url 'tickets:admin_locations' %}" class="sidebar-link">Campus Locations</a>
         <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+        <a href="{% url 'tickets:admin_solutions' %}" class="sidebar-link">Solutions & Quick Fixes</a>
         <a href="{% url 'accounts:admin_email_settings' %}" class="sidebar-link">Email & SMTP Settings</a>
         <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
         <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link">Issue Reports</a>
+        {% include 'includes/sidebar_notifications.html' %}
         <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
         <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
     </nav>
@@ -272,6 +278,31 @@
                 <div class="field" style="margin-bottom: 14px;">
                     <label for="id_max_tickets">Max Active Tickets / Tech</label>
                     <input type="number" name="max_tickets_per_tech" id="id_max_tickets" value="8" min="1" max="50">
+                </div>
+
+                <div class="field" style="margin-bottom: 14px;">
+                    <label>Covered Campus Locations</label>
+                    <div style="max-height: 120px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; background: #fff;">
+                        {% for loc in all_locations %}
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; cursor: pointer;">
+                            <input type="checkbox" name="campus_locations" value="{{ loc.id }}">
+                            🏢 {{ loc.name }}
+                        </label>
+                        {% empty %}
+                        <span class="muted" style="font-size: 12px;">No campus locations yet. <a href="{% url 'tickets:admin_locations' %}" style="color:#15803d; text-decoration:underline;">Add locations</a></span>
+                        {% endfor %}
+                    </div>
+                    <small class="muted" style="font-size: 11.5px; color: #64748b; margin-top: 3px; display: block;">
+                        Tickets matching these campus blocks will route directly to this support group.
+                    </small>
+                </div>
+
+                <div class="field" style="margin-bottom: 14px;">
+                    <label for="id_location_condition">Location Keywords / Fallback Condition</label>
+                    <input type="text" name="location_condition" id="id_location_condition" placeholder="e.g. Hostel, Boys Hostel or Tech Park, Lab">
+                    <small class="muted" style="font-size: 11.5px; color: #64748b; margin-top: 3px; display: block;">
+                        Tickets containing these location keywords will also route to this group.
+                    </small>
                 </div>
 
                 <div class="field" style="margin-bottom: 14px;">
@@ -327,7 +358,7 @@
                             </div>
                         </div>
                         <div class="tg-actions">
-                            <button type="button" class="btn-tg-edit" onclick="openEditGroupModal('{{ group.id }}', '{{ group.name|escapejs }}', '{{ group.description|escapejs }}', '{{ group.max_tickets_per_tech }}', [{% for t in group.technicians.all %}'{{ t.id }}',{% endfor %}], [{% for c in group.categories.all %}'{{ c.id }}',{% endfor %}])">
+                            <button type="button" class="btn-tg-edit" onclick="openEditGroupModal('{{ group.id }}', '{{ group.name|escapejs }}', '{{ group.description|escapejs }}', '{{ group.max_tickets_per_tech }}', [{% for t in group.technicians.all %}'{{ t.id }}',{% endfor %}], [{% for c in group.categories.all %}'{{ c.id }}',{% endfor %}], [{% for l in group.campus_locations.all %}'{{ l.id }}',{% endfor %}], '{{ group.location_condition|escapejs }}')">
                                 Edit
                             </button>
                             <form method="post" action="{% url 'accounts:admin_groups' %}" onsubmit="return confirm('Are you sure you want to delete group \'{{ group.name|escapejs }}\'?');" style="display:inline;">
@@ -346,6 +377,22 @@
                             <span class="tg-col-title">Workload Limit</span>
                             <div class="tg-badge-list">
                                 <span class="tg-pill-cap">Max {{ group.max_tickets_per_tech }} / tech</span>
+                            </div>
+                        </div>
+
+                        <div class="tg-col">
+                            <span class="tg-col-title">Covered Locations</span>
+                            <div class="tg-badge-list">
+                                {% for loc in group.campus_locations.all %}
+                                <span class="tg-pill-cat" style="background: #e0f2fe; color: #0369a1; font-weight: 600;">🏢 {{ loc.name }}</span>
+                                {% empty %}
+                                {% if not group.location_condition %}
+                                <span class="muted" style="font-size: 12px;">All Locations (Default)</span>
+                                {% endif %}
+                                {% endfor %}
+                                {% if group.location_condition %}
+                                <span class="tg-pill-cat" style="background: #fef3c7; color: #92400e; font-weight: 700;">📍 {{ group.location_condition }}</span>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -413,6 +460,26 @@
                 </div>
 
                 <div class="field" style="margin-bottom: 14px;">
+                    <label>Covered Campus Locations</label>
+                    <div id="edit_locations_container" style="max-height: 120px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; background: #fff;">
+                        {% for loc in all_locations %}
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; cursor: pointer;">
+                            <input type="checkbox" name="campus_locations" value="{{ loc.id }}" class="edit-loc-checkbox">
+                            🏢 {{ loc.name }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="field" style="margin-bottom: 14px;">
+                    <label for="edit_location_condition">Location Keywords / Fallback Condition</label>
+                    <input type="text" name="location_condition" id="edit_location_condition" placeholder="e.g. Hostel, Boys Hostel or Tech Park, Lab">
+                    <small class="muted" style="font-size: 11.5px; color: #64748b; margin-top: 3px; display: block;">
+                        Tickets containing these location keywords will also route to this group.
+                    </small>
+                </div>
+
+                <div class="field" style="margin-bottom: 14px;">
                     <label>Assigned Technicians</label>
                     <div id="edit_technicians_container" style="max-height: 120px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; background: #fff;">
                         {% for tech in all_technicians %}
@@ -446,11 +513,12 @@
 </div>
 
 <script>
-function openEditGroupModal(id, name, desc, maxTickets, techIds, catIds) {
+function openEditGroupModal(id, name, desc, maxTickets, techIds, catIds, locIds, locationCondition) {
     document.getElementById('edit_group_id').value = id;
     document.getElementById('edit_group_name').value = name;
     document.getElementById('edit_group_desc').value = desc;
     document.getElementById('edit_group_max').value = maxTickets;
+    document.getElementById('edit_location_condition').value = locationCondition || '';
 
     const techCheckboxes = document.querySelectorAll('.edit-tech-checkbox');
     techCheckboxes.forEach(cb => {
@@ -460,6 +528,11 @@ function openEditGroupModal(id, name, desc, maxTickets, techIds, catIds) {
     const catCheckboxes = document.querySelectorAll('.edit-cat-checkbox');
     catCheckboxes.forEach(cb => {
         cb.checked = catIds.includes(cb.value);
+    });
+
+    const locCheckboxes = document.querySelectorAll('.edit-loc-checkbox');
+    locCheckboxes.forEach(cb => {
+        cb.checked = (locIds || []).includes(cb.value);
     });
 
     document.getElementById('editGroupModal').classList.add('open');
@@ -474,6 +547,6 @@ window.addEventListener('click', function(e) {
     if (e.target === modal) closeEditGroupModal();
 });
 </script>
-<script src="{% static 'js/mobile_nav.js' %}?v=3.0"></script>
+<script src="{% static 'js/mobile_nav.js' %}?v=4.0"></script>
 </body>
 </html>

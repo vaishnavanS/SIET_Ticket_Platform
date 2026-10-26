@@ -6,8 +6,8 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from .forms import TicketCreateForm, AdminTicketForm, IssueFormFieldForm, ServiceCatalogItemForm
-from .models import Ticket, IssueFormField, TicketStatus, TicketComment, TicketHistory, ServiceCatalogItem, Category
+from .forms import TicketCreateForm, AdminTicketForm, IssueFormFieldForm, ServiceCatalogItemForm, SolutionArticleForm, CampusLocationForm
+from .models import Ticket, IssueFormField, TicketStatus, TicketComment, TicketHistory, ServiceCatalogItem, Category, SolutionArticle, CampusLocation
 from accounts.models import UserRole, TechnicianGroup
 
 @login_required(login_url='accounts:login')
@@ -128,6 +128,7 @@ def ticket_create(request):
 
 	return render(request, 'tickets/ticket_create.html', {
 		'form': form,
+		'campus_locations': CampusLocation.objects.filter(is_active=True).order_by('name'),
 		'issue_fields': issue_fields,
 		'max_attachment_size_mb': max_attachment_size_mb,
 		'fields_schema_json': json.dumps(fields_schema),
@@ -358,16 +359,85 @@ def user_service_catalog(request):
 @login_required(login_url='accounts:login')
 @require_http_methods(['GET', 'POST'])
 def ticket_edit(request, pk):
-	# Ticket records are immutable for audit integrity. Redirect to ticket detail.
 	ticket = get_object_or_404(Ticket, pk=pk)
-	messages.info(request, "Ticket content is locked for audit integrity. You can manage status, assignments, and notes here.")
-	return redirect('tickets:detail', pk=ticket.pk)
+	is_admin = (request.user.is_staff or (hasattr(request.user, 'profile') and request.user.profile.role == UserRole.ADMIN))
+	if not is_admin:
+		messages.error(request, "Only administrators have permission to edit ticket specifications.")
+		return redirect('tickets:detail', pk=ticket.pk)
+
+	if request.method == 'POST':
+		# Snapshot before values for audit tracking
+		old_values = {
+			'title': ticket.title,
+			'description': ticket.description,
+			'category': str(ticket.category.name if ticket.category else ''),
+			'urgency': ticket.get_urgency_display(),
+			'campus_location': str(ticket.campus_location.name if ticket.campus_location else ''),
+			'location_details': ticket.location_details or '',
+			'location': ticket.location,
+			'assigned_group': str(ticket.assigned_group.name if ticket.assigned_group else ''),
+			'assigned_technician': str(ticket.assigned_technician.username if ticket.assigned_technician else ''),
+			'status': ticket.get_status_display(),
+		}
+
+		form = AdminTicketForm(request.POST, instance=ticket)
+		if form.is_valid():
+			updated_ticket = form.save()
+
+			# Field label mappings for clean audit logs
+			field_labels = {
+				'title': 'Title',
+				'description': 'Description',
+				'category': 'Category',
+				'urgency': 'Urgency',
+				'campus_location': 'Campus Block',
+				'location_details': 'Location Details',
+				'location': 'Location',
+				'assigned_group': 'Technician Group',
+				'assigned_technician': 'Technician',
+				'status': 'Status',
+			}
+
+			new_values = {
+				'title': updated_ticket.title,
+				'description': updated_ticket.description,
+				'category': str(updated_ticket.category.name if updated_ticket.category else ''),
+				'urgency': updated_ticket.get_urgency_display(),
+				'campus_location': str(updated_ticket.campus_location.name if updated_ticket.campus_location else ''),
+				'location_details': updated_ticket.location_details or '',
+				'location': updated_ticket.location,
+				'assigned_group': str(updated_ticket.assigned_group.name if updated_ticket.assigned_group else ''),
+				'assigned_technician': str(updated_ticket.assigned_technician.username if updated_ticket.assigned_technician else ''),
+				'status': updated_ticket.get_status_display(),
+			}
+
+			for f_key, f_label in field_labels.items():
+				old_v = old_values.get(f_key, '')
+				new_v = new_values.get(f_key, '')
+				if old_v != new_v:
+					TicketHistory.objects.create(
+						ticket=updated_ticket,
+						changed_by=request.user,
+						field_name=f_label,
+						old_value=old_v,
+						new_value=new_v,
+					)
+
+			messages.success(request, f"Ticket #{updated_ticket.ticket_number} updated successfully.")
+			return redirect('tickets:detail', pk=updated_ticket.pk)
+	else:
+		form = AdminTicketForm(instance=ticket)
+
+	return render(request, 'tickets/ticket_edit.html', {
+		'form': form,
+		'ticket': ticket,
+	})
 
 
 @login_required(login_url='accounts:login')
 def ticket_detail(request, pk):
 	ticket = get_object_or_404(
-		Ticket.objects.select_related('reporter', 'assigned_technician', 'category', 'assigned_group'),
+		Ticket.objects.select_related('reporter', 'assigned_technician', 'category', 'assigned_group', 'campus_location'),
 		pk=pk
 	)
 	
@@ -686,5 +756,200 @@ def notifications_clear_all(request):
 	TicketNotification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
 	messages.success(request, "All notifications marked as read.")
 	return redirect(request.META.get('HTTP_REFERER') or 'accounts:dashboard')
+
+
+@login_required(login_url='accounts:login')
+def solutions_list(request):
+	"""Knowledge base & self-help troubleshooting guides for students, faculty, and staff"""
+	target = (request.GET.get('target') or request.GET.get('category') or 'all').strip().lower()
+	query = request.GET.get('q', '').strip()
+
+	solutions_qs = SolutionArticle.objects.filter(is_active=True).select_related('category').order_by('order', 'id')
+
+	if target in [t.value for t in SolutionArticle.TargetCategory]:
+		solutions_qs = solutions_qs.filter(target_category=target)
+
+	if query:
+		from django.db.models import Q
+		solutions_qs = solutions_qs.filter(
+			Q(title__icontains=query) |
+			Q(summary__icontains=query) |
+			Q(symptoms__icontains=query) |
+			Q(solution_steps__icontains=query) |
+			Q(verification_checklist__icontains=query)
+		)
+
+	categories_count = {
+		'all': SolutionArticle.objects.filter(is_active=True).count(),
+		'wifi_lan': SolutionArticle.objects.filter(is_active=True, target_category=SolutionArticle.TargetCategory.WIFI_LAN).count(),
+		'seb': SolutionArticle.objects.filter(is_active=True, target_category=SolutionArticle.TargetCategory.SEB).count(),
+		'hardware': SolutionArticle.objects.filter(is_active=True, target_category=SolutionArticle.TargetCategory.HARDWARE).count(),
+		'hostel': SolutionArticle.objects.filter(is_active=True, target_category=SolutionArticle.TargetCategory.HOSTEL).count(),
+	}
+
+	role = getattr(request.user.profile, 'role', None)
+	can_manage = (role in [UserRole.ADMIN, UserRole.TECHNICIAN] or request.user.is_staff)
+
+	return render(request, 'tickets/solutions_list.html', {
+		'solutions': solutions_qs,
+		'selected_target': target,
+		'query': query,
+		'categories_count': categories_count,
+		'target_choices': SolutionArticle.TargetCategory.choices,
+		'can_manage': can_manage,
+	})
+
+
+@login_required(login_url='accounts:login')
+@require_http_methods(['POST'])
+def solution_feedback(request, pk):
+	"""Records helpful feedback when student resolves problem, deflecting support tickets"""
+	solution = get_object_or_404(SolutionArticle, pk=pk, is_active=True)
+	solution.helpful_count += 1
+	solution.save(update_fields=['helpful_count'])
+
+	if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('ajax') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+		return JsonResponse({'success': True, 'status': 'ok', 'helpful_count': solution.helpful_count})
+
+	messages.success(request, f"Thank you for confirming! We're glad '{solution.title}' resolved your issue without needing a ticket.")
+	return redirect(request.META.get('HTTP_REFERER') or 'tickets:solutions_list')
+
+
+@login_required(login_url='accounts:login')
+@require_http_methods(['GET', 'POST'])
+def admin_solutions_manager(request):
+	"""Admin & Technician control center for publishing and managing self-help troubleshooting guides"""
+	role = getattr(request.user.profile, 'role', None)
+	is_admin = (role == UserRole.ADMIN or request.user.is_staff)
+	is_tech = (role == UserRole.TECHNICIAN)
+
+	if not (is_admin or is_tech):
+		return redirect('accounts:dashboard')
+
+	if request.method == 'POST':
+		action = request.POST.get('action')
+		if action == 'create':
+			form = SolutionArticleForm(request.POST)
+			if form.is_valid():
+				art = form.save()
+				messages.success(request, f"Solution guide '{art.title}' published successfully.")
+				return redirect('tickets:admin_solutions')
+			else:
+				messages.error(request, "Please correct the errors in the solution guide form.")
+		elif action == 'toggle_active':
+			art_id = request.POST.get('article_id') or request.POST.get('solution_id')
+			art = get_object_or_404(SolutionArticle, pk=art_id)
+			art.is_active = not art.is_active
+			art.save(update_fields=['is_active'])
+			state = "published" if art.is_active else "hidden"
+			messages.success(request, f"Solution guide '{art.title}' is now {state}.")
+			return redirect('tickets:admin_solutions')
+		elif action == 'delete':
+			art_id = request.POST.get('article_id') or request.POST.get('solution_id')
+			art = get_object_or_404(SolutionArticle, pk=art_id)
+			title = art.title
+			art.delete()
+			messages.success(request, f"Solution guide '{title}' was deleted.")
+			return redirect('tickets:admin_solutions')
+
+	form = SolutionArticleForm()
+	solutions = SolutionArticle.objects.select_related('category').order_by('order', 'id')
+	categories = Category.objects.all()
+	total_deflected = sum(s.helpful_count for s in solutions)
+
+	return render(request, 'tickets/admin_solutions.html', {
+		'form': form,
+		'solutions': solutions,
+		'categories': categories,
+		'total_deflected': total_deflected,
+		'is_admin': is_admin,
+		'is_technician': is_tech,
+	})
+
+
+@login_required(login_url='accounts:login')
+@require_http_methods(['GET', 'POST'])
+def admin_solution_edit(request, pk):
+	"""Admin & Technician edit view for a specific solution article"""
+	role = getattr(request.user.profile, 'role', None)
+	is_admin = (role == UserRole.ADMIN or request.user.is_staff)
+	is_tech = (role == UserRole.TECHNICIAN)
+
+	if not (is_admin or is_tech):
+		return redirect('accounts:dashboard')
+
+	article = get_object_or_404(SolutionArticle, pk=pk)
+	form = SolutionArticleForm(request.POST or None, instance=article)
+	if request.method == 'POST' and form.is_valid():
+		form.save()
+		messages.success(request, f"Solution guide '{article.title}' updated successfully.")
+		return redirect('tickets:admin_solutions')
+
+	return render(request, 'tickets/admin_solution_edit.html', {
+		'form': form,
+		'article': article,
+		'is_admin': is_admin,
+		'is_technician': is_tech,
+	})
+
+
+@login_required(login_url='accounts:login')
+@require_http_methods(['GET', 'POST'])
+def admin_locations(request):
+	"""Admin manager for campus buildings, blocks, and physical locations"""
+	role = getattr(request.user.profile, 'role', None) if hasattr(request.user, 'profile') else None
+	is_admin = (role == UserRole.ADMIN or request.user.is_staff)
+	if not is_admin:
+		messages.error(request, "Only administrators have permission to manage campus locations.")
+		return redirect('accounts:dashboard')
+
+	if request.method == 'POST':
+		action = request.POST.get('action', 'create')
+		if action == 'create':
+			form = CampusLocationForm(request.POST)
+			if form.is_valid():
+				loc = form.save()
+				messages.success(request, f"Campus location '{loc.name}' created successfully.")
+				return redirect('tickets:admin_locations')
+			else:
+				messages.error(request, "Please correct the errors in the campus location form.")
+		elif action == 'edit':
+			loc_id = request.POST.get('location_id')
+			loc = get_object_or_404(CampusLocation, pk=loc_id)
+			form = CampusLocationForm(request.POST, instance=loc)
+			if form.is_valid():
+				form.save()
+				messages.success(request, f"Campus location '{loc.name}' updated successfully.")
+				return redirect('tickets:admin_locations')
+			else:
+				messages.error(request, "Failed to update campus location. Please verify inputs.")
+		elif action == 'toggle_active':
+			loc_id = request.POST.get('location_id')
+			loc = get_object_or_404(CampusLocation, pk=loc_id)
+			loc.is_active = not loc.is_active
+			loc.save(update_fields=['is_active'])
+			state = "active" if loc.is_active else "inactive"
+			messages.success(request, f"Location '{loc.name}' is now {state}.")
+			return redirect('tickets:admin_locations')
+		elif action == 'delete':
+			loc_id = request.POST.get('location_id')
+			loc = get_object_or_404(CampusLocation, pk=loc_id)
+			name = loc.name
+			loc.delete()
+			messages.success(request, f"Campus location '{name}' deleted successfully.")
+			return redirect('tickets:admin_locations')
+
+	from django.db.models import Count
+	form = CampusLocationForm()
+	locations = CampusLocation.objects.prefetch_related('technician_groups').annotate(ticket_count=Count('tickets')).order_by('name')
+
+	return render(request, 'tickets/admin_locations.html', {
+		'form': form,
+		'locations': locations,
+		'total_locations': locations.count(),
+		'active_locations': sum(1 for l in locations if l.is_active),
+	})
+
+
 
 

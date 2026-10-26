@@ -12,7 +12,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home - SIET Helpdesk</title>
-    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=2.8">
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=4.0">
 </head>
 <body>
     <header class="topbar">
@@ -26,9 +26,11 @@
         </div>
         <nav>
             <a href="{% url 'accounts:user_dashboard' %}" class="active">Home</a>
+            <a href="{% url 'tickets:solutions_list' %}">Solutions</a>
             <a href="{% url 'tickets:user_catalog' %}">Service Catalog</a>
             <a href="{% url 'tickets:my_tickets' %}">My Tickets & History</a>
             <a href="{% url 'tickets:create' %}">Report an Issue</a>
+            {% include 'includes/notification_bell.html' %}
             <div class="user-profile-menu">
                 <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
                     <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
@@ -54,9 +56,11 @@
         </div>
         <nav class="sidebar-nav">
             <a href="{% url 'accounts:user_dashboard' %}" class="sidebar-link active">Home</a>
+            <a href="{% url 'tickets:solutions_list' %}" class="sidebar-link">Solutions</a>
             <a href="{% url 'tickets:user_catalog' %}" class="sidebar-link">Service Catalog</a>
             <a href="{% url 'tickets:my_tickets' %}" class="sidebar-link">My Tickets & History</a>
             <a href="{% url 'tickets:create' %}" class="sidebar-link">Report an Issue</a>
+            {% include 'includes/sidebar_notifications.html' %}
             <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
             <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
         </nav>
@@ -195,6 +199,6 @@
 
     </main>
 
-    <script src="{% static 'js/mobile_nav.js' %}?v=2.8"></script>
+    <script src="{% static 'js/mobile_nav.js' %}?v=4.0"></script>
 </body>
 </html>

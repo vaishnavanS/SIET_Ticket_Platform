@@ -32,12 +32,24 @@ To make the platform accessible to other computers, phones, or tablets connected
 # Or using Django management command
 ./venv/bin/python manage.py runserver_lan
 
-# Windows
+# Windows (PowerShell)
+.\run_lan.bat
+
+# Windows (Command Prompt)
 run_lan.bat
 ```
 This automatically detects your machine's active LAN IP (e.g. `http://192.168.1.2:8000/`) and prints direct URLs for both local and LAN access.
 
 #### Option B: Standard Localhost Only
+
+**On Windows (PowerShell):**
+```powershell
+.\venv\Scripts\Activate.ps1
+python manage.py runserver
+```
+*(Or without activating: `.\venv\Scripts\python.exe manage.py runserver`)*
+
+**On Linux / macOS:**
 ```bash
 source venv/bin/activate
 python manage.py runserver

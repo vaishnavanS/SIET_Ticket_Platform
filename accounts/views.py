@@ -329,14 +329,17 @@ def admin_groups(request):
             return redirect('accounts:admin_groups')
 
     form = TechnicianGroupForm()
-    groups = TechnicianGroup.objects.prefetch_related('technicians', 'categories').all()
+    from tickets.models import CampusLocation
+    groups = TechnicianGroup.objects.prefetch_related('technicians', 'categories', 'campus_locations').all()
     all_categories = Category.objects.all()
     all_technicians = User.objects.filter(profile__role=UserRole.TECHNICIAN, profile__is_active=True)
+    all_locations = CampusLocation.objects.filter(is_active=True).order_by('name')
     return render(request, 'accounts/admin_groups.html', {
         'form': form,
         'groups': groups,
         'all_categories': all_categories,
         'all_technicians': all_technicians,
+        'all_locations': all_locations,
     })
 
 
@@ -644,48 +647,56 @@ def password_reset_request_view(request):
             is_suspended = profile.is_suspended if profile else False
             is_verified = profile.is_email_verified if profile else True
 
-            if user and not is_suspended and user.email and is_verified:
-                from django.utils.http import urlsafe_base64_encode
-                from django.utils.encoding import force_bytes
-                from django.contrib.auth.tokens import default_token_generator
-                from django.template.loader import render_to_string
-                from django.core.mail import EmailMessage
-                from .utils import get_site_email_connection, get_site_base_url
+            if user:
+                if is_suspended:
+                    error = "Your account is suspended. Please contact the Network Team to get this resolved."
+                elif not user.email:
+                    error = "No email address is linked to this account. Please contact the Network Team to get this resolved."
+                elif not is_verified:
+                    error = "Your email address has not been verified. Please contact the Network Team to get this resolved."
+                else:
+                    from django.utils.http import urlsafe_base64_encode
+                    from django.utils.encoding import force_bytes
+                    from django.contrib.auth.tokens import default_token_generator
+                    from django.template.loader import render_to_string
+                    from django.core.mail import EmailMessage
+                    from .utils import get_site_email_connection, get_site_base_url
 
-                uid = urlsafe_base64_encode(force_bytes(user.pk))
-                token = default_token_generator.make_token(user)
-                base_url = get_site_base_url(request)
-                reset_link = f"{base_url}/accounts/password-reset/{uid}/{token}/"
+                    uid = urlsafe_base64_encode(force_bytes(user.pk))
+                    token = default_token_generator.make_token(user)
+                    base_url = get_site_base_url(request)
+                    reset_link = f"{base_url}/accounts/password-reset/{uid}/{token}/"
 
-                conn, from_email, site_name = get_site_email_connection()
-                subject = f"[{site_name}] Password Reset Request"
-                context = {
-                    'user': user,
-                    'reset_link': reset_link,
-                    'site_name': site_name,
-                }
-                body = render_to_string('accounts/password_reset_email.html', context)
+                    conn, from_email, site_name = get_site_email_connection()
+                    subject = f"[{site_name}] Password Reset Request"
+                    context = {
+                        'user': user,
+                        'reset_link': reset_link,
+                        'site_name': site_name,
+                    }
+                    body = render_to_string('accounts/password_reset_email.html', context)
 
-                try:
-                    email_msg = EmailMessage(
-                        subject=subject,
-                        body=body,
-                        from_email=from_email,
-                        to=[user.email],
-                        connection=conn,
-                    )
-                    email_msg.send(fail_silently=False)
-                    logger.info(f"Password reset link sent to {user.email} for user {user.username}")
-                except Exception as e:
-                    logger.error(f"Failed to dispatch password reset email to {user.email}: {e}")
+                    try:
+                        email_msg = EmailMessage(
+                            subject=subject,
+                            body=body,
+                            from_email=from_email,
+                            to=[user.email],
+                            connection=conn,
+                        )
+                        email_msg.send(fail_silently=False)
+                        logger.info(f"Password reset link sent to {user.email} for user {user.username}")
+                    except Exception as e:
+                        logger.error(f"Failed to dispatch password reset email to {user.email}: {e}")
 
-                request.session['reset_email_masked'] = mask_email_display(user.email)
+                    request.session['reset_email_masked'] = mask_email_display(user.email)
+                    messages.info(request, "If an account matches, a reset link has been sent.")
+                    return redirect('accounts:password_reset_done')
             else:
                 # To prevent user enumeration, show the generic confirmation even if account is not found
                 request.session['reset_email_masked'] = "your registered email address"
-
-            messages.info(request, "If an account matches, a reset link has been sent.")
-            return redirect('accounts:password_reset_done')
+                messages.info(request, "If an account matches, a reset link has been sent.")
+                return redirect('accounts:password_reset_done')
 
     return render(request, 'accounts/password_reset.html', {
         'error': error,

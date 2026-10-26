@@ -17,7 +17,12 @@ urlpatterns = [
     path('<int:pk>/edit/', views.ticket_edit, name='edit'),
     path('<int:pk>/status/', views.ticket_update_status, name='update_status'),
     path('<int:pk>/comment/', views.ticket_add_comment, name='add_comment'),
-    path('<int:pk>/confirm-resolution/', views.ticket_confirm_resolution, name='confirm_resolution'),
+    path('solutions/', views.solutions_list, name='solutions'),
+    path('solutions/list/', views.solutions_list, name='solutions_list'),
+    path('solutions/<int:pk>/feedback/', views.solution_feedback, name='solution_feedback'),
+    path('solutions-admin/', views.admin_solutions_manager, name='admin_solutions'),
+    path('solutions-admin/<int:pk>/edit/', views.admin_solution_edit, name='admin_solution_edit'),
+    path('locations/', views.admin_locations, name='admin_locations'),
     path('notifications/<int:pk>/read/', views.notification_mark_read, name='notification_read'),
     path('notifications/clear-all/', views.notifications_clear_all, name='notifications_clear'),
 ]

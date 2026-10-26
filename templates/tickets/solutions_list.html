@@ -1,0 +1,520 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/jpeg" href="{% static 'images/logo.jpg' %}">
+    <link rel="shortcut icon" type="image/jpeg" href="{% static 'images/logo.jpg' %}">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon.png' %}?v=3">
+    <link rel="apple-touch-icon" href="{% static 'images/favicon.png' %}?v=3">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solutions & Quick Fixes - SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=4.0">
+    <style>
+        .solutions-hero {
+            background: linear-gradient(135deg, #063b0c 0%, #15803d 100%);
+            color: #ffffff;
+            padding: 28px 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 14px rgba(6, 59, 12, 0.15);
+        }
+        .solutions-hero h1 {
+            margin: 0 0 8px 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .solutions-hero p {
+            margin: 0;
+            color: #e2f1e4;
+            font-size: 14.5px;
+            max-width: 680px;
+            line-height: 1.5;
+        }
+        .solutions-filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 22px;
+        }
+        .solutions-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .solutions-tab-pill {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13.5px;
+            font-weight: 600;
+            text-decoration: none;
+            color: #173b1c;
+            background: #eef5ec;
+            border: 1px solid #d1e5cf;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .solutions-tab-pill:hover {
+            background: #dbeef7;
+            color: #0b3d12;
+        }
+        .solutions-tab-pill.active {
+            background: #063b0c;
+            color: #ffffff;
+            border-color: #063b0c;
+        }
+        .solutions-count-badge {
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.08);
+        }
+        .solutions-tab-pill.active .solutions-count-badge {
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+        }
+        .solution-card {
+            background: #ffffff;
+            border: 1px solid #dce8db;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .solution-card:hover {
+            border-color: #9ac297;
+            box-shadow: 0 4px 12px rgba(6, 59, 12, 0.08);
+        }
+        .solution-header {
+            padding: 18px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            user-select: none;
+        }
+        .solution-header-left {
+            flex: 1;
+        }
+        .solution-badge {
+            display: inline-block;
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 3px 10px;
+            border-radius: 4px;
+            margin-bottom: 6px;
+        }
+        .badge-wifi { background: #e0f2fe; color: #0369a1; }
+        .badge-seb { background: #fee2e2; color: #b91c1c; }
+        .badge-hardware { background: #fef3c7; color: #b45309; }
+        .badge-hostel { background: #f3e8ff; color: #6b21a8; }
+        .badge-general { background: #f1f5f9; color: #475569; }
+
+        .solution-title {
+            margin: 0 0 4px 0;
+            font-size: 16.5px;
+            font-weight: 700;
+            color: #0f3614;
+        }
+        .solution-summary {
+            margin: 0;
+            font-size: 13.5px;
+            color: #4b6350;
+            line-height: 1.4;
+        }
+        .solution-toggle-btn {
+            font-size: 13px;
+            font-weight: 600;
+            color: #15803d;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            padding: 6px 14px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .solution-body {
+            display: none;
+            padding: 0 20px 20px 20px;
+            border-top: 1px solid #f0f6ef;
+            background: #ffffff;
+        }
+        .solution-body.open {
+            display: block;
+        }
+        .solution-section-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #335338;
+            margin: 16px 0 10px 0;
+        }
+        .symptoms-box {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 12px 16px;
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 16px;
+        }
+        .symptoms-list {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 13.5px;
+            color: #78350f;
+            line-height: 1.5;
+        }
+        .steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: #f7faf6;
+            border: 1px solid #e2ede0;
+            padding: 12px 14px;
+            border-radius: 8px;
+        }
+        .step-num {
+            background: #15803d;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .step-text {
+            font-size: 14px;
+            color: #173b1c;
+            line-height: 1.45;
+            margin: 0;
+        }
+        .checklist-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 18px;
+        }
+        .checklist-list {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 13.5px;
+            color: #166534;
+            line-height: 1.5;
+        }
+        .solution-footer {
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            margin: 18px -20px -20px -20px;
+            padding: 14px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .feedback-btn {
+            background: #15803d;
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .feedback-btn:hover {
+            background: #0f612c;
+        }
+        .feedback-btn.solved {
+            background: #047857;
+            cursor: default;
+        }
+        .ticket-redirect-btn {
+            color: #15803d;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .ticket-redirect-btn:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-left">
+            <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <strong>SIET Helpdesk</strong>
+        </div>
+        <nav>
+            <a href="{% url 'accounts:user_dashboard' %}">Home</a>
+            <a href="{% url 'tickets:solutions_list' %}" class="active">Solutions</a>
+            <a href="{% url 'tickets:user_catalog' %}">Service Catalog</a>
+            <a href="{% url 'tickets:my_tickets' %}">My Tickets & History</a>
+            <a href="{% url 'tickets:create' %}">Report an Issue</a>
+            {% include 'includes/notification_bell.html' %}
+            <div class="user-profile-menu">
+                <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
+                    <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
+                    <span class="user-dropdown-arrow">▾</span>
+                </button>
+                <div class="profile-dropdown-card" id="profileDropdownCard">
+                    <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'accounts:logout' %}" class="dropdown-item">Log out</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Mobile Sidebar Drawer -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+    <aside id="mobileSidebar" class="mobile-sidebar">
+        <div class="sidebar-header">
+            <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close Menu">✕</button>
+            <div class="sidebar-brand">
+                <strong>SIET Helpdesk</strong>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{% url 'accounts:user_dashboard' %}" class="sidebar-link">Home</a>
+            <a href="{% url 'tickets:solutions_list' %}" class="sidebar-link active">Solutions</a>
+            <a href="{% url 'tickets:user_catalog' %}" class="sidebar-link">Service Catalog</a>
+            <a href="{% url 'tickets:my_tickets' %}" class="sidebar-link">My Tickets & History</a>
+            <a href="{% url 'tickets:create' %}" class="sidebar-link">Report an Issue</a>
+            {% include 'includes/sidebar_notifications.html' %}
+            <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
+            <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+        </nav>
+    </aside>
+
+    <main class="page-shell">
+        {% if messages %}
+        <div class="alert-messages" style="margin-bottom: 20px;">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Hero Section -->
+        <div class="solutions-hero" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+                <h1>Solutions & Quick Fixes</h1>
+                <p>Step-by-step diagnostic guides to resolve common campus Wi-Fi, LAN, and Safe Exam Browser (SEB) issues in minutes without waiting in a ticket queue.</p>
+            </div>
+            {% if can_manage %}
+            <a href="{% url 'tickets:admin_solutions' %}" class="secondary-button" style="background: #ffffff; color: #063b0c; font-weight: 700; border: none; padding: 10px 18px; border-radius: 8px; text-decoration: none; box-shadow: 0 2px 6px rgba(0,0,0,0.12); display: inline-flex; align-items: center; gap: 6px;">
+                + Create & Manage Solutions
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Filter & Search Panel -->
+        <div class="solutions-filter-bar">
+            <!-- Category Pills -->
+            <div class="solutions-tabs">
+                <a href="{% url 'tickets:solutions_list' %}{% if query %}?q={{ query }}{% endif %}" class="solutions-tab-pill {% if selected_target == 'all' %}active{% endif %}">
+                    All Solutions <span class="solutions-count-badge">{{ categories_count.all }}</span>
+                </a>
+                <a href="{% url 'tickets:solutions_list' %}?target=wifi_lan{% if query %}&q={{ query }}{% endif %}" class="solutions-tab-pill {% if selected_target == 'wifi_lan' %}active{% endif %}">
+                    Wi-Fi & LAN Network <span class="solutions-count-badge">{{ categories_count.wifi_lan }}</span>
+                </a>
+                <a href="{% url 'tickets:solutions_list' %}?target=seb{% if query %}&q={{ query }}{% endif %}" class="solutions-tab-pill {% if selected_target == 'seb' %}active{% endif %}">
+                    Safe Exam Browser (SEB) <span class="solutions-count-badge">{{ categories_count.seb }}</span>
+                </a>
+                {% if categories_count.hardware %}
+                <a href="{% url 'tickets:solutions_list' %}?target=hardware{% if query %}&q={{ query }}{% endif %}" class="solutions-tab-pill {% if selected_target == 'hardware' %}active{% endif %}">
+                    PC & Hardware <span class="solutions-count-badge">{{ categories_count.hardware }}</span>
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Search Form -->
+            <form method="get" action="{% url 'tickets:solutions_list' %}" style="display: flex; gap: 8px;">
+                {% if selected_target != 'all' %}
+                <input type="hidden" name="target" value="{{ selected_target }}">
+                {% endif %}
+                <input type="text" name="q" value="{{ query }}" placeholder="Search solutions..." style="padding: 7px 14px; border: 1px solid #c8d8c6; border-radius: 6px; font-size: 13.5px; width: 220px;">
+                <button type="submit" class="secondary-button" style="padding: 0 12px; min-height: 34px;">Search</button>
+                {% if query %}
+                <a href="{% url 'tickets:solutions_list' %}{% if selected_target != 'all' %}?target={{ selected_target }}{% endif %}" class="secondary-button" style="padding: 0 10px; min-height: 34px; text-decoration: none; display: flex; align-items: center;">✕</a>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Solutions List -->
+        <section class="solutions-container">
+            {% for item in solutions %}
+            <article class="solution-card" id="solution-{{ item.id }}">
+                <div class="solution-header" onclick="toggleSolution('{{ item.id }}')">
+                    <div class="solution-header-left">
+                        <span class="solution-badge {% if item.target_category == 'wifi_lan' %}badge-wifi{% elif item.target_category == 'seb' %}badge-seb{% elif item.target_category == 'hardware' %}badge-hardware{% elif item.target_category == 'hostel' %}badge-hostel{% else %}badge-general{% endif %}">
+                            {{ item.get_target_category_display }}
+                        </span>
+                        <h2 class="solution-title">{{ item.title }}</h2>
+                        <p class="solution-summary">{{ item.summary }}</p>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        {% if can_manage %}
+                        <a href="{% url 'tickets:admin_solution_edit' item.id %}" class="solution-toggle-btn" style="background: #ffffff; border: 1px solid #dce8db; text-decoration: none; color: #166534;" onclick="event.stopPropagation();">
+                            Edit
+                        </a>
+                        {% endif %}
+                        <button type="button" class="solution-toggle-btn" id="btn-{{ item.id }}">
+                            View Solution <span id="arrow-{{ item.id }}">▾</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="solution-body" id="body-{{ item.id }}">
+                    <!-- Symptoms to check -->
+                    {% if item.get_symptoms_list %}
+                    <div class="solution-section-title">Common Indicators / Symptoms</div>
+                    <div class="symptoms-box">
+                        <ul class="symptoms-list">
+                            {% for symptom in item.get_symptoms_list %}
+                            <li>{{ symptom }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- Step-by-step instructions -->
+                    <div class="solution-section-title">Step-by-Step Resolution</div>
+                    <div class="steps-container">
+                        {% for step in item.get_steps_list %}
+                        <div class="step-item">
+                            <span class="step-num">{{ forloop.counter }}</span>
+                            <p class="step-text">{{ step }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Verification Checklist -->
+                    {% if item.get_checklist %}
+                    <div class="solution-section-title">Verification Checklist Before Raising a Ticket</div>
+                    <div class="checklist-box">
+                        <ul class="checklist-list">
+                            {% for check in item.get_checklist %}
+                            <li>{{ check }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- Action Footer -->
+                    <div class="solution-footer">
+                        <div>
+                            <button type="button" class="feedback-btn" id="feedback-btn-{{ item.id }}" onclick="recordHelpful('{{ item.id }}')">
+                                ✓ This Solved My Issue!
+                            </button>
+                            <span id="feedback-msg-{{ item.id }}" style="display: none; color: #15803d; font-size: 13px; font-weight: 600; margin-left: 10px;">
+                                Glad this helped! Ticket avoided.
+                            </span>
+                        </div>
+                        <div>
+                            <a href="{% if item.category %}{% url 'tickets:create' %}?category={{ item.category.pk }}{% else %}{% url 'tickets:create' %}{% endif %}" class="ticket-redirect-btn">
+                                Still having this issue? Raise a Ticket &rarr;
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            {% empty %}
+            <div class="panel" style="padding: 40px; text-align: center;">
+                <p style="font-size: 16px; font-weight: 600; color: #173b1c; margin-bottom: 6px;">No solution guides match your criteria</p>
+                <p class="muted" style="margin-bottom: 16px;">Try adjusting your search terms or category selection.</p>
+                <a href="{% url 'tickets:solutions_list' %}" class="primary-button" style="text-decoration: none;">View All Solutions</a>
+            </div>
+            {% endfor %}
+        </section>
+    </main>
+
+    <script>
+        function toggleSolution(id) {
+            const body = document.getElementById('body-' + id);
+            const arrow = document.getElementById('arrow-' + id);
+            const btn = document.getElementById('btn-' + id);
+            if (!body) return;
+
+            const isOpen = body.classList.contains('open');
+            if (isOpen) {
+                body.classList.remove('open');
+                if (arrow) arrow.textContent = '▾';
+                if (btn) btn.innerHTML = 'View Solution <span id="arrow-' + id + '">▾</span>';
+            } else {
+                body.classList.add('open');
+                if (arrow) arrow.textContent = '▴';
+                if (btn) btn.innerHTML = 'Hide Solution <span id="arrow-' + id + '">▴</span>';
+            }
+        }
+
+        function recordHelpful(id) {
+            const btn = document.getElementById('feedback-btn-' + id);
+            const msg = document.getElementById('feedback-msg-' + id);
+            if (!btn || btn.classList.contains('solved')) return;
+
+            const csrfToken = '{{ csrf_token }}';
+            const formData = new FormData();
+            formData.append('ajax', '1');
+
+            fetch(`/tickets/solutions/${id}/feedback/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    btn.classList.add('solved');
+                    btn.textContent = '✓ Solved!';
+                    if (msg) msg.style.display = 'inline';
+                }
+            })
+            .catch(err => {
+                btn.classList.add('solved');
+                btn.textContent = '✓ Solved!';
+                if (msg) msg.style.display = 'inline';
+            });
+        }
+    </script>
+    <script src="{% static 'js/mobile_nav.js' %}?v=2.8"></script>
+</body>
+</html>

@@ -1,0 +1,405 @@
+{% load static %}
+<div class="notif-menu-wrapper" style="position: relative; display: inline-flex; align-items: center; margin-right: 4px; overflow: visible;">
+    <button type="button" class="notif-bell-btn" id="notifBellBtn" onclick="toggleNotifDropdown(event)" aria-label="Notifications" title="Notifications">
+        <svg class="notif-bell-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        {% if unread_notifications_count > 0 %}
+        <span class="notif-badge-pill" id="notifBadge">
+            {% if unread_notifications_count > 9 %}9+{% else %}{{ unread_notifications_count }}{% endif %}
+        </span>
+        {% endif %}
+    </button>
+
+    <div class="notif-dropdown-card" id="notifDropdownCard" style="display: none;">
+        <div class="notif-dropdown-header">
+            <div class="notif-header-title-box">
+                <span class="notif-header-title">Notifications</span>
+                {% if unread_notifications_count > 0 %}
+                <span class="notif-count-chip">{{ unread_notifications_count }} new</span>
+                {% endif %}
+            </div>
+            {% if unread_notifications_count > 0 %}
+            <form action="{% url 'tickets:notifications_clear' %}" method="post" style="margin: 0; padding: 0; background: none; border: none; box-shadow: none;">
+                {% csrf_token %}
+                <button type="submit" class="notif-mark-read-btn">Mark all read</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <div class="notif-list-scroll">
+            {% for notif in recent_notifications %}
+            <a href="{% url 'tickets:notification_read' notif.pk %}" class="notif-row {% if not notif.is_read %}is-unread{% endif %}">
+                <div class="notif-icon-box notif-type-{{ notif.notification_type }}">
+                    {% if notif.notification_type == 'resolved' %}
+                    <!-- Resolved: Checkmark in circle -->
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    {% elif notif.notification_type == 'assigned' %}
+                    <!-- Assigned: User / Allocation -->
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                    {% elif notif.notification_type == 'reopened' %}
+                    <!-- Reopened: Rotate / Refresh loop -->
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="1 4 1 10 7 10"></polyline>
+                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                    </svg>
+                    {% elif notif.notification_type == 'closed' %}
+                    <!-- Closed: Shield check -->
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        <polyline points="9 12 11 14 15 10"></polyline>
+                    </svg>
+                    {% else %}
+                    <!-- Comment / General: Message bubble -->
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    {% endif %}
+                </div>
+
+                <div class="notif-row-text">
+                    <strong class="notif-row-title">{{ notif.title }}</strong>
+                    <p class="notif-row-msg">{{ notif.message|truncatechars:90 }}</p>
+                    <span class="notif-row-time">{{ notif.created_at|timesince }} ago</span>
+                </div>
+
+                {% if not notif.is_read %}
+                <span class="notif-unread-indicator" title="Unread"></span>
+                {% endif %}
+            </a>
+            {% empty %}
+            <div class="notif-empty-state">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px;">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <strong>No notifications</strong>
+                <span>You're all caught up! New alerts will appear here.</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="notif-dropdown-footer">
+            {% if request.user.profile.role == 'admin' or request.user.is_staff %}
+            <a href="{% url 'accounts:admin_tickets' %}">All Issue Reports &rarr;</a>
+            {% elif request.user.profile.role == 'technician' %}
+            <a href="{% url 'accounts:technician_dashboard' %}">Technician Workspace &rarr;</a>
+            {% else %}
+            <a href="{% url 'tickets:my_tickets' %}">My Tickets & History &rarr;</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Self-contained scoped styles for Topbar Notification Bell & Dropdown Card */
+.notif-menu-wrapper {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    margin-right: 4px !important;
+    overflow: visible !important;
+}
+
+.notif-bell-btn {
+    position: relative !important;
+    width: 36px !important;
+    height: 36px !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 50% !important;
+    color: #ffffff !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    outline: none !important;
+    transition: background 0.15s ease !important;
+}
+
+.notif-bell-btn:hover {
+    background: rgba(255, 255, 255, 0.16) !important;
+    color: #ffffff !important;
+}
+
+.notif-bell-icon {
+    display: block !important;
+    stroke: currentColor !important;
+    pointer-events: none !important;
+}
+
+.notif-bell-btn:hover .notif-bell-icon {
+    transform: rotate(8deg) scale(1.04);
+}
+
+.notif-badge-pill {
+    position: absolute !important;
+    top: 2px !important;
+    right: 2px !important;
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    line-height: 16px !important;
+    border-radius: 10px !important;
+    text-align: center !important;
+    padding: 0 4px !important;
+    border: 2px solid #063b0c !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+    pointer-events: none !important;
+    animation: notifPulse 2s infinite ease-in-out !important;
+}
+
+@keyframes notifPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.notif-dropdown-card {
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    right: 0 !important;
+    width: 360px !important;
+    max-width: min(360px, calc(100vw - 24px)) !important;
+    background: #ffffff !important;
+    border: 1px solid #dcebda !important;
+    border-radius: 12px !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+    display: none;
+    flex-direction: column !important;
+    z-index: 999999 !important;
+    overflow: hidden !important;
+    text-align: left !important;
+}
+
+.notif-dropdown-card.open {
+    display: flex !important;
+}
+
+.notif-dropdown-header {
+    padding: 12px 16px !important;
+    background: #fbfdfb !important;
+    border-bottom: 1px solid #e7efe5 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.notif-header-title-box {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.notif-header-title {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #123d18 !important;
+    margin: 0 !important;
+}
+
+.notif-count-chip {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    background: #dcfce7 !important;
+    color: #15803d !important;
+    padding: 2px 7px !important;
+    border-radius: 10px !important;
+}
+
+.notif-mark-read-btn {
+    background: none !important;
+    border: none !important;
+    color: #165c20 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    text-decoration: underline !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.notif-mark-read-btn:hover {
+    color: #0d4215 !important;
+}
+
+.notif-list-scroll {
+    max-height: 380px !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    background: #ffffff !important;
+}
+
+/* Strict link resets against .admin-nav a and .topbar nav a */
+.topbar nav .notif-dropdown-card a.notif-row,
+.admin-nav .notif-dropdown-card a.notif-row,
+.notif-dropdown-card a.notif-row {
+    display: flex !important;
+    gap: 12px !important;
+    align-items: flex-start !important;
+    padding: 12px 16px !important;
+    border: none !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    text-decoration: none !important;
+    color: #1e293b !important;
+    font-size: 13px !important;
+    font-weight: normal !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    text-align: left !important;
+    transition: background 0.12s ease !important;
+    line-height: normal !important;
+}
+
+.topbar nav .notif-dropdown-card a.notif-row:hover,
+.admin-nav .notif-dropdown-card a.notif-row:hover,
+.notif-dropdown-card a.notif-row:hover {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+}
+
+.topbar nav .notif-dropdown-card a.notif-row.is-unread,
+.admin-nav .notif-dropdown-card a.notif-row.is-unread,
+.notif-dropdown-card a.notif-row.is-unread {
+    background: #f0fdf4 !important;
+}
+
+.topbar nav .notif-dropdown-card a.notif-row.is-unread:hover,
+.admin-nav .notif-dropdown-card a.notif-row.is-unread:hover,
+.notif-dropdown-card a.notif-row.is-unread:hover {
+    background: #e6f9eb !important;
+}
+
+.notif-icon-box {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    flex-shrink: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-top: 2px !important;
+}
+
+.notif-type-resolved { background: #dcfce7 !important; color: #15803d !important; border: 1px solid #bbf7d0 !important; }
+.notif-type-assigned { background: #e0f2fe !important; color: #0369a1 !important; border: 1px solid #bae6fd !important; }
+.notif-type-reopened { background: #fef3c7 !important; color: #b45309 !important; border: 1px solid #fde68a !important; }
+.notif-type-closed   { background: #f1f5f9 !important; color: #475569 !important; border: 1px solid #e2e8f0 !important; }
+.notif-type-comment  { background: #ede9fe !important; color: #6d28d9 !important; border: 1px solid #ddd6fe !important; }
+
+.notif-row-text {
+    flex: 1 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+    text-align: left !important;
+}
+
+.notif-row-title {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #123d18 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: block !important;
+}
+
+.notif-row-msg {
+    margin: 0 !important;
+    font-size: 12px !important;
+    color: #475569 !important;
+    line-height: 1.4 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+}
+
+.notif-row-time {
+    font-size: 11px !important;
+    color: #94a3b8 !important;
+    margin-top: 2px !important;
+    display: block !important;
+}
+
+.notif-unread-indicator {
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    background: #16a34a !important;
+    margin-top: 6px !important;
+    flex-shrink: 0 !important;
+    display: inline-block !important;
+}
+
+.notif-empty-state {
+    padding: 32px 20px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    color: #64748b !important;
+    background: #ffffff !important;
+}
+
+.notif-empty-state strong {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    margin-top: 6px !important;
+    display: block !important;
+}
+
+.notif-empty-state span {
+    font-size: 12px !important;
+    color: #64748b !important;
+    margin-top: 4px !important;
+    display: block !important;
+}
+
+.notif-dropdown-footer {
+    padding: 10px 16px !important;
+    background: #fbfdfb !important;
+    border-top: 1px solid #e7efe5 !important;
+    text-align: center !important;
+}
+
+.topbar nav .notif-dropdown-card .notif-dropdown-footer a,
+.admin-nav .notif-dropdown-card .notif-dropdown-footer a,
+.notif-dropdown-footer a {
+    color: #165c20 !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    background: transparent !important;
+    padding: 4px 8px !important;
+    display: inline-block !important;
+    border: none !important;
+}
+
+.topbar nav .notif-dropdown-card .notif-dropdown-footer a:hover,
+.admin-nav .notif-dropdown-card .notif-dropdown-footer a:hover,
+.notif-dropdown-footer a:hover {
+    text-decoration: underline !important;
+    background: transparent !important;
+    color: #0d4215 !important;
+}
+</style>

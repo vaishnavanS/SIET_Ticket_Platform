@@ -157,21 +157,24 @@ class PasswordResetTests(TestCase):
         mail.outbox = []
         res = self.client.post(reverse('accounts:password_reset'), {'identity': 'user_suspended'}, follow=True)
         self.assertEqual(res.status_code, 200)
-        self.assertTemplateUsed(res, 'accounts/password_reset_done.html')
+        self.assertTemplateUsed(res, 'accounts/password_reset.html')
+        self.assertContains(res, "contact the Network Team to get this resolved")
         self.assertEqual(len(mail.outbox), 0)
 
     def test_reset_no_email_account(self):
         mail.outbox = []
         res = self.client.post(reverse('accounts:password_reset'), {'identity': 'user_no_email'}, follow=True)
         self.assertEqual(res.status_code, 200)
-        self.assertTemplateUsed(res, 'accounts/password_reset_done.html')
+        self.assertTemplateUsed(res, 'accounts/password_reset.html')
+        self.assertContains(res, "contact the Network Team to get this resolved")
         self.assertEqual(len(mail.outbox), 0)
 
     def test_reset_unverified_email_account(self):
         mail.outbox = []
         res = self.client.post(reverse('accounts:password_reset'), {'identity': 'user_unverified'}, follow=True)
         self.assertEqual(res.status_code, 200)
-        self.assertTemplateUsed(res, 'accounts/password_reset_done.html')
+        self.assertTemplateUsed(res, 'accounts/password_reset.html')
+        self.assertContains(res, "contact the Network Team to get this resolved")
         self.assertEqual(len(mail.outbox), 0)
 
     def test_reset_valid_username_success(self):

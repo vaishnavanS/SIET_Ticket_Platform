@@ -1,0 +1,507 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/jpeg" href="{% static 'images/logo.jpg' %}">
+    <link rel="shortcut icon" type="image/jpeg" href="{% static 'images/logo.jpg' %}">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon.png' %}?v=3">
+    <link rel="apple-touch-icon" href="{% static 'images/favicon.png' %}?v=3">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Locations - SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=4.0">
+    <style>
+        .tg-container {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        @media (max-width: 960px) {
+            .tg-container { grid-template-columns: 1fr; }
+        }
+        .tg-form-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        .loc-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px 22px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .loc-card:hover {
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+        }
+        .loc-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+        .loc-info-row {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+        .loc-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: #ecfdf5;
+            color: #047857;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            flex-shrink: 0;
+            border: 1px solid #d1fae5;
+        }
+        .loc-title-box h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .loc-title-box p {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0;
+            line-height: 1.45;
+        }
+        .loc-code-badge {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+        .loc-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .btn-loc-edit {
+            background: #f1f5f9;
+            color: #0f172a;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 6px 14px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-loc-edit:hover {
+            background: #063b0c;
+            color: #ffffff;
+            border-color: #063b0c;
+        }
+        .btn-loc-toggle {
+            background: #ffffff;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-loc-toggle:hover {
+            background: #f1f5f9;
+        }
+        .btn-loc-delete {
+            background: #ffffff;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-loc-delete:hover {
+            background: #dc2626;
+            color: #ffffff;
+        }
+        .loc-meta-grid {
+            display: grid;
+            grid-template-columns: 140px 1fr 120px;
+            gap: 14px;
+            background: #f8fafc;
+            border: 1px solid #f1f5f9;
+            border-radius: 8px;
+            padding: 12px 16px;
+            align-items: center;
+        }
+        @media (max-width: 768px) {
+            .loc-meta-grid { grid-template-columns: 1fr; }
+        }
+        .loc-meta-col {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .loc-meta-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+        }
+        .loc-pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .stat-banner {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px 20px;
+        }
+        .stat-num {
+            font-size: 26px;
+            font-weight: 700;
+            color: #063b0c;
+            margin: 0 0 4px 0;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-left">
+        <button id="hamburgerBtn" class="hamburger-btn" type="button" aria-label="Open Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <strong>SIET Helpdesk</strong>
+    </div>
+    <nav class="admin-nav">
+        <a href="{% url 'accounts:admin_dashboard' %}">Overview</a>
+        <div class="dropdown">
+            <button class="dropdown-btn active" type="button">Administration ▾</button>
+            <div class="dropdown-menu">
+                <a href="{% url 'accounts:admin_users' %}">Users</a>
+                <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
+                <a class="active" href="{% url 'tickets:admin_locations' %}">Campus Locations</a>
+                <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                <a href="{% url 'tickets:admin_solutions' %}">Solutions & Quick Fixes</a>
+                <a href="{% url 'accounts:admin_email_settings' %}">Email & SMTP Settings</a>
+            </div>
+        </div>
+        <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
+        <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
+        {% include 'includes/notification_bell.html' %}
+        <div class="user-profile-menu">
+            <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
+                <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
+                <span class="user-dropdown-arrow">▾</span>
+            </button>
+            <div class="profile-dropdown-card" id="profileDropdownCard">
+                <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                <div class="dropdown-divider"></div>
+                <a href="{% url 'accounts:logout' %}" class="dropdown-item">Log out</a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<!-- Mobile Sidebar Drawer -->
+<div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+<aside id="mobileSidebar" class="mobile-sidebar">
+    <div class="sidebar-header">
+        <button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close Menu">✕</button>
+        <div class="sidebar-brand">
+            <strong>SIET Helpdesk</strong>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="{% url 'accounts:admin_dashboard' %}" class="sidebar-link">Overview</a>
+        <a href="{% url 'accounts:admin_users' %}" class="sidebar-link">Users</a>
+        <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link">Technician Groups</a>
+        <a href="{% url 'tickets:admin_locations' %}" class="sidebar-link active">Campus Locations</a>
+        <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+        <a href="{% url 'tickets:admin_solutions' %}" class="sidebar-link">Solutions & Quick Fixes</a>
+        <a href="{% url 'accounts:admin_email_settings' %}" class="sidebar-link">Email & SMTP Settings</a>
+        <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
+        <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link">Issue Reports</a>
+        {% include 'includes/sidebar_notifications.html' %}
+        <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
+        <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
+    </nav>
+</aside>
+
+<main class="page-shell">
+    {% if messages %}
+    <div class="alert-messages" style="margin-bottom: 20px;">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">CAMPUS INFRASTRUCTURE & DISPATCH</p>
+            <h1>Campus Locations & Blocks</h1>
+            <p>Define physical campus locations (e.g. Admin Block, Tech Park, Academic Block, Hostels). Users pick their campus location when reporting an issue and provide specific room or lab details, allowing automatic dispatch to allocated technician groups.</p>
+        </div>
+    </div>
+
+    <!-- Stat Summary Banner -->
+    <div class="stat-banner">
+        <div class="stat-card">
+            <div class="stat-num">{{ total_locations }}</div>
+            <div class="stat-label">Total Campus Locations</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color: #15803d;">{{ active_locations }}</div>
+            <div class="stat-label">Active in Issue Reporting</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color: #0369a1;">
+                {% widthratio 1 1 0 as total_issues %}
+                {% for loc in locations %}{% if forloop.first %}{{ loc.ticket_count|default:0 }}{% endif %}{% endfor %}
+                {{ locations|length }}
+            </div>
+            <div class="stat-label">Configured Dispatch Zones</div>
+        </div>
+    </div>
+
+    <div class="tg-container">
+        
+        <!-- Left: Add Location Form -->
+        <div class="tg-form-card">
+            <h2 style="font-size: 16px; margin: 0 0 16px 0; color: #0f172a; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+                Add Campus Location
+            </h2>
+            <form method="post" action="{% url 'tickets:admin_locations' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create">
+
+                <div class="field" style="margin-bottom: 14px;">
+                    <label for="id_name">Location / Block Name *</label>
+                    <input type="text" name="name" id="id_name" required placeholder="e.g. Admin Block, Tech Park, Academic Block">
+                    <small class="muted" style="font-size: 11.5px; color: #64748b; margin-top: 3px; display: block;">
+                        Visible to users in the "Report an Issue" campus location selector.
+                    </small>
+                </div>
+
+                <div class="field" style="margin-bottom: 14px;">
+                    <label for="id_code">Identifier Code (Optional)</label>
+                    <input type="text" name="code" id="id_code" placeholder="e.g. TECH_PARK, ADMIN_BLOCK">
+                </div>
+
+                <div class="field" style="margin-bottom: 14px;">
+                    <label for="id_description">Description / Facilities</label>
+                    <textarea name="description" id="id_description" rows="3" placeholder="Summary of labs, faculties, or floors in this building..."></textarea>
+                </div>
+
+                <div class="field" style="display: flex; align-items: center; gap: 8px; margin-bottom: 18px;">
+                    <input type="checkbox" name="is_active" id="id_is_active" checked>
+                    <label for="id_is_active" style="margin: 0; font-size: 13px; font-weight: 600; cursor: pointer;">
+                        Active (Visible in issue form)
+                    </label>
+                </div>
+
+                <button class="primary-button full-width" type="submit" style="background: #063b0c;">Add Campus Location</button>
+            </form>
+        </div>
+
+        <!-- Right: Configured Locations List -->
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <h2 style="font-size: 16px; margin: 0; color: #0f172a;">Active Campus Locations</h2>
+                <span class="badge" style="background:#e2e8f0; color:#334155; font-weight: 600;">{{ locations|length }} Configured</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column;">
+                {% for loc in locations %}
+                <article class="loc-card">
+                    <div class="loc-card-header">
+                        <div class="loc-info-row">
+                            <div class="loc-avatar">
+                                🏢
+                            </div>
+                            <div class="loc-title-box">
+                                <h3>
+                                    {{ loc.name }}
+                                    {% if loc.code %}<span class="loc-code-badge">{{ loc.code }}</span>{% endif %}
+                                    {% if loc.is_active %}
+                                        <span class="badge" style="background:#dcfce7; color:#15803d; font-size:11px; font-weight:700;">Active</span>
+                                    {% else %}
+                                        <span class="badge" style="background:#f1f5f9; color:#64748b; font-size:11px; font-weight:700;">Inactive</span>
+                                    {% endif %}
+                                </h3>
+                                <p>{{ loc.description|default:"No description provided." }}</p>
+                            </div>
+                        </div>
+                        <div class="loc-actions">
+                            <button type="button" class="btn-loc-edit" onclick="openEditLocationModal('{{ loc.id }}', '{{ loc.name|escapejs }}', '{{ loc.code|default:''|escapejs }}', '{{ loc.description|default:''|escapejs }}', {{ loc.is_active|yesno:'true,false' }})">
+                                Edit
+                            </button>
+                            <form method="post" action="{% url 'tickets:admin_locations' %}" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_active">
+                                <input type="hidden" name="location_id" value="{{ loc.id }}">
+                                <button type="submit" class="btn-loc-toggle" title="Toggle active status">
+                                    {{ loc.is_active|yesno:"Disable,Enable" }}
+                                </button>
+                            </form>
+                            <form method="post" action="{% url 'tickets:admin_locations' %}" onsubmit="return confirm('Are you sure you want to delete campus location \'{{ loc.name|escapejs }}\'? Existing tickets will keep their location string.');" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="location_id" value="{{ loc.id }}">
+                                <button type="submit" class="btn-loc-delete">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="loc-meta-grid">
+                        <div class="loc-meta-col">
+                            <span class="loc-meta-title">Ticket Activity</span>
+                            <span style="font-size: 13px; font-weight: 700; color: #0f172a;">
+                                📊 {{ loc.ticket_count }} Issue{{ loc.ticket_count|pluralize }}
+                            </span>
+                        </div>
+
+                        <div class="loc-meta-col">
+                            <span class="loc-meta-title">Dedicated Support Groups</span>
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                                {% for tg in loc.technician_groups.all %}
+                                <span class="loc-pill-badge">👥 {{ tg.name }}</span>
+                                {% empty %}
+                                <span class="muted" style="font-size: 12px;">Covered by General Support Pool</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="loc-meta-col" style="text-align: right;">
+                            <span class="loc-meta-title">Created</span>
+                            <span class="muted" style="font-size: 12px;">{{ loc.created_at|date:"M d, Y" }}</span>
+                        </div>
+                    </div>
+                </article>
+                {% empty %}
+                <div class="empty-state" style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:36px; text-align:center;">
+                    <strong>No Campus Locations Defined Yet</strong>
+                    <p style="color:#64748b; font-size:13.5px; margin-top:6px;">Add buildings like Admin Block, Tech Park, Academic Block on the left so users can pinpoint exact rooms and labs.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- Edit Location Modal -->
+<div id="editLocationModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 480px;">
+        <div class="modal-header">
+            <h3>Edit Campus Location</h3>
+            <button type="button" class="modal-close" onclick="closeEditLocationModal()">✕</button>
+        </div>
+        <form method="post" action="{% url 'tickets:admin_locations' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="location_id" id="edit_location_id">
+            
+            <div class="modal-body">
+                <div class="field" style="margin-bottom: 14px;">
+                    <label for="edit_location_name">Location / Block Name *</label>
+                    <input type="text" name="name" id="edit_location_name" required>
+                </div>
+
+                <div class="field" style="margin-bottom: 14px;">
+                    <label for="edit_location_code">Identifier Code</label>
+                    <input type="text" name="code" id="edit_location_code">
+                </div>
+
+                <div class="field" style="margin-bottom: 14px;">
+                    <label for="edit_location_desc">Description / Facilities</label>
+                    <textarea name="description" id="edit_location_desc" rows="3"></textarea>
+                </div>
+
+                <div class="field" style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" name="is_active" id="edit_location_active">
+                    <label for="edit_location_active" style="margin: 0; font-size: 13px; font-weight: 600; cursor: pointer;">
+                        Active (Visible in issue form)
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="secondary-button" onclick="closeEditLocationModal()">Cancel</button>
+                <button type="submit" class="primary-button" style="background:#063b0c;">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openEditLocationModal(id, name, code, desc, isActive) {
+    document.getElementById('edit_location_id').value = id;
+    document.getElementById('edit_location_name').value = name;
+    document.getElementById('edit_location_code').value = code || '';
+    document.getElementById('edit_location_desc').value = desc || '';
+    document.getElementById('edit_location_active').checked = !!isActive;
+
+    document.getElementById('editLocationModal').classList.add('open');
+}
+
+function closeEditLocationModal() {
+    document.getElementById('editLocationModal').classList.remove('open');
+}
+
+window.addEventListener('click', function(e) {
+    const modal = document.getElementById('editLocationModal');
+    if (e.target === modal) closeEditLocationModal();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeEditLocationModal();
+});
+</script>
+<script src="{% static 'js/mobile_nav.js' %}?v=4.0"></script>
+</body>
+</html>

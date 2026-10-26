@@ -12,7 +12,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - SIET Helpdesk</title>
-    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=2.8">
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=4.0">
 </head>
 <body>
     <header class="topbar">
@@ -31,12 +31,15 @@
                 <div class="dropdown-menu">
                     <a href="{% url 'accounts:admin_users' %}">Users</a>
                     <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
+                    <a href="{% url 'tickets:admin_locations' %}">Campus Locations</a>
                     <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                    <a href="{% url 'tickets:admin_solutions' %}">Solutions & Quick Fixes</a>
                     <a href="{% url 'accounts:admin_email_settings' %}">Email & SMTP Settings</a>
                 </div>
             </div>
             <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
             <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
+            {% include 'includes/notification_bell.html' %}
             <div class="user-profile-menu">
                 <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
                     <span class="avatar-circle">{{ request.user.profile.get_initials }}</span>
@@ -64,10 +67,13 @@
             <a href="{% url 'accounts:admin_dashboard' %}" class="sidebar-link active">Overview</a>
             <a href="{% url 'accounts:admin_users' %}" class="sidebar-link">Users</a>
             <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link">Technician Groups</a>
+            <a href="{% url 'tickets:admin_locations' %}" class="sidebar-link">Campus Locations</a>
             <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+            <a href="{% url 'tickets:admin_solutions' %}" class="sidebar-link">Solutions & Quick Fixes</a>
             <a href="{% url 'accounts:admin_email_settings' %}" class="sidebar-link">Email & SMTP Settings</a>
             <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
             <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link">Issue Reports</a>
+            {% include 'includes/sidebar_notifications.html' %}
             <a href="{% url 'accounts:profile' %}" class="sidebar-link">My Profile</a>
             <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
         </nav>
@@ -75,7 +81,16 @@
 
     <main class="page-shell">
         <div class="page-heading"><div><p class="eyebrow">ADMINISTRATION</p><h1>Admin Dashboard</h1><p>Manage users, support teams, categories, and tickets.</p></div></div>
-        <div class="admin-tools"><span>Report an Issue Dynamic Form Studio</span><a class="secondary-button" href="{% url 'tickets:form_builder' %}">Open Form Studio</a></div>
+        <div class="admin-tools" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span>Report an Issue Dynamic Form Studio</span>
+                <a class="secondary-button" href="{% url 'tickets:form_builder' %}">Open Form Studio</a>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
+                <span>Self-Help Solutions</span>
+                <a class="secondary-button" href="{% url 'tickets:admin_solutions' %}" style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; font-weight:600;">Manage Solutions Hub</a>
+            </div>
+        </div>
         <section id="overview" class="report-section">
         <section class="stats-grid">
             <div class="stat-card"><span>Total users</span><strong>{{ user_count }}</strong><small>All platform accounts</small></div>
@@ -174,7 +189,7 @@
         </section>
 
     </main>
-    <script src="{% static 'js/mobile_nav.js' %}?v=2.8"></script>
+    <script src="{% static 'js/mobile_nav.js' %}?v=4.0"></script>
 </body>
 </html>
 

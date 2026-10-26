@@ -1807,3 +1807,590 @@ td small {
     .form-panel { padding: 18px; }
     .bar-row { grid-template-columns: 80px 1fr 30px; gap: 8px; }
 }
+
+/* ==========================================================================
+   NOTIFICATION BELL & POPOVER COMPONENT
+   ========================================================================== */
+.notif-menu-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-right: 4px;
+}
+
+.notif-bell-btn {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.88);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.notif-bell-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+.notif-bell-icon {
+    display: block;
+    stroke: currentColor;
+    transition: transform 0.2s ease;
+}
+
+.notif-bell-btn:hover .notif-bell-icon {
+    transform: rotate(12deg) scale(1.05);
+}
+
+.notif-badge-pill {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 800;
+    min-width: 17px;
+    height: 17px;
+    line-height: 17px;
+    border-radius: 10px;
+    text-align: center;
+    padding: 0 4px;
+    border: 2px solid #063b0c;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    animation: notifPulse 2s infinite ease-in-out;
+}
+
+@keyframes notifPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.notif-dropdown-card {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 360px;
+    max-width: calc(100vw - 20px);
+    background: #ffffff;
+    border: 1px solid #dcebda;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16), 0 2px 6px rgba(0, 0, 0, 0.06);
+    display: none;
+    flex-direction: column;
+    z-index: 2100;
+    overflow: hidden;
+    animation: notifFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.notif-dropdown-card.open {
+    display: flex;
+}
+
+@keyframes notifFadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.notif-dropdown-header {
+    padding: 12px 16px;
+    background: #fbfdfb;
+    border-bottom: 1px solid #e7efe5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.notif-header-title-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notif-header-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #123d18;
+    letter-spacing: -0.2px;
+}
+
+.notif-count-chip {
+    font-size: 11px;
+    font-weight: 700;
+    background: #dcfce7;
+    color: #15803d;
+    padding: 2px 7px;
+    border-radius: 10px;
+}
+
+.notif-mark-read-btn {
+    background: none;
+    border: none;
+    color: #165c20;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 2px 4px;
+    transition: color 0.15s ease;
+}
+
+.notif-mark-read-btn:hover {
+    color: #0d4215;
+}
+
+.notif-list-scroll {
+    max-height: 380px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.notif-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.12s ease;
+    position: relative;
+}
+
+.notif-row:last-child {
+    border-bottom: none;
+}
+
+.notif-row:hover {
+    background: #f8fafc;
+}
+
+.notif-row.is-unread {
+    background: #f0fdf4;
+}
+
+.notif-row.is-unread:hover {
+    background: #e6f9eb;
+}
+
+.notif-icon-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+}
+
+/* Professional vector icon box themes */
+.notif-type-resolved {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.notif-type-assigned {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+.notif-type-reopened {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.notif-type-closed {
+    background: #d1fae5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.notif-type-comment {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+}
+
+.notif-row-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-row-title {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 2px;
+    line-height: 1.35;
+}
+
+.notif-row-msg {
+    font-size: 12px;
+    color: #475569;
+    margin: 0 0 4px 0;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+.notif-row-time {
+    display: block;
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.notif-unread-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #16a34a;
+    flex-shrink: 0;
+    margin-top: 6px;
+    box-shadow: 0 0 0 2px #dcfce7;
+}
+
+.notif-empty-state {
+    padding: 36px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.notif-empty-state strong {
+    font-size: 13.5px;
+    color: #334155;
+}
+
+.notif-empty-state span {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+}
+
+.topbar nav .notif-dropdown-card a.notif-row,
+.admin-nav .notif-dropdown-card a.notif-row,
+.notif-dropdown-card a.notif-row {
+    display: flex !important;
+    gap: 12px !important;
+    align-items: flex-start !important;
+    padding: 12px 16px !important;
+    border: none !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    text-decoration: none !important;
+    color: #1e293b !important;
+    font-size: 13px !important;
+    font-weight: normal !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    text-align: left !important;
+    transition: background 0.12s ease !important;
+    line-height: normal !important;
+}
+
+.topbar nav .notif-dropdown-card a.notif-row:hover,
+.admin-nav .notif-dropdown-card a.notif-row:hover,
+.notif-dropdown-card a.notif-row:hover {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+}
+
+.topbar nav .notif-dropdown-card a.notif-row.is-unread,
+.admin-nav .notif-dropdown-card a.notif-row.is-unread,
+.notif-dropdown-card a.notif-row.is-unread {
+    background: #f0fdf4 !important;
+}
+
+.topbar nav .notif-dropdown-card a.notif-row.is-unread:hover,
+.admin-nav .notif-dropdown-card a.notif-row.is-unread:hover,
+.notif-dropdown-card a.notif-row.is-unread:hover {
+    background: #e6f9eb !important;
+}
+
+.notif-dropdown-footer {
+    padding: 10px 16px;
+    background: #fbfdfb;
+    border-top: 1px solid #e7efe5;
+    text-align: center;
+}
+
+.topbar nav .notif-dropdown-card .notif-dropdown-footer a,
+.admin-nav .notif-dropdown-card .notif-dropdown-footer a,
+.notif-dropdown-footer a {
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    color: #165c20 !important;
+    text-decoration: none !important;
+    background: transparent !important;
+    padding: 4px 8px !important;
+    display: inline-block !important;
+    border: none !important;
+}
+
+.topbar nav .notif-dropdown-card .notif-dropdown-footer a:hover,
+.admin-nav .notif-dropdown-card .notif-dropdown-footer a:hover,
+.notif-dropdown-footer a:hover {
+    text-decoration: underline !important;
+    color: #0d4215 !important;
+    background: transparent !important;
+}
+
+/* ==========================================================================
+   MOBILE SIDEBAR NOTIFICATIONS COMPONENT
+   ========================================================================== */
+.sidebar-notif-accordion {
+    width: 100%;
+    border-bottom: 1px solid #eef4ec;
+    background: transparent;
+}
+
+.sidebar-notif-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: none !important;
+    padding: 14px 20px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #173b1c !important;
+    cursor: pointer !important;
+    text-align: left !important;
+    transition: background 0.15s ease, color 0.15s ease !important;
+    box-sizing: border-box !important;
+}
+
+.sidebar-notif-btn:hover {
+    background: #f5faf3 !important;
+    color: #123d18 !important;
+}
+
+.sidebar-notif-left {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.sidebar-notif-bell {
+    stroke: #165c20 !important;
+    flex-shrink: 0 !important;
+}
+
+.sidebar-notif-right {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.sidebar-notif-pill {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    line-height: 18px !important;
+    border-radius: 10px !important;
+    text-align: center !important;
+    padding: 0 5px !important;
+    display: inline-block !important;
+}
+
+.sidebar-notif-arrow {
+    stroke: #64748b !important;
+    transition: transform 0.2s ease !important;
+    flex-shrink: 0 !important;
+}
+
+.sidebar-notif-accordion.open .sidebar-notif-arrow {
+    transform: rotate(180deg) !important;
+}
+
+.sidebar-notif-panel {
+    background: #f8fafc !important;
+    border-top: 1px solid #e2e8f0 !important;
+    overflow: hidden !important;
+}
+
+.sidebar-notif-panel-header {
+    padding: 10px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    background: #edf6eb !important;
+    border-bottom: 1px solid #e2ece0 !important;
+}
+
+.sidebar-notif-panel-title {
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    color: #123d18 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.sidebar-notif-chip {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    background: #dcfce7 !important;
+    color: #15803d !important;
+    padding: 1px 6px !important;
+    border-radius: 8px !important;
+}
+
+.sidebar-notif-clear-btn {
+    background: none !important;
+    border: none !important;
+    color: #165c20 !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    text-decoration: underline !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.sidebar-notif-clear-btn:hover {
+    color: #0d4215 !important;
+}
+
+.sidebar-notif-scroll {
+    max-height: 280px !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+}
+
+.sidebar-notif-row {
+    display: flex !important;
+    gap: 10px !important;
+    align-items: flex-start !important;
+    padding: 10px 14px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    text-decoration: none !important;
+    color: #1e293b !important;
+    background: #ffffff !important;
+    transition: background 0.12s ease !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+}
+
+.sidebar-notif-row:last-child {
+    border-bottom: none !important;
+}
+
+.sidebar-notif-row:hover {
+    background: #f8fafc !important;
+}
+
+.sidebar-notif-row.is-unread {
+    background: #f0fdf4 !important;
+}
+
+.sidebar-notif-row.is-unread:hover {
+    background: #e6f9eb !important;
+}
+
+.sidebar-notif-icon-box {
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    margin-top: 2px !important;
+}
+
+.sidebar-notif-body {
+    flex: 1 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    text-align: left !important;
+}
+
+.sidebar-notif-item-title {
+    display: block !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    color: #123d18 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.sidebar-notif-item-msg {
+    margin: 0 !important;
+    font-size: 11.5px !important;
+    color: #475569 !important;
+    line-height: 1.35 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+}
+
+.sidebar-notif-item-time {
+    display: block !important;
+    font-size: 10.5px !important;
+    color: #94a3b8 !important;
+    margin-top: 2px !important;
+}
+
+.sidebar-notif-unread-dot {
+    width: 7px !important;
+    height: 7px !important;
+    border-radius: 50% !important;
+    background: #16a34a !important;
+    flex-shrink: 0 !important;
+    margin-top: 6px !important;
+}
+
+.sidebar-notif-empty-box {
+    padding: 24px 16px !important;
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    color: #64748b !important;
+    font-size: 12px !important;
+    background: #ffffff !important;
+}
+
+.sidebar-notif-empty-box strong {
+    font-size: 13px !important;
+    color: #334155 !important;
+    margin-top: 4px !important;
+    display: block !important;
+}
+
+.sidebar-notif-empty-box span {
+    font-size: 11.5px !important;
+    color: #64748b !important;
+    margin-top: 2px !important;
+    display: block !important;
+}
+
+

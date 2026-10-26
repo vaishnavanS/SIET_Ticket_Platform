@@ -12,7 +12,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile - {{ request.user.get_full_name|default:request.user.username }} | SIET Helpdesk</title>
-    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=2.8">
+    <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=4.0">
 </head>
 <body>
     <header class="topbar">
@@ -33,11 +33,13 @@
                     <a href="{% url 'accounts:admin_users' %}">Users</a>
                     <a href="{% url 'accounts:admin_groups' %}">Technician groups</a>
                     <a href="{% url 'tickets:form_builder' %}">Forms & Dynamic Studio</a>
+                    <a href="{% url 'tickets:admin_solutions' %}">Solutions & Quick Fixes</a>
                     <a href="{% url 'accounts:admin_email_settings' %}">Email & SMTP Settings</a>
                 </div>
             </div>
             <a href="{% url 'tickets:catalog_manager' %}">Service Catalog</a>
             <a href="{% url 'accounts:admin_tickets' %}">Issue Reports</a>
+            {% include 'includes/notification_bell.html' %}
             <div class="user-profile-menu">
                 <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
                     <span class="avatar-circle">{{ profile.get_initials }}</span>
@@ -56,6 +58,8 @@
             <a href="{% url 'accounts:technician_dashboard' %}?scope=my_resolved">My Resolved Tickets</a>
             <a href="{% url 'accounts:technician_dashboard' %}?scope=team">All Team Tickets</a>
             <a href="{% url 'accounts:technician_dashboard' %}?scope=unassigned">Unassigned Pool</a>
+            <a href="{% url 'tickets:admin_solutions' %}">Solutions Manager</a>
+            {% include 'includes/notification_bell.html' %}
             <div class="user-profile-menu">
                 <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
                     <span class="avatar-circle">{{ profile.get_initials }}</span>
@@ -71,9 +75,11 @@
         {% else %}
         <nav>
             <a href="{% url 'accounts:user_dashboard' %}">Home</a>
+            <a href="{% url 'tickets:solutions' %}">Solutions & Quick Fixes</a>
             <a href="{% url 'tickets:user_catalog' %}">Service Catalog</a>
             <a href="{% url 'tickets:my_tickets' %}">My Tickets & History</a>
             <a href="{% url 'tickets:create' %}">Report an Issue</a>
+            {% include 'includes/notification_bell.html' %}
             <div class="user-profile-menu">
                 <button type="button" class="user-avatar-btn" id="userAvatarBtn" onclick="toggleProfileDropdown(event)" aria-label="User profile">
                     <span class="avatar-circle">{{ profile.get_initials }}</span>
@@ -104,9 +110,11 @@
                 <a href="{% url 'accounts:admin_users' %}" class="sidebar-link">Users</a>
                 <a href="{% url 'accounts:admin_groups' %}" class="sidebar-link">Technician Groups</a>
                 <a href="{% url 'tickets:form_builder' %}" class="sidebar-link">Forms & Dynamic Studio</a>
+                <a href="{% url 'tickets:admin_solutions' %}" class="sidebar-link">Solutions & Quick Fixes</a>
                 <a href="{% url 'accounts:admin_email_settings' %}" class="sidebar-link">Email & SMTP Settings</a>
                 <a href="{% url 'tickets:catalog_manager' %}" class="sidebar-link">Service Catalog</a>
                 <a href="{% url 'accounts:admin_tickets' %}" class="sidebar-link">Issue Reports</a>
+                {% include 'includes/sidebar_notifications.html' %}
                 <a href="{% url 'accounts:profile' %}" class="sidebar-link active">My Profile</a>
                 <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
             {% elif user_role == 'technician' %}
@@ -114,13 +122,17 @@
                 <a href="{% url 'accounts:technician_dashboard' %}?scope=my_resolved" class="sidebar-link">My Resolved Tickets</a>
                 <a href="{% url 'accounts:technician_dashboard' %}?scope=team" class="sidebar-link">All Team Tickets</a>
                 <a href="{% url 'accounts:technician_dashboard' %}?scope=unassigned" class="sidebar-link">Unassigned Pool</a>
+                <a href="{% url 'tickets:admin_solutions' %}" class="sidebar-link">Solutions Manager</a>
+                {% include 'includes/sidebar_notifications.html' %}
                 <a href="{% url 'accounts:profile' %}" class="sidebar-link active">My Profile</a>
                 <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
             {% else %}
                 <a href="{% url 'accounts:user_dashboard' %}" class="sidebar-link">Home</a>
+                <a href="{% url 'tickets:solutions' %}" class="sidebar-link">Solutions & Quick Fixes</a>
                 <a href="{% url 'tickets:user_catalog' %}" class="sidebar-link">Service Catalog</a>
                 <a href="{% url 'tickets:my_tickets' %}" class="sidebar-link">My Tickets & History</a>
                 <a href="{% url 'tickets:create' %}" class="sidebar-link">Report an Issue</a>
+                {% include 'includes/sidebar_notifications.html' %}
                 <a href="{% url 'accounts:profile' %}" class="sidebar-link active">My Profile</a>
                 <a href="{% url 'accounts:logout' %}" class="sidebar-link logout">Logout</a>
             {% endif %}
@@ -403,6 +415,6 @@
             if (e.target === editModal) closeEditModal();
         });
     </script>
-    <script src="{% static 'js/mobile_nav.js' %}?v=2.8"></script>
+    <script src="{% static 'js/mobile_nav.js' %}?v=4.0"></script>
 </body>
 </html>

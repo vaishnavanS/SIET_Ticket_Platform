@@ -9,9 +9,9 @@ def ticket_notifications_processor(request):
             'pending_resolutions_count': 0,
         }
 
-    notifications_qs = TicketNotification.objects.filter(recipient=request.user)
+    notifications_qs = TicketNotification.objects.filter(recipient=request.user).select_related('ticket')
     unread_count = notifications_qs.filter(is_read=False).count()
-    recent_notifications = notifications_qs.filter(is_read=False)[:5]
+    recent_notifications = notifications_qs.order_by('-created_at')[:8]
 
     # Count of tickets reported by normal user that are in Resolved state awaiting confirmation
     pending_resolutions = Ticket.objects.filter(
