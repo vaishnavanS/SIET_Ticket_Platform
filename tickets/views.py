@@ -206,6 +206,14 @@ def issue_form_builder(request):
 		})
 
 	
+	max_attachment_size_mb = 5
+	for f in fields:
+		if f.field_key == 'attachment' or f.field_type == IssueFormField.FieldType.FILE:
+			max_attachment_size_mb = f.max_file_size_mb
+			break
+
+	campus_locations = CampusLocation.objects.prefetch_related('technician_groups').all().order_by('name')
+
 	return render(request, 'tickets/form_builder.html', {
 		'form': form,
 		'fields': fields,
@@ -213,6 +221,8 @@ def issue_form_builder(request):
 		'categories': categories,
 		'technician_groups': technician_groups,
 		'catalog_items': catalog_items,
+		'campus_locations': campus_locations,
+		'max_attachment_size_mb': max_attachment_size_mb,
 	})
 
 

@@ -193,6 +193,50 @@
             font-size: 12px;
             font-weight: 600;
         }
+
+        /* Professional Service Catalog SVG Icon Selector */
+        .icon-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 6px;
+        }
+        @media (max-width: 600px) {
+            .icon-picker-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        .icon-choice-btn {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            color: #475569;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .icon-choice-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+        .icon-choice-btn:hover {
+            border-color: #86efac;
+            background: #f0fdf4;
+            color: #15803d;
+        }
+        .icon-choice-btn.selected {
+            border-color: #15803d;
+            background: #f0fdf4;
+            color: #15803d;
+            box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -307,8 +351,58 @@
                     </div>
 
                     <div class="field" style="margin-bottom: 14px;">
-                        <label for="id_icon">Icon / Emoji</label>
-                        <input type="text" name="icon" id="id_icon" value="📌" placeholder="e.g. 🌐, 💻, 🔒, 📌">
+                        <label>Service Category Icon *</label>
+                        <input type="hidden" name="icon" id="id_icon" value="network">
+                        <div class="icon-picker-grid" id="new_icon_picker">
+                            <button type="button" class="icon-choice-btn selected" data-icon="network" onclick="selectCatalogIcon('new', 'network')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                                <span>Network</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="wifi" onclick="selectCatalogIcon('new', 'wifi')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+                                <span>Wi-Fi</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="hardware" onclick="selectCatalogIcon('new', 'hardware')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                                <span>Desktop PC</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="laptop" onclick="selectCatalogIcon('new', 'laptop')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M2 20h20"></path></svg>
+                                <span>Laptop</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="security" onclick="selectCatalogIcon('new', 'security')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                <span>SEB / Security</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="support" onclick="selectCatalogIcon('new', 'support')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"></line></svg>
+                                <span>IT Support</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="server" onclick="selectCatalogIcon('new', 'server')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                                <span>Server</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="email" onclick="selectCatalogIcon('new', 'email')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                <span>Email</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="printer" onclick="selectCatalogIcon('new', 'printer')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                                <span>Printer</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="code" onclick="selectCatalogIcon('new', 'code')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                                <span>Software</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="lab" onclick="selectCatalogIcon('new', 'lab')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31L4.1 20.3a2 2 0 0 0 1.7 2.7h12.4a2 2 0 0 0 1.7-2.7L14 9.31V2"></path><line x1="8.5" y1="2" x2="15.5" y2="2"></line></svg>
+                                <span>Lab Tech</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="lock" onclick="selectCatalogIcon('new', 'lock')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                <span>Accounts</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="field" style="margin-bottom: 14px;">
@@ -342,7 +436,7 @@
                         <div class="tg-card-header">
                             <div class="tg-info-row">
                                 <div class="tg-team-avatar">
-                                    {{ item.icon }}
+                                    {{ item.get_icon_svg|safe }}
                                 </div>
                                 <div class="tg-title-box">
                                     <h3>{{ item.title }}</h3>
@@ -444,8 +538,58 @@
                     </div>
 
                     <div class="field" style="margin-bottom: 14px;">
-                        <label for="edit_catalog_icon">Icon / Emoji</label>
-                        <input type="text" name="icon" id="edit_catalog_icon">
+                        <label>Service Category Icon *</label>
+                        <input type="hidden" name="icon" id="edit_catalog_icon" value="network">
+                        <div class="icon-picker-grid" id="edit_icon_picker">
+                            <button type="button" class="icon-choice-btn" data-icon="network" onclick="selectCatalogIcon('edit', 'network')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                                <span>Network</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="wifi" onclick="selectCatalogIcon('edit', 'wifi')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
+                                <span>Wi-Fi</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="hardware" onclick="selectCatalogIcon('edit', 'hardware')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                                <span>Desktop PC</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="laptop" onclick="selectCatalogIcon('edit', 'laptop')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M2 20h20"></path></svg>
+                                <span>Laptop</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="security" onclick="selectCatalogIcon('edit', 'security')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                <span>SEB / Security</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="support" onclick="selectCatalogIcon('edit', 'support')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"></line></svg>
+                                <span>IT Support</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="server" onclick="selectCatalogIcon('edit', 'server')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                                <span>Server</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="email" onclick="selectCatalogIcon('edit', 'email')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                <span>Email</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="printer" onclick="selectCatalogIcon('edit', 'printer')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                                <span>Printer</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="code" onclick="selectCatalogIcon('edit', 'code')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                                <span>Software</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="lab" onclick="selectCatalogIcon('edit', 'lab')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31L4.1 20.3a2 2 0 0 0 1.7 2.7h12.4a2 2 0 0 0 1.7-2.7L14 9.31V2"></path><line x1="8.5" y1="2" x2="15.5" y2="2"></line></svg>
+                                <span>Lab Tech</span>
+                            </button>
+                            <button type="button" class="icon-choice-btn" data-icon="lock" onclick="selectCatalogIcon('edit', 'lock')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                <span>Accounts</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="field" style="margin-bottom: 14px;">
@@ -472,12 +616,46 @@
     </div>
 
     <script>
+    function selectCatalogIcon(scope, iconKey) {
+        var inputId = scope === 'new' ? 'id_icon' : 'edit_catalog_icon';
+        var containerId = scope === 'new' ? 'new_icon_picker' : 'edit_icon_picker';
+        var hiddenInput = document.getElementById(inputId);
+        if (hiddenInput) {
+            hiddenInput.value = iconKey;
+        }
+        var container = document.getElementById(containerId);
+        if (container) {
+            var buttons = container.querySelectorAll('.icon-choice-btn');
+            buttons.forEach(function(btn) {
+                if (btn.getAttribute('data-icon') === iconKey) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+        }
+    }
+
     function openEditCatalogModal(id, title, categoryId, description, icon, order, isActive, showOnHomepage) {
         document.getElementById('edit_catalog_id').value = id;
         document.getElementById('edit_catalog_title').value = title;
         document.getElementById('edit_catalog_category').value = categoryId || '';
         document.getElementById('edit_catalog_description').value = description;
-        document.getElementById('edit_catalog_icon').value = icon || '📌';
+        
+        var cleanIcon = icon || 'network';
+        var emojiMap = {
+            '🌐': 'network',
+            '💻': 'hardware',
+            '🔒': 'security',
+            '🛠️': 'support',
+            '🛠': 'support',
+            '📌': 'network',
+            '📎': 'support'
+        };
+        cleanIcon = emojiMap[cleanIcon] || cleanIcon;
+        document.getElementById('edit_catalog_icon').value = cleanIcon;
+        selectCatalogIcon('edit', cleanIcon);
+
         document.getElementById('edit_catalog_order').value = order;
         document.getElementById('edit_catalog_active').checked = isActive;
         document.getElementById('edit_catalog_homepage').checked = showOnHomepage;

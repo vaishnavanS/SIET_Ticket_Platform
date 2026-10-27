@@ -18,45 +18,85 @@
             margin: 28px auto 60px auto;
         }
 
-        .report-hero-card {
-            background: linear-gradient(135deg, #094017 0%, #15803d 100%);
-            color: #ffffff;
-            padding: 24px 28px;
+        .report-header-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 12px;
-            margin-bottom: 22px;
-            box-shadow: 0 4px 16px rgba(9, 64, 23, 0.14);
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 16px;
         }
-        .report-hero-content h1 {
-            margin: 4px 0 6px 0;
-            font-size: 24px;
-            font-weight: 700;
-            color: #ffffff;
-            letter-spacing: -0.3px;
+        .report-header-main {
+            flex: 1;
+            min-width: 280px;
         }
-        .report-hero-content p {
-            margin: 0;
-            font-size: 13.5px;
-            color: #e2f1e4;
-            max-width: 560px;
-            line-height: 1.45;
-        }
-        .report-hero-badge {
+        .report-header-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: rgba(255, 255, 255, 0.16);
-            border: 1px solid rgba(255, 255, 255, 0.28);
-            color: #f0fdf4;
-            padding: 4px 11px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 3px 10px;
             border-radius: 20px;
-            font-size: 11.5px;
+            font-size: 11px;
             font-weight: 700;
             letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .report-header-title {
+            margin: 0 0 6px 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.3px;
+        }
+        .report-header-sub {
+            margin: 0;
+            font-size: 13.5px;
+            color: #64748b;
+            max-width: 620px;
+            line-height: 1.5;
+        }
+        .report-header-sla {
+            display: flex;
+            align-items: center;
+        }
+        .sla-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 8px 14px;
+            border-radius: 8px;
+        }
+        .sla-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #16a34a;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
+            flex-shrink: 0;
+        }
+        .sla-title {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1.2;
+        }
+        .sla-sub {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 2px;
         }
 
         /* Quick Solutions Notice Banner */
@@ -454,28 +494,27 @@
     </aside>
 
     <main class="page-shell report-issue-shell">
-        <!-- Elevated Hero Banner -->
-        <div class="report-hero-card">
-            <div class="report-hero-content">
-                <span class="report-hero-badge" style="display: inline-flex; align-items: center; gap: 6px;">
+        <!-- Clean Modern Header -->
+        <div class="report-header-card">
+            <div class="report-header-main">
+                <div class="report-header-badge">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                         <circle cx="12" cy="10" r="3"></circle>
                     </svg>
-                    <span>SMART CAMPUS DISPATCH</span>
-                </span>
-                <h1>Report an Issue</h1>
-                <p>Submit technical, classroom, laboratory, or network requests. Your issue is automatically dispatched to the allocated campus team based on category and location.</p>
+                    <span>Smart Campus Dispatch</span>
+                </div>
+                <h1 class="report-header-title">Report an Issue</h1>
+                <p class="report-header-sub">Submit technical, classroom, laboratory, or network requests. Your issue is automatically dispatched to the allocated campus team based on category and location.</p>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-end;">
-                <span style="font-size: 12px; color: #d1fae5; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    <span>1-Hour SLA Target Response</span>
-                </span>
-                <span style="font-size: 11.5px; color: #a7f3d0;">Campus Technicians on Duty</span>
+            <div class="report-header-sla">
+                <div class="sla-status-pill">
+                    <span class="sla-dot"></span>
+                    <div>
+                        <span class="sla-title">1-Hour SLA Target Response</span>
+                        <span class="sla-sub">Campus Technicians on Duty</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -560,17 +599,6 @@
                             <div class="field" style="margin-bottom: 0;">
                                 <label for="{{ form.campus_location.id_for_label }}">Campus Block / Location *</label>
                                 {{ form.campus_location }}
-                                <div class="location-chips-row">
-                                    <span style="font-size: 11px; color: #64748b; font-weight: 600;">Quick Select:</span>
-                                    {% for loc in campus_locations %}
-                                    <button type="button" class="location-chip-btn" onclick="selectCampusLocation('{{ loc.id }}', '{{ loc.name|escapejs }}')">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M3 21h18"></path><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path><path d="M9 9h1"></path><path d="M14 9h1"></path><path d="M9 13h1"></path><path d="M14 13h1"></path><path d="M10 21v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4"></path></svg>
-                                        {{ loc.name }}
-                                    </button>
-                                    {% empty %}
-                                    <span class="muted" style="font-size: 11.5px;">All campus blocks</span>
-                                    {% endfor %}
-                                </div>
                                 {% if form.campus_location.errors %}<small class="field-error">{{ form.campus_location.errors|striptags }}</small>{% endif %}
                             </div>
 
@@ -583,6 +611,18 @@
                                 {% if form.location_details.errors %}<small class="field-error">{{ form.location_details.errors|striptags }}</small>{% endif %}
                             </div>
                         </div>
+
+                        {% if campus_locations %}
+                        <div class="location-chips-row" style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed #e2e8f0;">
+                            <span style="font-size: 11.5px; color: #64748b; font-weight: 600;">Quick Select:</span>
+                            {% for loc in campus_locations %}
+                            <button type="button" class="location-chip-btn" onclick="selectCampusLocation('{{ loc.id }}', '{{ loc.name|escapejs }}')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M3 21h18"></path><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path><path d="M9 9h1"></path><path d="M14 9h1"></path><path d="M9 13h1"></path><path d="M14 13h1"></path><path d="M10 21v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4"></path></svg>
+                                {{ loc.name }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
 
                         <!-- Live Dispatch Target Preview Pill -->
                         <div id="location-preview-box" class="location-preview-pill" style="display: none;">

@@ -105,7 +105,7 @@ class ServiceCatalogItem(models.Model):
     """Catalog items/services displayed to normal users"""
     title = models.CharField(max_length=150)
     description = models.TextField(blank=True, default='')
-    icon = models.CharField(max_length=50, default='📌', blank=True, help_text='Emoji or icon representation')
+    icon = models.CharField(max_length=50, default='network', blank=True, help_text='Icon identifier (e.g. network, hardware, security, support, etc.)')
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True,
                                 help_text='Optional category linked to this service')
     show_on_homepage = models.BooleanField(default=True, help_text='Display this item on user dashboard homepage')
@@ -119,6 +119,107 @@ class ServiceCatalogItem(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def get_icon_svg(self):
+        """Returns crisp, professional inline SVG icon based on key or legacy emoji fallback"""
+        key = (self.icon or '').strip().lower()
+        emoji_map = {
+            '🌐': 'network',
+            '💻': 'hardware',
+            '🔒': 'security',
+            '🛠️': 'support',
+            '🛠': 'support',
+            '📌': 'network',
+            '📎': 'support',
+        }
+        key = emoji_map.get(key, key)
+
+        icons = {
+            'network': (
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                '<circle cx="12" cy="12" r="10"></circle>'
+                '<line x1="2" y1="12" x2="22" y2="12"></line>'
+                '<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>'
+                '</svg>'
+            ),
+            'wifi': (
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                '<path d="M5 12.55a11 11 0 0 1 14.08 0"></path>'
+                '<path d="M1.42 9a16 16 0 0 1 21.16 0"></path>'
+                '<path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>'
+                '<line x1="12" y1="20" x2="12.01" y2="20"></line>'
+                '</svg>'
+            ),
+            'hardware': (
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                '<rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>'
+                '<line x1="8" y1="21" x2="16" y2="21"></line>'
+                '<line x1="12" y1="17" x2="12" y2="21"></line>'
+                '</svg>'
+            ),
+            'laptop': (
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                '<rect x="3" y="4" width="18" height="12" rx="2"></rect>'
+                '<path d="M2 20h20"></path>'
+                '</svg>'
+            ),
+            'security': (
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>'
+                '</svg>'
+            ),
+            'lock': (
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>'
+                '<path d="M7 11V7a5 5 0 0 1 10 0v4"></path>'
+                '</svg>'
+            ),
+            'support': (
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                '<circle cx="12" cy="12" r="10"></circle>'
+                '<circle cx="12" cy="12" r="4"></circle>'
+                '<line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line>'
+                '<line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line>'
+                '<line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line>'
+                '<line x1="4.93" y1="19.07" x2="9.17" y2="14.83"></line>'
+                '</svg>'
+            ),
+            'server': (
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                '<rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>'
+                '<rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>'
+                '<line x1="6" y1="6" x2="6.01" y2="6"></line>'
+                '<line x1="6" y1="18" x2="6.01" y2="18"></line>'
+                '</svg>'
+            ),
+            'email': (
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>'
+                '<polyline points="22,6 12,13 2,6"></polyline>'
+                '</svg>'
+            ),
+            'printer': (
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                '<polyline points="6 9 6 2 18 2 18 9"></polyline>'
+                '<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>'
+                '<rect x="6" y="14" width="12" height="8"></rect>'
+                '</svg>'
+            ),
+            'code': (
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                '<polyline points="16 18 22 12 16 6"></polyline>'
+                '<polyline points="8 6 2 12 8 18"></polyline>'
+                '</svg>'
+            ),
+            'lab': (
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                '<path d="M10 2v7.31L4.1 20.3a2 2 0 0 0 1.7 2.7h12.4a2 2 0 0 0 1.7-2.7L14 9.31V2"></path>'
+                '<line x1="8.5" y1="2" x2="15.5" y2="2"></line>'
+                '</svg>'
+            ),
+        }
+        return icons.get(key, icons['support'])
 
 
 

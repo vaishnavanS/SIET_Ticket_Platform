@@ -272,7 +272,7 @@ class ServiceCatalogItemForm(forms.ModelForm):
 
     def clean_icon(self):
         icon = self.cleaned_data.get('icon', '').strip()
-        return icon if icon else '📌'
+        return icon if icon else 'network'
 
     def clean_order(self):
         order = self.cleaned_data.get('order')

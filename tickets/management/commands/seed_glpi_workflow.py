@@ -269,7 +269,7 @@ class Command(BaseCommand):
             title='Campus WiFi & LAN Access',
             defaults={
                 'description': 'WiFi login assistance, slow connection troubleshooting, and lab network drops.',
-                'icon': '🌐',
+                'icon': 'network',
                 'category': cat_net,
                 'show_on_homepage': True,
                 'is_active': True,
@@ -280,7 +280,7 @@ class Command(BaseCommand):
             title='Lab Workstation Hardware',
             defaults={
                 'description': 'Desktop PC booting, monitors, keyboards, mice, and classroom projector assistance.',
-                'icon': '💻',
+                'icon': 'hardware',
                 'category': cat_pc,
                 'show_on_homepage': True,
                 'is_active': True,
@@ -291,7 +291,7 @@ class Command(BaseCommand):
             title='Safe Exam Browser (SEB)',
             defaults={
                 'description': 'Assistance with online exam client lockdown, proctoring camera errors, or session crashes.',
-                'icon': '🔒',
+                'icon': 'security',
                 'category': cat_seb,
                 'show_on_homepage': True,
                 'is_active': True,
@@ -302,7 +302,7 @@ class Command(BaseCommand):
             title='General IT Helpdesk',
             defaults={
                 'description': 'Assistance with email, printing, college portal access, and general IT inquiries.',
-                'icon': '🛠️',
+                'icon': 'support',
                 'category': cat_other,
                 'show_on_homepage': True,
                 'is_active': True,
