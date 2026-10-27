@@ -13,13 +13,18 @@
     <title>Report an Issue - SIET Helpdesk</title>
     <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=4.0">
     <style>
+        .report-issue-shell {
+            width: min(840px, 94%);
+            margin: 28px auto 60px auto;
+        }
+
         .report-hero-card {
-            background: linear-gradient(135deg, #063b0c 0%, #15803d 100%);
+            background: linear-gradient(135deg, #094017 0%, #15803d 100%);
             color: #ffffff;
             padding: 24px 28px;
             border-radius: 12px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 16px rgba(6, 59, 12, 0.16);
+            margin-bottom: 22px;
+            box-shadow: 0 4px 16px rgba(9, 64, 23, 0.14);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -31,12 +36,13 @@
             font-size: 24px;
             font-weight: 700;
             color: #ffffff;
+            letter-spacing: -0.3px;
         }
         .report-hero-content p {
             margin: 0;
-            font-size: 14px;
+            font-size: 13.5px;
             color: #e2f1e4;
-            max-width: 580px;
+            max-width: 560px;
             line-height: 1.45;
         }
         .report-hero-badge {
@@ -46,60 +52,155 @@
             background: rgba(255, 255, 255, 0.16);
             border: 1px solid rgba(255, 255, 255, 0.28);
             color: #f0fdf4;
-            padding: 5px 12px;
+            padding: 4px 11px;
             border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
 
-        /* Form Visual Section Cards */
-        .form-step-card {
+        /* Quick Solutions Notice Banner */
+        .quick-solutions-banner {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 10px;
-            padding: 22px 24px;
+            padding: 14px 20px;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        }
+        .quick-solutions-text {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 260px;
+        }
+        .quick-solutions-icon {
+            font-size: 22px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .quick-solutions-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #0f172a;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .quick-solutions-sub {
+            font-size: 12.5px;
+            color: #64748b;
+            display: block;
+        }
+        .quick-solutions-link {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #15803d;
+            text-decoration: none;
+            background: #f0fdf4;
+            padding: 7px 14px;
+            border-radius: 7px;
+            border: 1px solid #bbf7d0;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        .quick-solutions-link:hover {
+            background: #15803d;
+            color: #ffffff;
+            border-color: #15803d;
+        }
+
+        /* Unified Form Step Cards */
+        .form-step-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px 28px;
             margin-bottom: 20px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-            transition: border-color 0.15s ease;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
         .form-step-card:hover {
             border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
         }
         .form-step-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 18px;
-            padding-bottom: 10px;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
             border-bottom: 1px solid #f1f5f9;
         }
         .form-step-number {
-            width: 28px;
-            height: 28px;
+            width: 30px;
+            height: 30px;
             border-radius: 8px;
-            background: #eef7ee;
+            background: #f0fdf4;
             color: #15803d;
-            border: 1px solid #c9dec7;
+            border: 1.5px solid #bbf7d0;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 13px;
-            font-weight: 700;
+            font-size: 14px;
+            font-weight: 800;
             flex-shrink: 0;
         }
         .form-step-title {
             margin: 0;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 700;
             color: #0f172a;
         }
         .form-step-desc {
             margin: 2px 0 0 0;
-            font-size: 12.5px;
+            font-size: 13px;
             color: #64748b;
         }
 
-        /* Location Quick Chips */
+        /* Location Section inside Card 1 */
+        .location-composite-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-top: 18px;
+        }
+        .location-box-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .location-box-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #0f172a;
+            display: block;
+        }
+        .location-box-subtitle {
+            color: #64748b;
+            font-size: 12px;
+            display: block;
+            margin-top: 2px;
+        }
+        .auto-dispatch-badge {
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
         .location-chips-row {
             display: flex;
             flex-wrap: wrap;
@@ -108,12 +209,12 @@
             align-items: center;
         }
         .location-chip-btn {
-            background: #f1f5f9;
+            background: #ffffff;
             color: #334155;
             border: 1px solid #cbd5e1;
-            border-radius: 14px;
-            padding: 3px 10px;
-            font-size: 11.5px;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.15s ease;
@@ -136,20 +237,20 @@
             .location-composite-grid { grid-template-columns: 1fr; }
         }
         .location-preview-pill {
-            background: #ecfdf5;
-            border: 1px solid #a7f3d0;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
             border-radius: 8px;
-            padding: 8px 14px;
-            margin-top: 12px;
+            padding: 9px 14px;
+            margin-top: 14px;
             display: flex;
             align-items: center;
             gap: 10px;
         }
         .preview-tag {
-            font-size: 10.5px;
+            font-size: 10px;
             font-weight: 700;
             letter-spacing: 0.5px;
-            background: #063b0c;
+            background: #15803d;
             color: #ffffff;
             padding: 2px 7px;
             border-radius: 4px;
@@ -159,55 +260,101 @@
         .preview-val {
             font-size: 13px;
             font-weight: 700;
-            color: #065f46;
+            color: #14532d;
         }
 
-        /* Dynamic Questionnaire Card Styling */
-        .diagnostic-card {
-            background: #fcfdfc;
-            border: 1px solid #dcebda;
-            border-left: 4px solid #16a34a;
-            border-radius: 10px;
-            padding: 22px 24px;
-            margin-bottom: 20px;
+        /* Form Input Fields */
+        .field {
+            margin-bottom: 18px;
         }
-
-        /* Modern Attachment Dropzone styling */
-        .attachment-drop-box {
-            border: 1.5px dashed #cbd5e1;
+        .field:last-child {
+            margin-bottom: 0;
+        }
+        .field label {
+            display: block;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 7px;
+        }
+        .field input[type="text"],
+        .field input[type="number"],
+        .field input[type="email"],
+        .field select,
+        .field textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
             border-radius: 8px;
-            padding: 16px;
+            font-size: 14px;
+            font-family: inherit;
+            color: #0f172a;
+            background: #ffffff;
+            box-sizing: border-box;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .field input[type="text"]:focus,
+        .field input[type="number"]:focus,
+        .field input[type="email"]:focus,
+        .field select:focus,
+        .field textarea:focus {
+            outline: none;
+            border-color: #15803d;
+            box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
+        }
+        .field-help {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .field-error {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        /* Attachment Dropzone */
+        .attachment-drop-box {
+            border: 2px dashed #cbd5e1;
+            border-radius: 10px;
+            padding: 22px 18px;
             background: #f8fafc;
             text-align: center;
-            transition: border-color 0.15s ease;
+            transition: all 0.2s ease;
+            cursor: pointer;
         }
         .attachment-drop-box:hover {
             border-color: #15803d;
+            background: #f0fdf4;
         }
         .attachment-drop-box input[type="file"] {
-            margin-top: 6px;
+            margin-top: 8px;
             font-size: 13px;
         }
 
-        /* Submit Action Button */
+        /* Action Buttons */
         .btn-submit-issue {
-            background: linear-gradient(135deg, #063b0c 0%, #15803d 100%);
+            background: linear-gradient(135deg, #094017 0%, #15803d 100%);
             color: #ffffff;
             border: none;
-            padding: 11px 26px;
+            padding: 12px 28px;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 14.5px;
             font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(6, 59, 12, 0.2);
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            box-shadow: 0 2px 8px rgba(9, 64, 23, 0.2);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
             display: inline-flex;
             align-items: center;
             gap: 8px;
         }
         .btn-submit-issue:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(6, 59, 12, 0.28);
+            box-shadow: 0 4px 14px rgba(9, 64, 23, 0.28);
+            background: linear-gradient(135deg, #063b0c 0%, #166534 100%);
         }
     </style>
 </head>
@@ -306,7 +453,7 @@
         </nav>
     </aside>
 
-    <main class="page-shell narrow-shell">
+    <main class="page-shell report-issue-shell">
         <!-- Elevated Hero Banner -->
         <div class="report-hero-card">
             <div class="report-hero-content">
@@ -320,12 +467,16 @@
             </div>
         </div>
 
-        <!-- Quick Fix Banner -->
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-            <div style="font-size: 13.5px; color: #166534;">
-                <strong>Experiencing a Wi-Fi, LAN, or SEB issue?</strong> Try checking our self-help solutions before submitting to solve it immediately.
+        <!-- Quick Solutions Notice Banner -->
+        <div class="quick-solutions-banner">
+            <div class="quick-solutions-text">
+                <span class="quick-solutions-icon">💡</span>
+                <div>
+                    <strong class="quick-solutions-title">Experiencing a Wi-Fi, LAN, or SEB issue?</strong>
+                    <span class="quick-solutions-sub">Check our self-help diagnostic guides to solve common problems in seconds without waiting for a technician.</span>
+                </div>
             </div>
-            <a href="{% url 'tickets:solutions_list' %}" target="_blank" style="font-size: 13px; font-weight: 700; color: #15803d; text-decoration: none; background: #ffffff; padding: 5px 12px; border-radius: 6px; border: 1px solid #86efac; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+            <a href="{% url 'tickets:solutions_list' %}" target="_blank" class="quick-solutions-link">
                 View Quick Fixes &nearr;
             </a>
         </div>
@@ -378,13 +529,13 @@
                     </div>
 
                     <!-- Campus Location Block & Room / Lab Details -->
-                    <div class="location-composite-box" style="background: #fcfdfc; border: 1.5px solid #dcebda; border-radius: 10px; padding: 18px 20px; margin-top: 14px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <div class="location-composite-box">
+                        <div class="location-box-header">
                             <div>
-                                <strong style="font-size: 13.5px; color: #166534; display: block;">Campus Block & Room / Lab Details</strong>
-                                <small style="color: #64748b; font-size: 12px;">Select the campus building and specify your room, lab, or floor so technicians find you immediately.</small>
+                                <strong class="location-box-title">Campus Block & Room / Lab Details</strong>
+                                <small class="location-box-subtitle">Select the campus building and specify your room, lab, or floor so technicians find you immediately.</small>
                             </div>
-                            <span style="font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: 700;">AUTO DISPATCH</span>
+                            <span class="auto-dispatch-badge">AUTO ROUTING</span>
                         </div>
 
                         <div class="location-composite-grid">
@@ -426,9 +577,9 @@
                 </div>
 
                 <!-- CARD 2: Dynamic Diagnostic Questionnaire -->
-                <div class="diagnostic-card">
-                    <div class="form-step-header" style="border-bottom-color: #dcebda;">
-                        <div class="form-step-number" style="background: #16a34a; color: #ffffff; border-color: #15803d;">2</div>
+                <div class="form-step-card">
+                    <div class="form-step-header">
+                        <div class="form-step-number">2</div>
                         <div>
                             <h2 class="form-step-title">Diagnostic Details</h2>
                             <p class="form-step-desc">Answer a few diagnostic questions to ensure fast assessment and routing.</p>
