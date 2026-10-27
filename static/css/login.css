@@ -16,7 +16,7 @@ body {
 }
 
 .navbar {
-    height: 56px;
+    height: 60px;
     background: #063b0c;
     padding: 0 4%;
     display: flex;
@@ -34,8 +34,8 @@ body {
 }
 
 .navbar-logo {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     object-fit: contain;
     border-radius: 50%;
     background: #ffffff;
@@ -54,18 +54,20 @@ body {
 }
 
 .navbar-center {
-    flex: 2;
+    flex: 3;
     text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
+    min-width: 0;
 }
 
 .navbar-college-name {
     color: #ffffff;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
     white-space: nowrap;
 }
 
@@ -92,7 +94,7 @@ body {
 }
 
 .logo-section {
-    margin-bottom: 14px;
+    margin-bottom: 20px;
 }
 
 .logo {
@@ -100,23 +102,13 @@ body {
     height: 82px;
     object-fit: contain;
     border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(6, 75, 13, 0.15);
-}
-
-.college-name {
-    margin-top: 14px;
-    margin-bottom: 16px;
-    color: #064b0d;
-    font-size: 18px;
-    font-weight: 800;
-    line-height: 1.35;
-    letter-spacing: -0.2px;
+    box-shadow: 0 4px 14px rgba(6, 75, 13, 0.18);
 }
 
 .login-card h1 {
-    margin-bottom: 16px;
+    margin-bottom: 20px;
     color: #064b0d;
-    font-size: 19px;
+    font-size: 21px;
     font-weight: 700;
 }
 
@@ -263,13 +255,21 @@ body {
 }
 
 /* Responsive Design */
-@media (max-width: 860px) {
+@media (max-width: 1200px) {
     .navbar-college-name {
-        font-size: 13px;
+        font-size: 16px;
+        letter-spacing: 0.6px;
     }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 960px) {
+    .navbar-college-name {
+        font-size: 14px;
+        letter-spacing: 0.4px;
+    }
+}
+
+@media (max-width: 768px) {
     .navbar-center,
     .navbar-right {
         display: none;
@@ -283,9 +283,5 @@ body {
 
     .login-card {
         padding: 26px 18px 30px;
-    }
-
-    .college-name {
-        font-size: 16px;
     }
 }
