@@ -244,6 +244,9 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'SIET Helpdesk <helpdesk@si
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Admin URL Path (deterministic across all Gunicorn/WSGI workers)
+ADMIN_URL_PATH = os.getenv('ADMIN_URL_PATH', 'siet-secure-admin-portal').strip('/')
+
 # Production Security Settings
 if not DEBUG:
     SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True').lower() in ('true', '1')

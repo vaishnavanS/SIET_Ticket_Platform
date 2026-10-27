@@ -20,11 +20,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
-import os
-import secrets
-
-DEFAULT_ADMIN_PATH = secrets.token_hex(8)
-ADMIN_URL_PATH = os.getenv('ADMIN_URL_PATH', DEFAULT_ADMIN_PATH).strip('/')
+# Deterministic admin URL across all Gunicorn/WSGI worker processes
+ADMIN_URL_PATH = getattr(settings, 'ADMIN_URL_PATH', None) or os.getenv('ADMIN_URL_PATH', 'siet-secure-admin-portal').strip('/')
+if not ADMIN_URL_PATH:
+    ADMIN_URL_PATH = 'siet-secure-admin-portal'
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/accounts/login/', permanent=False), name='home'),
