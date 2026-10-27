@@ -144,6 +144,88 @@ def issue_form_builder(request):
 
 	action = request.POST.get('action')
 	
+	# Action: Update Core Ticket Field Configuration
+	if request.method == 'POST' and action == 'edit_core_field':
+		from .models import CoreFieldSetting
+		field_key = request.POST.get('field_key')
+		label = request.POST.get('label', '').strip()
+		placeholder = request.POST.get('placeholder', '').strip()
+		help_text = request.POST.get('help_text', '').strip()
+		required = (request.POST.get('required') in ('1', 'on', 'true'))
+		
+		core_setting = CoreFieldSetting.get_setting(field_key)
+		if label:
+			core_setting.label = label
+		core_setting.placeholder = placeholder
+		core_setting.help_text = help_text
+		core_setting.required = required
+
+		extra = dict(core_setting.extra_config or {})
+		if field_key == 'urgency':
+			extra['default_urgency'] = request.POST.get('default_urgency', 'medium')
+			try:
+				extra['sla_low_hours'] = int(request.POST.get('sla_low_hours', 24))
+				extra['sla_medium_hours'] = int(request.POST.get('sla_medium_hours', 8))
+				extra['sla_high_hours'] = int(request.POST.get('sla_high_hours', 4))
+				extra['sla_urgent_hours'] = int(request.POST.get('sla_urgent_hours', 1))
+			except (ValueError, TypeError):
+				pass
+		elif field_key == 'title':
+			extra['enable_deflection'] = (request.POST.get('enable_deflection') in ('1', 'on', 'true'))
+			try:
+				extra['max_length'] = int(request.POST.get('max_length', 150))
+			except (ValueError, TypeError):
+				pass
+		elif field_key == 'location':
+			extra['room_details_label'] = request.POST.get('room_details_label', 'Room / Lab / Specific Details').strip()
+			extra['room_details_required'] = (request.POST.get('room_details_required') in ('1', 'on', 'true'))
+		elif field_key == 'description':
+			try:
+				extra['rows'] = int(request.POST.get('rows', 4))
+			except (ValueError, TypeError):
+				pass
+		elif field_key == 'attachment':
+			try:
+				max_mb = int(request.POST.get('max_file_size_mb', 5))
+				extra['max_file_size_mb'] = max_mb
+				IssueFormField.objects.filter(field_key='attachment').update(max_file_size_mb=max_mb)
+			except (ValueError, TypeError):
+				pass
+			extra['allowed_extensions'] = request.POST.get('allowed_extensions', 'JPG, JPEG, PNG, GIF, PDF').strip()
+
+		core_setting.extra_config = extra
+		core_setting.save()
+		messages.success(request, f"Core field '{core_setting.label}' updated successfully.")
+		return redirect('tickets:form_builder')
+
+	# Action: Inline Campus Location Management (Add, Edit, Delete)
+	if request.method == 'POST' and action == 'add_campus_location':
+		name = request.POST.get('name', '').strip()
+		if name:
+			from django.utils.text import slugify
+			code = slugify(name).upper().replace('-', '_')
+			CampusLocation.objects.get_or_create(name=name, defaults={'code': code})
+			messages.success(request, f"Campus location '{name}' added successfully.")
+		return redirect('tickets:form_builder')
+
+	if request.method == 'POST' and action == 'edit_campus_location':
+		loc_id = request.POST.get('location_id')
+		name = request.POST.get('name', '').strip()
+		if loc_id and name:
+			CampusLocation.objects.filter(pk=loc_id).update(name=name)
+			messages.success(request, f"Campus location updated to '{name}'.")
+		return redirect('tickets:form_builder')
+
+	if request.method == 'POST' and action == 'delete_campus_location':
+		loc_id = request.POST.get('location_id')
+		if loc_id:
+			loc = CampusLocation.objects.filter(pk=loc_id).first()
+			if loc:
+				name = loc.name
+				loc.delete()
+				messages.success(request, f"Campus location '{name}' removed.")
+		return redirect('tickets:form_builder')
+
 	# Action: Update Technician Group Routing for a Category
 	if request.method == 'POST' and action == 'update_routing':
 		category_id = request.POST.get('category_id')
@@ -206,23 +288,31 @@ def issue_form_builder(request):
 		})
 
 	
+	from .models import CoreFieldSetting
+	core_settings = CoreFieldSetting.get_all_settings()
 	max_attachment_size_mb = 5
-	for f in fields:
-		if f.field_key == 'attachment' or f.field_type == IssueFormField.FieldType.FILE:
-			max_attachment_size_mb = f.max_file_size_mb
-			break
+	if 'attachment' in core_settings and core_settings['attachment'].extra_config:
+		max_attachment_size_mb = core_settings['attachment'].extra_config.get('max_file_size_mb', 5)
+	else:
+		for f in fields:
+			if f.field_key == 'attachment' or f.field_type == IssueFormField.FieldType.FILE:
+				max_attachment_size_mb = f.max_file_size_mb
+				break
 
 	campus_locations = CampusLocation.objects.prefetch_related('technician_groups').all().order_by('name')
+	dynamic_fields = [f for f in fields if f.field_key not in ('problem_description', 'description', 'attachment')]
 
 	return render(request, 'tickets/form_builder.html', {
 		'form': form,
 		'fields': fields,
+		'dynamic_fields': dynamic_fields,
 		'fields_schema_json': json.dumps(fields_schema),
 		'categories': categories,
 		'technician_groups': technician_groups,
 		'catalog_items': catalog_items,
 		'campus_locations': campus_locations,
 		'max_attachment_size_mb': max_attachment_size_mb,
+		'core_settings': core_settings,
 	})
 
 

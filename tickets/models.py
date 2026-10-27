@@ -223,9 +223,114 @@ class ServiceCatalogItem(models.Model):
 
 
 
+class CoreFieldSetting(models.Model):
+    """Admin configuration for standard/core ticket fields (Global)"""
+    field_key = models.CharField(max_length=50, unique=True, help_text="e.g. location, urgency, title, description, attachment")
+    label = models.CharField(max_length=150)
+    placeholder = models.CharField(max_length=255, blank=True, default='')
+    help_text = models.CharField(max_length=255, blank=True, default='')
+    required = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+    extra_config = models.JSONField(default=dict, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Core Field Setting"
+        verbose_name_plural = "Core Field Settings"
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.field_key}: {self.label}"
+
+    @classmethod
+    def get_setting(cls, key, default_label='', default_placeholder='', default_help='', default_required=True, default_extra=None):
+        try:
+            obj, _ = cls.objects.get_or_create(
+                field_key=key,
+                defaults={
+                    'label': default_label,
+                    'placeholder': default_placeholder,
+                    'help_text': default_help,
+                    'required': default_required,
+                    'extra_config': default_extra or {},
+                }
+            )
+            return obj
+        except Exception:
+            return cls(
+                field_key=key,
+                label=default_label,
+                placeholder=default_placeholder,
+                help_text=default_help,
+                required=default_required,
+                extra_config=default_extra or {}
+            )
+
+    @classmethod
+    def get_all_settings(cls):
+        defaults = {
+            'location': {
+                'label': 'Location / Room / Lab',
+                'placeholder': 'e.g. VLSI Lab, Lab 2 - Table 4, Room 304, Server Room',
+                'help_text': 'Select campus building and room/lab so technicians locate you quickly.',
+                'required': True,
+                'extra_config': {'room_details_label': 'Room / Lab / Specific Details', 'room_details_required': True}
+            },
+            'urgency': {
+                'label': 'Urgency Level',
+                'placeholder': '',
+                'help_text': 'User-selectable issue priority with automated SLA targets.',
+                'required': True,
+                'extra_config': {
+                    'default_urgency': 'medium',
+                    'sla_low_hours': 24,
+                    'sla_medium_hours': 8,
+                    'sla_high_hours': 4,
+                    'sla_urgent_hours': 1
+                }
+            },
+            'title': {
+                'label': 'Issue Title',
+                'placeholder': 'e.g., WiFi disconnected in CS Lab 2',
+                'help_text': 'Single line text input for quick problem identification.',
+                'required': True,
+                'extra_config': {'enable_deflection': True, 'max_length': 150}
+            },
+            'description': {
+                'label': 'Detailed Problem Description',
+                'placeholder': 'Provide details about what happened...',
+                'help_text': 'Provide detailed symptoms and error logs if available.',
+                'required': True,
+                'extra_config': {'rows': 4}
+            },
+            'attachment': {
+                'label': 'File Attachment',
+                'placeholder': '',
+                'help_text': 'Allowed: JPG, JPEG, PNG, GIF, PDF. Maximum file size in MB.',
+                'required': False,
+                'extra_config': {'max_file_size_mb': 5, 'allowed_extensions': 'JPG, JPEG, PNG, GIF, PDF'}
+            }
+        }
+        result = {}
+        for k, v in defaults.items():
+            result[k] = cls.get_setting(
+                key=k,
+                default_label=v['label'],
+                default_placeholder=v['placeholder'],
+                default_help=v['help_text'],
+                default_required=v['required'],
+                default_extra=v['extra_config']
+            )
+        return result
+
+
+
 def get_admin_max_upload_size_bytes():
-    """Returns max upload size in bytes configured by admin in IssueFormField or settings"""
+    """Returns max upload size in bytes configured by admin in CoreFieldSetting, IssueFormField or settings"""
     try:
+        setting = CoreFieldSetting.objects.filter(field_key='attachment').first()
+        if setting and setting.extra_config and 'max_file_size_mb' in setting.extra_config:
+            return int(setting.extra_config['max_file_size_mb']) * 1024 * 1024
         field = IssueFormField.objects.filter(field_key__in=['attachment', 'problem_attachment', 'file_upload'], is_active=True).first()
         if field and field.max_file_size_mb:
             return field.max_file_size_mb * 1024 * 1024

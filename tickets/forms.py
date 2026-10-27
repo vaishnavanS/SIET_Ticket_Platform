@@ -72,6 +72,41 @@ class TicketCreateForm(forms.ModelForm):
         self.fields['description'].required = False
         self.fields['location'].required = False
 
+        from .models import CoreFieldSetting
+        try:
+            core_settings = CoreFieldSetting.get_all_settings()
+            if 'title' in self.fields and 'title' in core_settings:
+                t_set = core_settings['title']
+                if t_set.label: self.fields['title'].label = t_set.label
+                if t_set.placeholder: self.fields['title'].widget.attrs['placeholder'] = t_set.placeholder
+            if 'description' in self.fields and 'description' in core_settings:
+                d_set = core_settings['description']
+                if d_set.label: self.fields['description'].label = d_set.label
+                if d_set.placeholder: self.fields['description'].widget.attrs['placeholder'] = d_set.placeholder
+            if 'campus_location' in self.fields and 'location' in core_settings:
+                loc_set = core_settings['location']
+                if loc_set.label:
+                    self.fields['campus_location'].label = loc_set.label
+                    self.fields['campus_location'].empty_label = f"-- Select {loc_set.label} * --"
+            if 'location_details' in self.fields and 'location' in core_settings:
+                loc_set = core_settings['location']
+                if loc_set.placeholder:
+                    self.fields['location_details'].widget.attrs['placeholder'] = loc_set.placeholder
+                room_lbl = loc_set.extra_config.get('room_details_label') if loc_set.extra_config else None
+                if room_lbl:
+                    self.fields['location_details'].label = room_lbl
+            if 'urgency' in self.fields and 'urgency' in core_settings:
+                u_set = core_settings['urgency']
+                if u_set.label: self.fields['urgency'].label = u_set.label
+                def_u = u_set.extra_config.get('default_urgency') if u_set.extra_config else None
+                if def_u and not self.is_bound:
+                    self.fields['urgency'].initial = def_u
+            if 'attachment' in self.fields and 'attachment' in core_settings:
+                att_set = core_settings['attachment']
+                if att_set.label: self.fields['attachment'].label = att_set.label
+        except Exception:
+            pass
+
         self.issue_fields = issue_fields or []
 
         for issue_field in self.issue_fields:

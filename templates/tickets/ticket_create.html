@@ -574,13 +574,13 @@
                     {{ form.category }}
 
                     <div class="field">
-                        <label for="{{ form.title.id_for_label }}">Issue Title *</label>
+                        <label for="{{ form.title.id_for_label }}">{{ form.title.label|default:"Issue Title" }} *</label>
                         {{ form.title }}
                         {% if form.title.errors %}<small class="field-error">{{ form.title.errors|striptags }}</small>{% endif %}
                     </div>
 
                     <div class="field">
-                        <label for="{{ form.urgency.id_for_label }}">Urgency Level *</label>
+                        <label for="{{ form.urgency.id_for_label }}">{{ form.urgency.label|default:"Urgency Level" }} *</label>
                         {{ form.urgency }}
                         {% if form.urgency.errors %}<small class="field-error">{{ form.urgency.errors|striptags }}</small>{% endif %}
                     </div>
@@ -597,13 +597,13 @@
 
                         <div class="location-composite-grid">
                             <div class="field" style="margin-bottom: 0;">
-                                <label for="{{ form.campus_location.id_for_label }}">Campus Block / Location *</label>
+                                <label for="{{ form.campus_location.id_for_label }}">{{ form.campus_location.label|default:"Campus Block / Location" }} *</label>
                                 {{ form.campus_location }}
                                 {% if form.campus_location.errors %}<small class="field-error">{{ form.campus_location.errors|striptags }}</small>{% endif %}
                             </div>
 
                             <div class="field" style="margin-bottom: 0;">
-                                <label for="{{ form.location_details.id_for_label }}">Room / Lab / Specific Details *</label>
+                                <label for="{{ form.location_details.id_for_label }}">{{ form.location_details.label|default:"Room / Lab / Specific Details" }} *</label>
                                 {{ form.location_details }}
                                 <small class="muted" style="font-size: 11.5px; color: #64748b; margin-top: 5px; display: block;">
                                     e.g. VLSI Lab, Lab 2 - Table 4, Room 304, Server Room
@@ -689,14 +689,14 @@
 
                     {% if 'problem_description' not in form.fields %}
                     <div class="field">
-                        <label for="{{ form.description.id_for_label }}">Detailed Problem Description *</label>
+                        <label for="{{ form.description.id_for_label }}">{{ form.description.label|default:"Detailed Problem Description" }} *</label>
                         {{ form.description }}
                         {% if form.description.errors %}<small class="field-error">{{ form.description.errors|striptags }}</small>{% endif %}
                     </div>
                     {% endif %}
 
                     <div class="field">
-                        <label for="{{ form.attachment.id_for_label }}">Attachment (Optional screenshot or error photo)</label>
+                        <label for="{{ form.attachment.id_for_label }}">{{ form.attachment.label|default:"Attachment (Optional screenshot or error photo)" }}</label>
                         <div class="attachment-drop-box">
                             <div style="display: flex; justify-content: center; margin-bottom: 6px;">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

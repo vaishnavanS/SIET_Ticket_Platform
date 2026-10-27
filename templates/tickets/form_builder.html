@@ -13,6 +13,132 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Form Studio - Report an Issue | SIET Helpdesk</title>
     <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=4.0">
+    <style>
+        .core-fields-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .core-field-card {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px 20px;
+            transition: all 0.15s ease;
+        }
+        .core-field-card:hover {
+            border-color: #cbd5e1;
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        }
+        .core-field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .core-field-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .core-field-icon-badge {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .core-field-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+        }
+        .btn-edit-core-field {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #1e293b;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+        .btn-edit-core-field:hover {
+            background: #15803d;
+            color: #ffffff;
+            border-color: #15803d;
+        }
+        .core-field-body-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            font-size: 13px;
+            color: #475569;
+            padding-top: 10px;
+            border-top: 1px dashed #e2e8f0;
+        }
+        @media (max-width: 768px) {
+            .core-field-body-grid { grid-template-columns: 1fr; }
+        }
+        .core-chip-pill {
+            font-size: 11px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+        }
+        .core-sla-pill {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .core-modal-field {
+            margin-bottom: 16px;
+        }
+        .core-modal-field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+        .core-modal-field input[type="text"],
+        .core-modal-field input[type="number"],
+        .core-modal-field select,
+        .core-modal-field textarea {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13.5px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .core-modal-field input:focus,
+        .core-modal-field select:focus,
+        .core-modal-field textarea:focus {
+            outline: none;
+            border-color: #15803d;
+            box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
+        }
+    </style>
 </head>
 <body>
     <header class="topbar">
@@ -200,133 +326,215 @@
                 <!-- Canvas: Form Sections & Dynamic Question Cards -->
                 <div>
                     <!-- Core Standard Fields Overview Panel -->
-                    <div class="panel" style="padding: 20px 24px; margin-bottom: 22px; border-left: 4px solid #15803d; background: #ffffff; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                    <!-- Core Standard Fields Overview Panel (Spacious & Non-Congested) -->
+                    <div class="panel" style="padding: 22px 24px; margin-bottom: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;">
                             <div>
-                                <strong style="font-size: 16px; color: #165c20; display: flex; align-items: center; gap: 6px;">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                                <strong style="font-size: 16.5px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                                     Core Ticket Fields (Global)
                                 </strong>
-                                <p class="muted" style="margin: 2px 0 0; font-size: 13px;">Standard fields included on all support requests &bull; Fully synchronized with campus routing</p>
+                                <p class="muted" style="margin: 3px 0 0; font-size: 13px;">Standard fields included on all support requests &bull; Fully synchronized with campus routing &amp; editable by administrator</p>
                             </div>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <a href="{% url 'tickets:admin_locations' %}" class="secondary-button" style="padding: 6px 14px; font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; border-color: #86efac; background: #f0fdf4; color: #15803d;">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"></path><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path><path d="M9 9h1"></path><path d="M14 9h1"></path></svg>
-                                    Manage Campus Locations ({{ campus_locations|length }}) &rarr;
+                                <a href="{% url 'tickets:admin_locations' %}" class="secondary-button" style="padding: 6px 14px; font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path><path d="M9 9h1"></path><path d="M14 9h1"></path></svg>
+                                    Location Directory ({{ campus_locations|length }}) &rarr;
                                 </a>
-                                <span class="badge success-badge">5 Built-in Fields</span>
+                                <span class="badge success-badge">5 Global Fields</span>
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
-                            <!-- Field 1: Campus Location -->
-                            <div style="padding: 12px 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px;">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-                                    <strong style="font-size: 13.5px; color: #0f172a; display: flex; align-items: center; gap: 5px;">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                                        Location / Room / Lab *
-                                    </strong>
-                                    <span style="font-size: 10.5px; padding: 2px 6px; background: #dcfce7; color: #15803d; border-radius: 4px; font-weight: 700;">Active</span>
+                        <!-- Spacious, Non-Congested Core Fields Stack -->
+                        <div class="core-fields-stack">
+                            <!-- 1. Location / Room / Lab -->
+                            <div class="core-field-card">
+                                <div class="core-field-header">
+                                    <div class="core-field-title-group">
+                                        <span class="core-field-icon-badge" style="background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0;">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                        </span>
+                                        <div>
+                                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                                <h3 class="core-field-title">{{ core_settings.location.label|default:'Location / Room / Lab' }}</h3>
+                                                <span class="badge danger-badge" style="font-size: 10.5px;">Required</span>
+                                                <span class="badge success-badge" style="font-size: 10.5px;">Auto Routing</span>
+                                            </div>
+                                            <span style="font-size: 11.5px; color: #64748b; font-family: monospace;">Keys: campus_location &bull; location_details</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-edit-core-field" onclick="openCoreModal('location')">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        Edit Field &amp; Blocks
+                                    </button>
                                 </div>
-                                <span class="muted" style="font-size: 11.5px; display: block; margin-bottom: 6px;">
-                                    Campus block selector &amp; specific room/lab input.
-                                </span>
-                                <div style="margin-bottom: 8px;">
-                                    <span style="font-size: 11px; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">Configured Blocks ({{ campus_locations|length }}):</span>
-                                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                                        {% for loc in campus_locations %}
-                                        <span style="font-size: 10.5px; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 2px 6px; border-radius: 4px; font-weight: 600;">{{ loc.name }}</span>
-                                        {% empty %}
-                                        <span class="muted" style="font-size: 11px;">No blocks added yet</span>
-                                        {% endfor %}
+                                <div class="core-field-body-grid">
+                                    <div>
+                                        <strong style="display: block; font-size: 11.5px; color: #475569; margin-bottom: 6px;">Configured Campus Blocks ({{ campus_locations|length }}):</strong>
+                                        <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                                            {% for loc in campus_locations %}
+                                            <span class="core-chip-pill">{{ loc.name }}</span>
+                                            {% empty %}
+                                            <span class="muted" style="font-size: 12px;">No blocks added yet</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong style="display: block; font-size: 11.5px; color: #475569; margin-bottom: 4px;">Room / Lab Guidance:</strong>
+                                        <span style="font-size: 12.5px; color: #1e293b; display: block; font-family: monospace; background: #ffffff; padding: 4px 8px; border-radius: 4px; border: 1px solid #e2e8f0;">{{ core_settings.location.placeholder|default:'e.g. VLSI Lab, Lab 2 - Table 4, Room 304' }}</span>
                                     </div>
                                 </div>
-                                <a href="{% url 'tickets:admin_locations' %}" style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: #15803d; text-decoration: underline;">
-                                    + Add / Edit Locations &rarr;
-                                </a>
                             </div>
 
-                            <!-- Field 2: Urgency Level -->
-                            <div style="padding: 12px 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px;">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-                                    <strong style="font-size: 13.5px; color: #0f172a; display: flex; align-items: center; gap: 5px;">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                        Urgency Level *
-                                    </strong>
-                                    <span style="font-size: 10.5px; padding: 2px 6px; background: #fef3c7; color: #92400e; border-radius: 4px; font-weight: 700;">4 SLA Tiers</span>
+                            <!-- 2. Urgency Level -->
+                            <div class="core-field-card">
+                                <div class="core-field-header">
+                                    <div class="core-field-title-group">
+                                        <span class="core-field-icon-badge" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a;">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                        </span>
+                                        <div>
+                                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                                <h3 class="core-field-title">{{ core_settings.urgency.label|default:'Urgency Level' }}</h3>
+                                                <span class="badge danger-badge" style="font-size: 10.5px;">Required</span>
+                                                <span class="badge warning-badge" style="font-size: 10.5px;">4 SLA Tiers</span>
+                                            </div>
+                                            <span style="font-size: 11.5px; color: #64748b; font-family: monospace;">Key: urgency</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-edit-core-field" onclick="openCoreModal('urgency')">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        Edit SLA &amp; Urgency
+                                    </button>
                                 </div>
-                                <span class="muted" style="font-size: 11.5px; display: block; margin-bottom: 6px;">
-                                    User-selectable issue priority with automated SLA targets.
-                                </span>
-                                <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
-                                    <span style="font-size: 10.5px; background: #f1f5f9; color: #475569; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Low (24h)</span>
-                                    <span style="font-size: 10.5px; background: #f1f5f9; color: #475569; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Medium (8h)</span>
-                                    <span style="font-size: 10.5px; background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px; font-weight: 600;">High (4h)</span>
-                                    <span style="font-size: 10.5px; background: #fef2f2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; font-weight: 700;">Urgent (1h)</span>
+                                <div class="core-field-body-grid">
+                                    <div>
+                                        <strong style="display: block; font-size: 11.5px; color: #475569; margin-bottom: 6px;">Automated SLA Dispatch Targets:</strong>
+                                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                            <span class="core-sla-pill" style="background: #f1f5f9; color: #334155;">Low: {{ core_settings.urgency.extra_config.sla_low_hours|default:24 }}h</span>
+                                            <span class="core-sla-pill" style="background: #eff6ff; color: #1d4ed8;">Medium: {{ core_settings.urgency.extra_config.sla_medium_hours|default:8 }}h</span>
+                                            <span class="core-sla-pill" style="background: #fef3c7; color: #92400e;">High: {{ core_settings.urgency.extra_config.sla_high_hours|default:4 }}h</span>
+                                            <span class="core-sla-pill" style="background: #fee2e2; color: #991b1b; font-weight: 700;">Urgent: {{ core_settings.urgency.extra_config.sla_urgent_hours|default:1 }}h</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong style="display: block; font-size: 11.5px; color: #475569; margin-bottom: 4px;">Default Initial Selection:</strong>
+                                        <span style="font-size: 13px; font-weight: 600; color: #1e293b;">{{ core_settings.urgency.extra_config.default_urgency|default:'medium'|title }} Priority</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Field 3: Issue Title -->
-                            <div style="padding: 12px 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px;">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-                                    <strong style="font-size: 13.5px; color: #0f172a; display: flex; align-items: center; gap: 5px;">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
-                                        Issue Title *
-                                    </strong>
-                                    <span style="font-size: 10.5px; padding: 2px 6px; background: #eff6ff; color: #1d4ed8; border-radius: 4px; font-weight: 700;">Required</span>
+                            <!-- 3. Issue Title -->
+                            <div class="core-field-card">
+                                <div class="core-field-header">
+                                    <div class="core-field-title-group">
+                                        <span class="core-field-icon-badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+                                        </span>
+                                        <div>
+                                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                                <h3 class="core-field-title">{{ core_settings.title.label|default:'Issue Title' }}</h3>
+                                                <span class="badge danger-badge" style="font-size: 10.5px;">Required</span>
+                                                <span class="badge info-badge" style="font-size: 10.5px;">Deflection Active</span>
+                                            </div>
+                                            <span style="font-size: 11.5px; color: #64748b; font-family: monospace;">Key: title</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-edit-core-field" onclick="openCoreModal('title')">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        Edit Title Field
+                                    </button>
                                 </div>
-                                <span class="muted" style="font-size: 11.5px; display: block; margin-bottom: 4px;">
-                                    Single line text input (max 150 chars).
-                                </span>
-                                <span style="font-size: 11px; color: #15803d; font-weight: 600; display: block; margin-top: 6px;">
-                                    &bull; Live self-help deflection search enabled
-                                </span>
+                                <div class="core-field-body-grid">
+                                    <div>
+                                        <strong style="display: block; font-size: 11.5px; color: #475569; margin-bottom: 4px;">Placeholder Guidance:</strong>
+                                        <span style="font-size: 12.5px; color: #1e293b; font-family: monospace; background: #ffffff; padding: 4px 8px; border-radius: 4px; border: 1px solid #e2e8f0; display: block;">{{ core_settings.title.placeholder|default:'e.g., WiFi disconnected in CS Lab 2' }}</span>
+                                    </div>
+                                    <div>
+                                        <strong style="display: block; font-size: 11.5px; color: #475569; margin-bottom: 4px;">Self-Help Knowledge Search:</strong>
+                                        <span style="font-size: 13px; color: #15803d; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            Enabled (Live deflection as user types)
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <!-- Field 4: Problem Description -->
-                            <div style="padding: 12px 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px;">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-                                    <strong style="font-size: 13.5px; color: #0f172a; display: flex; align-items: center; gap: 5px;">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                                        Problem Description *
-                                    </strong>
-                                    <span style="font-size: 10.5px; padding: 2px 6px; background: #eff6ff; color: #1d4ed8; border-radius: 4px; font-weight: 700;">Required</span>
+                            <!-- 4. Problem Description -->
+                            <div class="core-field-card">
+                                <div class="core-field-header">
+                                    <div class="core-field-title-group">
+                                        <span class="core-field-icon-badge" style="background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe;">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                                        </span>
+                                        <div>
+                                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                                <h3 class="core-field-title">{{ core_settings.description.label|default:'Problem Description' }}</h3>
+                                                <span class="badge danger-badge" style="font-size: 10.5px;">Required</span>
+                                            </div>
+                                            <span style="font-size: 11.5px; color: #64748b; font-family: monospace;">Key: description</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-edit-core-field" onclick="openCoreModal('description')">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        Edit Description Field
+                                    </button>
                                 </div>
-                                <span class="muted" style="font-size: 11.5px; display: block; margin-bottom: 4px;">
-                                    Multiline detailed symptoms textarea.
-                                </span>
-                                <span style="font-size: 11px; color: #64748b; font-weight: 600; display: block; margin-top: 6px;">
-                                    &bull; Synchronized with dynamic question responses
-                                </span>
+                                <div class="core-field-body-grid">
+                                    <div>
+                                        <strong style="display: block; font-size: 11.5px; color: #475569; margin-bottom: 4px;">Placeholder Text:</strong>
+                                        <span style="font-size: 12.5px; color: #1e293b; font-family: monospace; background: #ffffff; padding: 4px 8px; border-radius: 4px; border: 1px solid #e2e8f0; display: block;">{{ core_settings.description.placeholder|default:'Provide details about what happened...' }}</span>
+                                    </div>
+                                    <div>
+                                        <strong style="display: block; font-size: 11.5px; color: #475569; margin-bottom: 4px;">Textarea Height:</strong>
+                                        <span style="font-size: 13px; color: #1e293b; font-weight: 600;">{{ core_settings.description.extra_config.rows|default:4 }} Visible Rows</span>
+                                    </div>
+                                </div>
                             </div>
 
-                            <!-- Field 5: File Attachment -->
-                            <div style="padding: 12px 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px;">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-                                    <strong style="font-size: 13.5px; color: #0f172a; display: flex; align-items: center; gap: 5px;">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
-                                        File Attachment
-                                    </strong>
-                                    <span style="font-size: 10.5px; padding: 2px 6px; background: #f1f5f9; color: #475569; border-radius: 4px; font-weight: 700;">Optional</span>
+                            <!-- 5. File Attachment -->
+                            <div class="core-field-card">
+                                <div class="core-field-header">
+                                    <div class="core-field-title-group">
+                                        <span class="core-field-icon-badge" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                                        </span>
+                                        <div>
+                                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                                <h3 class="core-field-title">{{ core_settings.attachment.label|default:'File Attachment' }}</h3>
+                                                <span class="badge" style="background: #f1f5f9; color: #475569; font-size: 10.5px;">Optional</span>
+                                                <span class="badge success-badge" style="font-size: 10.5px;">Max {{ max_attachment_size_mb }} MB</span>
+                                            </div>
+                                            <span style="font-size: 11.5px; color: #64748b; font-family: monospace;">Key: attachment</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-edit-core-field" onclick="openCoreModal('attachment')">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        Edit Attachment Field
+                                    </button>
                                 </div>
-                                <span class="muted" style="font-size: 11.5px; display: block; margin-bottom: 4px;">
-                                    Screenshot / error photo dropzone.
-                                </span>
-                                <span style="font-size: 11px; color: #475569; font-weight: 600; display: block; margin-top: 6px;">
-                                    &bull; Limit: {{ max_attachment_size_mb|default:5 }} MB (JPG, PNG, GIF, PDF)
-                                </span>
+                                <div class="core-field-body-grid">
+                                    <div>
+                                        <strong style="display: block; font-size: 11.5px; color: #475569; margin-bottom: 4px;">Maximum Upload Size:</strong>
+                                        <span style="font-size: 13px; font-weight: 700; color: #15803d;">{{ max_attachment_size_mb }} MB per file</span>
+                                    </div>
+                                    <div>
+                                        <strong style="display: block; font-size: 11.5px; color: #475569; margin-bottom: 4px;">Allowed File Formats:</strong>
+                                        <span style="font-size: 12px; font-weight: 600; color: #334155;">{{ core_settings.attachment.extra_config.allowed_extensions|default:'JPG, JPEG, PNG, GIF, PDF' }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Dynamic Flow Canvas -->
                     <div class="studio-action-bar">
-                        <strong>Dynamic Question Hierarchy &amp; Rules ({{ fields|length }} Blocks)</strong>
+                        <strong>Dynamic Question Hierarchy &amp; Rules ({{ dynamic_fields|length }} Blocks)</strong>
                         <span class="muted">Branching questions and option selectors</span>
                     </div>
 
                     <div class="question-cards-stack">
-                        {% for item in fields %}
+                        {% for item in dynamic_fields %}
                         <article class="question-card" id="card-{{ item.id }}">
                             <div class="card-header">
                                 <div class="card-title-wrap">
@@ -759,6 +967,345 @@
                 if (otherBox) {
                     otherBox.style.display = hasOtherSelected ? 'block' : 'none';
                 }
+            }
+        });
+    <!-- ========================================== -->
+    <!-- CORE FIELD CONFIGURATION MODALS              -->
+    <!-- ========================================== -->
+
+    <!-- Modal 1: Location & Campus Blocks -->
+    <div id="modal-core-location" class="modal-overlay">
+        <div class="modal-box" style="max-width: 680px;">
+            <div class="modal-header">
+                <h3 style="margin: 0; font-size: 17px; display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    Configure Location Field &amp; Campus Blocks
+                </h3>
+                <button type="button" class="modal-close" onclick="closeCoreModal('location')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Field Settings Form -->
+                <form method="post" action="{% url 'tickets:form_builder' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="edit_core_field">
+                    <input type="hidden" name="field_key" value="location">
+
+                    <div class="core-modal-field">
+                        <label>Field Title / Label *</label>
+                        <input type="text" name="label" value="{{ core_settings.location.label }}" required>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                        <div class="core-modal-field">
+                            <label>Room / Lab Field Label *</label>
+                            <input type="text" name="room_details_label" value="{{ core_settings.location.extra_config.room_details_label|default:'Room / Lab / Specific Details' }}" required>
+                        </div>
+                        <div class="core-modal-field">
+                            <label>Room / Lab Placeholder *</label>
+                            <input type="text" name="placeholder" value="{{ core_settings.location.placeholder }}" required>
+                        </div>
+                    </div>
+
+                    <div class="core-modal-field">
+                        <label>Help Guidance Note</label>
+                        <input type="text" name="help_text" value="{{ core_settings.location.help_text }}">
+                    </div>
+
+                    <div style="margin-bottom: 18px;">
+                        <label style="font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" name="room_details_required" value="1" {% if core_settings.location.extra_config.room_details_required %}checked{% endif %}>
+                            Require users to specify Room / Lab / Specific Details
+                        </label>
+                    </div>
+
+                    <button type="submit" class="primary-button" style="padding: 9px 20px; font-weight: 700;">Save Field Settings</button>
+                </form>
+
+                <hr style="margin: 24px 0 20px 0; border: none; border-top: 1px solid #e2e8f0;">
+
+                <!-- Campus Locations Inline Manager -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div>
+                            <strong style="font-size: 14px; color: #0f172a;">Manage Campus Blocks ({{ campus_locations|length }})</strong>
+                            <p class="muted" style="margin: 2px 0 0; font-size: 12px;">Add new blocks, rename existing blocks, or delete old blocks:</p>
+                        </div>
+                    </div>
+
+                    <!-- Add New Location Block -->
+                    <form method="post" action="{% url 'tickets:form_builder' %}" style="display: flex; gap: 8px; margin-bottom: 16px;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_campus_location">
+                        <input type="text" name="name" placeholder="Enter new block name (e.g. Mechanical Block, Bio-Tech Park)" required style="flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;">
+                        <button type="submit" class="primary-button" style="white-space: nowrap; padding: 8px 16px; font-size: 12.5px;">+ Add Block</button>
+                    </form>
+
+                    <!-- Existing Blocks List with Inline Rename & Delete -->
+                    <div style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                        {% for loc in campus_locations %}
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 12px;">
+                            <form method="post" action="{% url 'tickets:form_builder' %}" style="display: flex; align-items: center; gap: 8px; flex: 1; margin: 0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="edit_campus_location">
+                                <input type="hidden" name="location_id" value="{{ loc.id }}">
+                                <input type="text" name="name" value="{{ loc.name }}" required style="flex: 1; padding: 5px 8px; font-size: 12.5px; border: 1px solid #cbd5e1; border-radius: 4px; background: #ffffff;">
+                                <button type="submit" class="secondary-button" style="padding: 5px 10px; font-size: 11.5px; font-weight: 700; white-space: nowrap; border-color: #86efac; color: #166534; background: #f0fdf4;">Rename</button>
+                            </form>
+                            <form method="post" action="{% url 'tickets:form_builder' %}" onsubmit="return confirm('Delete campus block \'{{ loc.name|escapejs }}\'?');" style="margin: 0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete_campus_location">
+                                <input type="hidden" name="location_id" value="{{ loc.id }}">
+                                <button type="submit" class="delete-button" style="padding: 5px 10px; font-size: 11.5px; border-radius: 4px; border: 1px solid #fecaca; background: #fef2f2; color: #dc2626; cursor: pointer;">Delete</button>
+                            </form>
+                        </div>
+                        {% empty %}
+                        <p class="muted" style="font-size: 13px; text-align: center; padding: 14px;">No campus locations added yet. Use the input above to add your first block.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="secondary-button" onclick="closeCoreModal('location')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Urgency Level & SLA Targets -->
+    <div id="modal-core-urgency" class="modal-overlay">
+        <div class="modal-box" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 style="margin: 0; font-size: 17px; display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    Configure Urgency Level &amp; SLA Targets
+                </h3>
+                <button type="button" class="modal-close" onclick="closeCoreModal('urgency')">&times;</button>
+            </div>
+            <form method="post" action="{% url 'tickets:form_builder' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_core_field">
+                <input type="hidden" name="field_key" value="urgency">
+
+                <div class="modal-body">
+                    <div class="core-modal-field">
+                        <label>Field Label *</label>
+                        <input type="text" name="label" value="{{ core_settings.urgency.label }}" required>
+                    </div>
+
+                    <div class="core-modal-field">
+                        <label>Default Initial Selection *</label>
+                        <select name="default_urgency">
+                            <option value="low" {% if core_settings.urgency.extra_config.default_urgency == 'low' %}selected{% endif %}>Low</option>
+                            <option value="medium" {% if core_settings.urgency.extra_config.default_urgency == 'medium' or not core_settings.urgency.extra_config.default_urgency %}selected{% endif %}>Medium</option>
+                            <option value="high" {% if core_settings.urgency.extra_config.default_urgency == 'high' %}selected{% endif %}>High</option>
+                            <option value="critical" {% if core_settings.urgency.extra_config.default_urgency == 'critical' %}selected{% endif %}>Urgent / Critical</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 18px;">
+                        <label style="font-size: 13px; font-weight: 700; color: #1e293b; display: block; margin-bottom: 8px;">Target SLA Resolution Windows (in Hours):</label>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                            <div class="core-modal-field" style="margin-bottom: 0;">
+                                <label style="font-size: 11.5px; color: #475569;">Low (Hours)</label>
+                                <input type="number" name="sla_low_hours" min="1" value="{{ core_settings.urgency.extra_config.sla_low_hours|default:24 }}" required>
+                            </div>
+                            <div class="core-modal-field" style="margin-bottom: 0;">
+                                <label style="font-size: 11.5px; color: #1d4ed8;">Medium (Hours)</label>
+                                <input type="number" name="sla_medium_hours" min="1" value="{{ core_settings.urgency.extra_config.sla_medium_hours|default:8 }}" required>
+                            </div>
+                            <div class="core-modal-field" style="margin-bottom: 0;">
+                                <label style="font-size: 11.5px; color: #b45309;">High (Hours)</label>
+                                <input type="number" name="sla_high_hours" min="1" value="{{ core_settings.urgency.extra_config.sla_high_hours|default:4 }}" required>
+                            </div>
+                            <div class="core-modal-field" style="margin-bottom: 0;">
+                                <label style="font-size: 11.5px; color: #b91c1c;">Urgent (Hours)</label>
+                                <input type="number" name="sla_urgent_hours" min="1" value="{{ core_settings.urgency.extra_config.sla_urgent_hours|default:1 }}" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="core-modal-field">
+                        <label>Help Guidance Note</label>
+                        <input type="text" name="help_text" value="{{ core_settings.urgency.help_text }}">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="secondary-button" onclick="closeCoreModal('urgency')">Cancel</button>
+                    <button type="submit" class="primary-button">Save SLA Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 3: Issue Title Field -->
+    <div id="modal-core-title" class="modal-overlay">
+        <div class="modal-box" style="max-width: 580px;">
+            <div class="modal-header">
+                <h3 style="margin: 0; font-size: 17px; display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+                    Configure Issue Title Field
+                </h3>
+                <button type="button" class="modal-close" onclick="closeCoreModal('title')">&times;</button>
+            </div>
+            <form method="post" action="{% url 'tickets:form_builder' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_core_field">
+                <input type="hidden" name="field_key" value="title">
+
+                <div class="modal-body">
+                    <div class="core-modal-field">
+                        <label>Field Label *</label>
+                        <input type="text" name="label" value="{{ core_settings.title.label }}" required>
+                    </div>
+
+                    <div class="core-modal-field">
+                        <label>Input Placeholder Text *</label>
+                        <input type="text" name="placeholder" value="{{ core_settings.title.placeholder }}" required>
+                    </div>
+
+                    <div class="core-modal-field">
+                        <label>Maximum Allowed Characters *</label>
+                        <input type="number" name="max_length" min="20" max="250" value="{{ core_settings.title.extra_config.max_length|default:150 }}" required>
+                    </div>
+
+                    <div style="margin-bottom: 18px;">
+                        <label style="font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" name="enable_deflection" value="1" {% if core_settings.title.extra_config.enable_deflection != False %}checked{% endif %}>
+                            Enable automated solution deflection suggestions as user types
+                        </label>
+                    </div>
+
+                    <div class="core-modal-field">
+                        <label>Help Guidance Note</label>
+                        <input type="text" name="help_text" value="{{ core_settings.title.help_text }}">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="secondary-button" onclick="closeCoreModal('title')">Cancel</button>
+                    <button type="submit" class="primary-button">Save Title Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 4: Problem Description Field -->
+    <div id="modal-core-description" class="modal-overlay">
+        <div class="modal-box" style="max-width: 580px;">
+            <div class="modal-header">
+                <h3 style="margin: 0; font-size: 17px; display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6d28d9" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                    Configure Problem Description Field
+                </h3>
+                <button type="button" class="modal-close" onclick="closeCoreModal('description')">&times;</button>
+            </div>
+            <form method="post" action="{% url 'tickets:form_builder' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_core_field">
+                <input type="hidden" name="field_key" value="description">
+
+                <div class="modal-body">
+                    <div class="core-modal-field">
+                        <label>Field Label *</label>
+                        <input type="text" name="label" value="{{ core_settings.description.label }}" required>
+                    </div>
+
+                    <div class="core-modal-field">
+                        <label>Input Placeholder Text *</label>
+                        <input type="text" name="placeholder" value="{{ core_settings.description.placeholder }}" required>
+                    </div>
+
+                    <div class="core-modal-field">
+                        <label>Textarea Visible Rows *</label>
+                        <input type="number" name="rows" min="2" max="10" value="{{ core_settings.description.extra_config.rows|default:4 }}" required>
+                    </div>
+
+                    <div style="margin-bottom: 18px;">
+                        <label style="font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" name="required" value="1" {% if core_settings.description.required %}checked{% endif %}>
+                            Mark problem description as mandatory / required
+                        </label>
+                    </div>
+
+                    <div class="core-modal-field">
+                        <label>Help Guidance Note</label>
+                        <input type="text" name="help_text" value="{{ core_settings.description.help_text }}">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="secondary-button" onclick="closeCoreModal('description')">Cancel</button>
+                    <button type="submit" class="primary-button">Save Description Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 5: File Attachment Field -->
+    <div id="modal-core-attachment" class="modal-overlay">
+        <div class="modal-box" style="max-width: 580px;">
+            <div class="modal-header">
+                <h3 style="margin: 0; font-size: 17px; display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                    Configure File Attachment Field
+                </h3>
+                <button type="button" class="modal-close" onclick="closeCoreModal('attachment')">&times;</button>
+            </div>
+            <form method="post" action="{% url 'tickets:form_builder' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_core_field">
+                <input type="hidden" name="field_key" value="attachment">
+
+                <div class="modal-body">
+                    <div class="core-modal-field">
+                        <label>Field Label *</label>
+                        <input type="text" name="label" value="{{ core_settings.attachment.label }}" required>
+                    </div>
+
+                    <div class="core-modal-field">
+                        <label>Maximum Allowed File Size (MB) *</label>
+                        <input type="number" name="max_file_size_mb" min="1" max="100" value="{{ core_settings.attachment.extra_config.max_file_size_mb|default:5 }}" required>
+                    </div>
+
+                    <div class="core-modal-field">
+                        <label>Allowed File Formats *</label>
+                        <input type="text" name="allowed_extensions" value="{{ core_settings.attachment.extra_config.allowed_extensions|default:'JPG, JPEG, PNG, GIF, PDF' }}" required>
+                    </div>
+
+                    <div class="core-modal-field">
+                        <label>Help Guidance Note</label>
+                        <input type="text" name="help_text" value="{{ core_settings.attachment.help_text }}">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="secondary-button" onclick="closeCoreModal('attachment')">Cancel</button>
+                    <button type="submit" class="primary-button">Save Attachment Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openCoreModal(fieldKey) {
+            const m = document.getElementById('modal-core-' + fieldKey);
+            if (m) m.classList.add('open');
+        }
+
+        function closeCoreModal(fieldKey) {
+            const m = document.getElementById('modal-core-' + fieldKey);
+            if (m) m.classList.remove('open');
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('modal-overlay')) {
+                e.target.classList.remove('open');
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
             }
         });
     </script>

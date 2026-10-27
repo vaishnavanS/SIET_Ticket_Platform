@@ -286,6 +286,76 @@ class FormBuilderTests(TestCase):
         self.assertTrue(IssueFormField.objects.filter(field_key='network_problem_type').exists())
         self.assertTrue(ServiceCatalogItem.objects.filter(title='Campus WiFi & LAN Access').exists())
 
+    def test_core_fields_configuration_and_inline_locations(self):
+        from tickets.models import CoreFieldSetting, CampusLocation
+        from tickets.forms import TicketCreateForm
+        self.client.login(username='admin_builder', password='Password123!')
+
+        # 1. Edit Core Field (e.g. title & urgency)
+        res = self.client.post(reverse('tickets:form_builder'), {
+            'action': 'edit_core_field',
+            'field_key': 'title',
+            'label': 'Problem Headline',
+            'placeholder': 'Describe issue in 5 words...',
+            'enable_deflection': '1',
+            'max_length': '120',
+        })
+        self.assertEqual(res.status_code, 302)
+        title_setting = CoreFieldSetting.objects.get(field_key='title')
+        self.assertEqual(title_setting.label, 'Problem Headline')
+        self.assertEqual(title_setting.placeholder, 'Describe issue in 5 words...')
+
+        # Edit Urgency
+        res_urg = self.client.post(reverse('tickets:form_builder'), {
+            'action': 'edit_core_field',
+            'field_key': 'urgency',
+            'label': 'Severity Level',
+            'default_urgency': 'high',
+            'sla_low_hours': '48',
+            'sla_medium_hours': '12',
+            'sla_high_hours': '6',
+            'sla_urgent_hours': '2',
+        })
+        self.assertEqual(res_urg.status_code, 302)
+        urg_setting = CoreFieldSetting.objects.get(field_key='urgency')
+        self.assertEqual(urg_setting.label, 'Severity Level')
+        self.assertEqual(urg_setting.extra_config['default_urgency'], 'high')
+        self.assertEqual(urg_setting.extra_config['sla_urgent_hours'], 2)
+
+        # 2. Inline Campus Location Management (Add, Rename, Delete)
+        res_add_loc = self.client.post(reverse('tickets:form_builder'), {
+            'action': 'add_campus_location',
+            'name': 'Innovation Labs Wing',
+        })
+        self.assertEqual(res_add_loc.status_code, 302)
+        loc = CampusLocation.objects.get(name='Innovation Labs Wing')
+        self.assertTrue(loc.is_active)
+
+        # Rename
+        res_rename_loc = self.client.post(reverse('tickets:form_builder'), {
+            'action': 'edit_campus_location',
+            'location_id': loc.id,
+            'name': 'AI & Innovation Wing',
+        })
+        self.assertEqual(res_rename_loc.status_code, 302)
+        loc.refresh_from_db()
+        self.assertEqual(loc.name, 'AI & Innovation Wing')
+
+        # Delete
+        res_del_loc = self.client.post(reverse('tickets:form_builder'), {
+            'action': 'delete_campus_location',
+            'location_id': loc.id,
+        })
+        self.assertEqual(res_del_loc.status_code, 302)
+        self.assertFalse(CampusLocation.objects.filter(pk=loc.id).exists())
+
+        # 3. Verify TicketCreateForm reflects the updated CoreFieldSettings
+        form = TicketCreateForm()
+        self.assertEqual(form.fields['title'].label, 'Problem Headline')
+        self.assertEqual(form.fields['title'].widget.attrs['placeholder'], 'Describe issue in 5 words...')
+        self.assertEqual(form.fields['urgency'].label, 'Severity Level')
+        self.assertEqual(form.fields['urgency'].initial, 'high')
+
     def test_ticket_creation_with_dynamic_custom_answers_and_routing(self):
         from django.core.management import call_command
         from accounts.models import UserProfile
