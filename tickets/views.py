@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from .forms import TicketCreateForm, AdminTicketForm, IssueFormFieldForm, ServiceCatalogItemForm, SolutionArticleForm, CampusLocationForm
 from .models import Ticket, IssueFormField, TicketStatus, TicketComment, TicketHistory, ServiceCatalogItem, Category, SolutionArticle, CampusLocation
 from accounts.models import UserRole, TechnicianGroup
@@ -435,8 +436,13 @@ def my_tickets(request):
 	if status_filter in dict(TicketStatus.choices):
 		filtered_tickets = filtered_tickets.filter(status=status_filter)
 
+	paginator = Paginator(filtered_tickets, 15)  # 15 tickets per page
+	page_number = request.GET.get('page')
+	tickets_page = paginator.get_page(page_number)
+
 	context = {
-		'tickets': filtered_tickets,
+		'tickets': tickets_page,
+		'page_obj': tickets_page,
 		'total_count': all_tickets.count(),
 		'open_count': all_tickets.filter(status=TicketStatus.OPEN).count(),
 		'in_progress_count': all_tickets.filter(status=TicketStatus.IN_PROGRESS).count(),
@@ -890,8 +896,13 @@ def solutions_list(request):
 	role = getattr(request.user.profile, 'role', None)
 	can_manage = (role in [UserRole.ADMIN, UserRole.TECHNICIAN] or request.user.is_staff)
 
+	paginator = Paginator(solutions_qs, 12)  # 12 solutions per page
+	page_number = request.GET.get('page')
+	solutions_page = paginator.get_page(page_number)
+
 	return render(request, 'tickets/solutions_list.html', {
-		'solutions': solutions_qs,
+		'solutions': solutions_page,
+		'page_obj': solutions_page,
 		'selected_target': target,
 		'query': query,
 		'categories_count': categories_count,

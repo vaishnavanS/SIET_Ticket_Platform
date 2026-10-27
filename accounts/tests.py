@@ -518,3 +518,91 @@ class EmailQueueAndCronTests(TestCase):
         setting = SiteEmailSetting.get_setting()
         self.assertEqual(setting.smtp_backend, 'console')
 
+
+class RateLimitingAndPaginationTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.client = Client(REMOTE_ADDR='198.51.100.10')
+        self.user = User.objects.create_user(
+            username='rate_test_user',
+            email='rate@siet.edu.in',
+            password='ValidPassword123!'
+        )
+        self.user.profile.role = UserRole.NORMAL_USER
+        self.user.profile.save()
+
+    def test_login_rate_limiting_lockout(self):
+        login_url = reverse('accounts:login')
+        
+        # 4 consecutive invalid attempts should fail normally with remaining attempts warning
+        for i in range(1, 5):
+            res = self.client.post(login_url, {
+                'username': 'rate_test_user',
+                'password': 'WrongPassword!',
+            })
+            self.assertEqual(res.status_code, 200)
+            self.assertContains(res, f"{5 - i} attempt(s) remaining")
+
+        # 5th invalid attempt triggers rate limit lockout (HTTP 429)
+        res5 = self.client.post(login_url, {
+            'username': 'rate_test_user',
+            'password': 'WrongPassword!',
+        })
+        self.assertEqual(res5.status_code, 429)
+        self.assertContains(res5, "temporarily locked for 5 minutes", status_code=429)
+
+        # Even with correct password, locked out IP is rejected with 429
+        res_locked = self.client.post(login_url, {
+            'username': 'rate_test_user',
+            'password': 'ValidPassword123!',
+        })
+        self.assertEqual(res_locked.status_code, 429)
+        self.assertContains(res_locked, "temporarily locked for 5 minutes", status_code=429)
+
+    def test_successful_login_resets_rate_limiter(self):
+        from django.core.cache import cache
+        login_url = reverse('accounts:login')
+        
+        # 2 failed attempts
+        self.client.post(login_url, {'username': 'rate_test_user', 'password': 'WrongPassword!'})
+        self.client.post(login_url, {'username': 'rate_test_user', 'password': 'WrongPassword!'})
+        self.assertEqual(cache.get('login_attempts_198.51.100.10'), 2)
+
+        # Successful login clears the failed attempts
+        res = self.client.post(login_url, {
+            'username': 'rate_test_user',
+            'password': 'ValidPassword123!',
+        })
+        self.assertEqual(res.status_code, 302)
+        self.assertIsNone(cache.get('login_attempts_198.51.100.10'))
+
+    def test_admin_users_pagination(self):
+        admin = User.objects.create_superuser('admin_page_test', 'adminpage@siet.edu.in', 'Password123!')
+        admin.profile.role = UserRole.ADMIN
+        admin.profile.save()
+
+        # Create 25 additional users to test 20-per-page pagination
+        for i in range(25):
+            User.objects.create_user(f"student_batch_{i}", f"student_{i}@siet.edu.in", "Password123!")
+
+        self.client.login(username='admin_page_test', password='Password123!')
+        res_page1 = self.client.get(reverse('accounts:admin_users'))
+        self.assertEqual(res_page1.status_code, 200)
+        self.assertTrue('page_obj' in res_page1.context)
+        self.assertEqual(len(res_page1.context['page_obj']), 20)
+        self.assertTrue(res_page1.context['page_obj'].has_next())
+
+        # Page 2
+        res_page2 = self.client.get(reverse('accounts:admin_users') + '?page=2')
+        self.assertEqual(res_page2.status_code, 200)
+        self.assertTrue(res_page2.context['page_obj'].has_previous())
+
+    def test_production_logging_configuration(self):
+        from django.conf import settings
+        self.assertIn('version', settings.LOGGING)
+        self.assertIn('handlers', settings.LOGGING)
+        self.assertIn('file_app', settings.LOGGING['handlers'])
+        self.assertIn('file_security', settings.LOGGING['handlers'])
+        self.assertIn('file_errors', settings.LOGGING['handlers'])
+

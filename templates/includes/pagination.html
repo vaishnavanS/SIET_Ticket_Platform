@@ -1,0 +1,29 @@
+{% load query_tags %}
+{% if page_obj.has_other_pages %}
+<div class="pagination-wrapper" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 20px; padding: 14px 18px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+    <div class="pagination-info" style="font-size: 13px; color: #64748b; font-weight: 500;">
+        Showing <strong style="color: #0f172a;">{{ page_obj.start_index }}</strong> to <strong style="color: #0f172a;">{{ page_obj.end_index }}</strong> of <strong style="color: #0f172a;">{{ page_obj.paginator.count }}</strong> entries
+    </div>
+    <div class="pagination-controls" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+        {% if page_obj.has_previous %}
+            <a href="?{% query_transform page=page_obj.previous_page_number %}" class="pagination-btn" style="padding: 6px 12px; font-size: 13px; font-weight: 600; color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; text-decoration: none; transition: all 0.15s ease;">&laquo; Previous</a>
+        {% else %}
+            <span class="pagination-btn disabled" style="padding: 6px 12px; font-size: 13px; font-weight: 500; color: #94a3b8; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; cursor: not-allowed;">&laquo; Previous</span>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <span class="pagination-btn active" style="padding: 6px 12px; font-size: 13px; font-weight: 700; color: #ffffff; background: #15803d; border: 1px solid #15803d; border-radius: 6px;">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?{% query_transform page=num %}" class="pagination-btn" style="padding: 6px 12px; font-size: 13px; font-weight: 600; color: #334155; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; text-decoration: none;">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <a href="?{% query_transform page=page_obj.next_page_number %}" class="pagination-btn" style="padding: 6px 12px; font-size: 13px; font-weight: 600; color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; text-decoration: none; transition: all 0.15s ease;">Next &raquo;</a>
+        {% else %}
+            <span class="pagination-btn disabled" style="padding: 6px 12px; font-size: 13px; font-weight: 500; color: #94a3b8; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; cursor: not-allowed;">Next &raquo;</span>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

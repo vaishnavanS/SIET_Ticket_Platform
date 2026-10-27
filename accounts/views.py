@@ -8,11 +8,25 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
 from django.db.models import Count, Q
+from django.core.cache import cache
+from django.core.paginator import Paginator
 from .forms import AdminUserCreationForm, TechnicianGroupForm, CategoryForm
 from .models import UserProfile, UserRole, TechnicianGroup
 from tickets.models import Category, Ticket, TicketStatus
 
 logger = logging.getLogger(__name__)
+
+# Security: Rate limiting constants
+MAX_LOGIN_ATTEMPTS = 5
+LOGIN_LOCKOUT_SECONDS = 300  # 5 minutes temporary lockout
+
+
+def get_client_ip(request):
+    """Retrieve client IP address taking reverse proxies into account."""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR', '127.0.0.1')
 
 
 def admin_required(view_func):
@@ -27,10 +41,20 @@ def admin_required(view_func):
 @require_http_methods(["GET", "POST"])
 @csrf_protect
 def login_view(request):
-    """User login view"""
+    """User login view with IP brute-force rate limiting and security lockout."""
     if request.user.is_authenticated:
         return redirect('accounts:dashboard')
     
+    ip = get_client_ip(request)
+    lockout_key = f"login_lockout_{ip}"
+    attempts_key = f"login_attempts_{ip}"
+
+    # Check if this IP is currently locked out
+    if cache.get(lockout_key):
+        logger.warning(f"Blocked login attempt from locked-out IP {ip}")
+        messages.error(request, 'Too many failed login attempts. Your IP has been temporarily locked for 5 minutes. Please try again later.')
+        return render(request, 'accounts/login.html', status=429)
+
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
@@ -57,6 +81,11 @@ def login_view(request):
                 messages.error(request, 'User profile not found. Please contact admin.')
                 return redirect('accounts:login')
             
+            # Reset failed attempts counters on success
+            cache.delete(attempts_key)
+            cache.delete(lockout_key)
+            logger.info(f"Successful login for user '{user.username}' (role: {profile.role}) from IP {ip}")
+
             login(request, user)
             
             # Handle remember me
@@ -66,7 +95,18 @@ def login_view(request):
             
             return redirect('accounts:dashboard')
         else:
-            messages.error(request, 'Invalid username/email or password. Please try again.')
+            attempts = cache.get(attempts_key, 0) + 1
+            cache.set(attempts_key, attempts, timeout=LOGIN_LOCKOUT_SECONDS)
+            logger.warning(f"Failed login attempt ({attempts}/{MAX_LOGIN_ATTEMPTS}) for user '{username}' from IP {ip}")
+
+            if attempts >= MAX_LOGIN_ATTEMPTS:
+                cache.set(lockout_key, True, timeout=LOGIN_LOCKOUT_SECONDS)
+                logger.error(f"IP {ip} locked out for {LOGIN_LOCKOUT_SECONDS}s after {attempts} failed login attempts")
+                messages.error(request, 'Too many failed login attempts. Your IP has been temporarily locked for 5 minutes. Please try again later.')
+                return render(request, 'accounts/login.html', status=429)
+            else:
+                remaining = MAX_LOGIN_ATTEMPTS - attempts
+                messages.error(request, f'Invalid username/email or password. {remaining} attempt(s) remaining before temporary lockout.')
     
     return render(request, 'accounts/login.html')
 
@@ -74,7 +114,9 @@ def login_view(request):
 @login_required(login_url='accounts:login')
 def logout_view(request):
     """User logout view"""
+    username = request.user.username if request.user.is_authenticated else 'unknown'
     logout(request)
+    logger.info(f"User '{username}' logged out.")
     return redirect('accounts:login')
 
 
@@ -169,8 +211,13 @@ def admin_users(request):
 
     technician_groups = TechnicianGroup.objects.all()
 
+    paginator = Paginator(users_qs, 20)  # 20 users per page
+    page_number = request.GET.get('page')
+    users_page = paginator.get_page(page_number)
+
     context = {
-        'users': users_qs,
+        'users': users_page,
+        'page_obj': users_page,
         'selected_role': selected_role,
         'selected_status': selected_status,
         'selected_group': selected_group,
@@ -455,11 +502,15 @@ def admin_email_settings(request):
 @admin_required
 def admin_tickets(request):
     status = request.GET.get('status', '')
-    tickets = Ticket.objects.select_related('reporter', 'assigned_technician', 'category')
+    tickets = Ticket.objects.select_related('reporter', 'assigned_technician', 'category').order_by('-created_at')
     if status in dict(TicketStatus.choices):
         tickets = tickets.filter(status=status)
+    paginator = Paginator(tickets, 20)  # 20 tickets per page
+    page_number = request.GET.get('page')
+    tickets_page = paginator.get_page(page_number)
     return render(request, 'accounts/admin_tickets.html', {
-        'tickets': tickets,
+        'tickets': tickets_page,
+        'page_obj': tickets_page,
         'selected_status': status,
         'status_choices': TicketStatus.choices,
     })
@@ -494,8 +545,13 @@ def technician_dashboard(request):
     if status_filter in dict(TicketStatus.choices):
         tickets = tickets.filter(status=status_filter)
 
+    paginator = Paginator(tickets.order_by('-created_at'), 15)  # 15 tickets per page
+    page_number = request.GET.get('page')
+    tickets_page = paginator.get_page(page_number)
+
     context = {
-        'tickets': tickets,
+        'tickets': tickets_page,
+        'page_obj': tickets_page,
         'scope': scope,
         'my_active_count': my_active_tickets.count(),
         'in_progress_count': my_all_tickets.filter(status=TicketStatus.IN_PROGRESS).count(),

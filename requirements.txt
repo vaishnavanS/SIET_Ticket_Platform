@@ -3,3 +3,4 @@ PyMySQL==1.2.0
 Pillow==12.3.0
 django-cors-headers==4.9.0
 python-dotenv==1.2.3
+gunicorn==26.2.0

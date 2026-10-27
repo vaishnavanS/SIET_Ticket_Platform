@@ -461,6 +461,7 @@
                 <a href="{% url 'tickets:solutions_list' %}" class="primary-button" style="text-decoration: none;">View All Solutions</a>
             </div>
             {% endfor %}
+            {% include 'includes/pagination.html' %}
         </section>
     </main>
 
