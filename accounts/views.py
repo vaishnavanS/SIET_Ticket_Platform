@@ -393,6 +393,17 @@ def admin_email_settings(request):
             messages.success(request, "Site Email & SMTP settings have been updated successfully.")
             return redirect('accounts:admin_email_settings')
 
+        elif action == 'toggle_mode':
+            new_mode = request.POST.get('mode', '').strip()
+            if new_mode in ('smtp', 'console'):
+                setting.smtp_backend = new_mode
+                setting.save()
+                if new_mode == 'smtp':
+                    messages.success(request, "⚡ Switched to Production (Live SMTP) mode! System is now configured to dispatch real emails.")
+                else:
+                    messages.info(request, "Switched to Development Console mode. Outgoing emails will be logged to server terminal logs.")
+            return redirect('accounts:admin_email_settings')
+
         elif action == 'test_email':
             test_recipient = request.POST.get('test_recipient', '').strip()
             if not test_recipient:

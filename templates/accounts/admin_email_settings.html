@@ -34,10 +34,16 @@
         .panel-title-row {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 12px;
             margin-bottom: 20px;
             padding-bottom: 14px;
             border-bottom: 1px solid #f1f5f9;
+        }
+        .panel-title-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
         .panel-title-icon {
             width: 38px;
@@ -55,7 +61,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-bottom: 18px;
+            margin-bottom: 12px;
         }
         @media (max-width: 600px) {
             .mode-selection-grid {
@@ -70,6 +76,7 @@
             cursor: pointer;
             transition: all 0.15s ease;
             display: block;
+            user-select: none;
         }
         .mode-card:hover {
             border-color: #94a3b8;
@@ -82,6 +89,19 @@
         }
         .mode-card.active strong {
             color: #15803d;
+        }
+        .unsaved-banner {
+            display: none;
+            background: #fefce8;
+            border: 1px solid #fef08a;
+            border-radius: 8px;
+            padding: 9px 12px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            color: #854d0e;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
         }
         .preset-row {
             background: #f8fafc;
@@ -139,6 +159,40 @@
             border-radius: 8px;
             padding: 12px 8px;
             text-align: center;
+        }
+        .quick-mode-switch-btn {
+            background: #ffffff;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 6px 13px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .quick-mode-switch-btn:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+            border-color: #94a3b8;
+        }
+        .quick-mode-switch-btn-live {
+            background: #15803d;
+            color: #ffffff;
+            border: 1px solid #15803d;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .quick-mode-switch-btn-live:hover {
+            background: #166534;
+            border-color: #166534;
         }
     </style>
 </head>
@@ -222,17 +276,35 @@
                 <h1 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">Site Email & SMTP Settings</h1>
                 <p style="font-size: 13.5px; color: #64748b; margin: 0;">Configure the production mail server for ticket alerts, email verification, and password resets.</p>
             </div>
-            <div>
+            
+            <!-- Quick Engine Status Badge with 1-Click Instant Activation Action -->
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 {% if setting.smtp_backend == 'smtp' %}
-                <span style="display: inline-flex; align-items: center; gap: 7px; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 6px 14px; border-radius: 9999px; font-size: 12.5px; font-weight: 700;">
+                <span id="headerEngineBadge" style="display: inline-flex; align-items: center; gap: 7px; background: #dcfce7; color: #15803d; border: 1.5px solid #bbf7d0; padding: 7px 15px; border-radius: 9999px; font-size: 13px; font-weight: 700;">
                     <span style="width: 8px; height: 8px; border-radius: 50%; background: #15803d;"></span>
                     Production SMTP Active
                 </span>
+                <form method="post" action="{% url 'accounts:admin_email_settings' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="toggle_mode">
+                    <input type="hidden" name="mode" value="console">
+                    <button type="submit" class="quick-mode-switch-btn" title="Temporarily switch to Console mode for testing without sending real emails">
+                        Switch to Console Mode
+                    </button>
+                </form>
                 {% else %}
-                <span style="display: inline-flex; align-items: center; gap: 7px; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; padding: 6px 14px; border-radius: 9999px; font-size: 12.5px; font-weight: 700;">
+                <span id="headerEngineBadge" style="display: inline-flex; align-items: center; gap: 7px; background: #fef3c7; color: #92400e; border: 1.5px solid #fde68a; padding: 7px 15px; border-radius: 9999px; font-size: 13px; font-weight: 700;">
                     <span style="width: 8px; height: 8px; border-radius: 50%; background: #d97706;"></span>
                     Development Console Mode
                 </span>
+                <form method="post" action="{% url 'accounts:admin_email_settings' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="toggle_mode">
+                    <input type="hidden" name="mode" value="smtp">
+                    <button type="submit" class="quick-mode-switch-btn-live" title="Instantly activate Live SMTP mode for production email delivery">
+                        ⚡ Activate Live SMTP
+                    </button>
+                </form>
                 {% endif %}
             </div>
         </div>
@@ -243,44 +315,63 @@
         
         <!-- LEFT COLUMN: Primary SMTP Credentials Form -->
         <section class="config-panel">
-            <div class="panel-title-row">
-                <div class="panel-title-icon" aria-hidden="true">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                        <polyline points="22,6 12,13 2,6"></polyline>
-                    </svg>
-                </div>
-                <div>
-                    <h2 style="font-size: 17px; margin: 0; color: #0f172a; font-weight: 700;">Outgoing Mail Credentials</h2>
-                    <p style="font-size: 12.5px; color: #64748b; margin: 2px 0 0 0;">Production SMTP host, authentication, and sender details.</p>
-                </div>
-            </div>
-
-            <form method="post" action="{% url 'accounts:admin_email_settings' %}">
+            <form method="post" id="smtpSettingsForm" action="{% url 'accounts:admin_email_settings' %}">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="save_settings">
 
+                <div class="panel-title-row">
+                    <div class="panel-title-left">
+                        <div class="panel-title-icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 style="font-size: 17px; margin: 0; color: #0f172a; font-weight: 700;">Outgoing Mail Credentials</h2>
+                            <p style="font-size: 12.5px; color: #64748b; margin: 2px 0 0 0;">Production SMTP host, authentication, and sender details.</p>
+                        </div>
+                    </div>
+                    <!-- Quick Save button at top right of card header -->
+                    <button type="submit" class="primary-button" style="background: #063b0c; padding: 7px 16px; font-size: 12.5px; font-weight: 700; border-radius: 6px;">
+                        Save Settings
+                    </button>
+                </div>
+
                 <!-- Delivery Mode Selection Cards -->
-                <div class="field" style="margin-bottom: 16px;">
+                <div class="field" style="margin-bottom: 12px;">
                     <label style="font-size: 12.5px; font-weight: 700; color: #0f172a; margin-bottom: 8px; display: block;">Outgoing Delivery Engine *</label>
                     <div class="mode-selection-grid">
-                        <label class="mode-card {% if setting.smtp_backend == 'smtp' %}active{% endif %}" id="modeCardSmtp" onclick="selectDeliveryMode('smtp')">
-                            <input type="radio" name="smtp_backend" value="smtp" id="modeRadioSmtp" {% if setting.smtp_backend == 'smtp' %}checked{% endif %} style="display: none;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                                <strong style="font-size: 13px;">Live SMTP (Production)</strong>
+                        <div class="mode-card {% if setting.smtp_backend == 'smtp' %}active{% endif %}" id="modeCardSmtp" onclick="selectDeliveryMode('smtp')">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                    <strong style="font-size: 13px;">Live SMTP (Production)</strong>
+                                </div>
+                                <input type="radio" name="smtp_backend" value="smtp" id="modeRadioSmtp" {% if setting.smtp_backend == 'smtp' %}checked{% endif %} style="accent-color: #15803d; width: 17px; height: 17px; cursor: pointer;">
                             </div>
-                            <small style="font-size: 11.5px; color: #64748b; margin-top: 4px; display: block;">Dispatches real emails to user inboxes</small>
-                        </label>
-                        <label class="mode-card {% if setting.smtp_backend == 'console' %}active{% endif %}" id="modeCardConsole" onclick="selectDeliveryMode('console')">
-                            <input type="radio" name="smtp_backend" value="console" id="modeRadioConsole" {% if setting.smtp_backend == 'console' %}checked{% endif %} style="display: none;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
-                                <strong style="font-size: 13px;">Local Console (Dev)</strong>
+                            <small style="font-size: 11.5px; color: #64748b; margin-top: 5px; display: block;">Dispatches real emails to user inboxes</small>
+                        </div>
+
+                        <div class="mode-card {% if setting.smtp_backend == 'console' %}active{% endif %}" id="modeCardConsole" onclick="selectDeliveryMode('console')">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+                                    <strong style="font-size: 13px;">Local Console (Dev)</strong>
+                                </div>
+                                <input type="radio" name="smtp_backend" value="console" id="modeRadioConsole" {% if setting.smtp_backend == 'console' %}checked{% endif %} style="accent-color: #15803d; width: 17px; height: 17px; cursor: pointer;">
                             </div>
-                            <small style="font-size: 11.5px; color: #64748b; margin-top: 4px; display: block;">Logs email body to server terminal</small>
-                        </label>
+                            <small style="font-size: 11.5px; color: #64748b; margin-top: 5px; display: block;">Logs email body to server terminal</small>
+                        </div>
                     </div>
+                </div>
+
+                <!-- Unsaved Changes Prompt Banner -->
+                <div id="unsavedChangesBanner" class="unsaved-banner">
+                    <span id="unsavedChangesText">⚡ You changed the delivery engine. Click <strong>Save Settings</strong> to apply changes.</span>
+                    <button type="submit" class="primary-button" style="background: #15803d; padding: 4px 12px; font-size: 11.5px; border-radius: 5px;">
+                        Save Now
+                    </button>
                 </div>
 
                 <!-- Provider 1-Click Presets -->
@@ -383,15 +474,17 @@
             <!-- Live Test Connection Card -->
             <section class="config-panel">
                 <div class="panel-title-row">
-                    <div class="panel-title-icon" style="background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;" aria-hidden="true">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="22" y1="2" x2="11" y2="13"></line>
-                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 style="font-size: 16px; margin: 0; color: #0f172a; font-weight: 700;">Test Outgoing Mail Connection</h2>
-                        <p style="font-size: 12.5px; color: #64748b; margin: 2px 0 0 0;">Verify SMTP server host, handshake, and credentials.</p>
+                    <div class="panel-title-left">
+                        <div class="panel-title-icon" style="background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 style="font-size: 16px; margin: 0; color: #0f172a; font-weight: 700;">Test Outgoing Mail Connection</h2>
+                            <p style="font-size: 12.5px; color: #64748b; margin: 2px 0 0 0;">Verify SMTP server host, handshake, and credentials.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -417,7 +510,7 @@
             <!-- Asynchronous Email Queue & Background Worker Monitor -->
             <section class="config-panel">
                 <div class="panel-title-row" style="justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="panel-title-left">
                         <div class="panel-title-icon" style="background: #f0fdf4; color: #15803d; border-color: #bbf7d0;" aria-hidden="true">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
@@ -477,11 +570,16 @@
 
 <script src="{% static 'js/mobile_nav.js' %}?v=4.0"></script>
 <script>
+    var currentSavedMode = '{{ setting.smtp_backend|default:"console" }}';
+
     function selectDeliveryMode(mode) {
         var smtpCard = document.getElementById('modeCardSmtp');
         var consoleCard = document.getElementById('modeCardConsole');
         var smtpRadio = document.getElementById('modeRadioSmtp');
         var consoleRadio = document.getElementById('modeRadioConsole');
+        var banner = document.getElementById('unsavedChangesBanner');
+        var bannerText = document.getElementById('unsavedChangesText');
+        var headerBadge = document.getElementById('headerEngineBadge');
 
         if (mode === 'smtp') {
             smtpCard.classList.add('active');
@@ -491,6 +589,30 @@
             consoleCard.classList.add('active');
             smtpCard.classList.remove('active');
             consoleRadio.checked = true;
+        }
+
+        // Show unsaved alert if different from currently saved state
+        if (mode !== currentSavedMode) {
+            banner.style.display = 'flex';
+            if (mode === 'smtp') {
+                bannerText.innerHTML = '⚡ You selected <strong>Live SMTP (Production)</strong>. Click <strong>Save Settings</strong> to activate real email delivery on the server.';
+                if (headerBadge) {
+                    headerBadge.innerHTML = '<span style="width: 8px; height: 8px; border-radius: 50%; background: #15803d; box-shadow: 0 0 6px #15803d;"></span> Production SMTP (Unsaved — Click Save)';
+                    headerBadge.style.background = '#dcfce7';
+                    headerBadge.style.color = '#15803d';
+                    headerBadge.style.borderColor = '#bbf7d0';
+                }
+            } else {
+                bannerText.innerHTML = 'ℹ️ You selected <strong>Local Console (Dev)</strong>. Click <strong>Save Settings</strong> to apply.';
+                if (headerBadge) {
+                    headerBadge.innerHTML = '<span style="width: 8px; height: 8px; border-radius: 50%; background: #d97706;"></span> Console Mode (Unsaved — Click Save)';
+                    headerBadge.style.background = '#fef3c7';
+                    headerBadge.style.color = '#92400e';
+                    headerBadge.style.borderColor = '#fde68a';
+                }
+            }
+        } else {
+            banner.style.display = 'none';
         }
     }
 

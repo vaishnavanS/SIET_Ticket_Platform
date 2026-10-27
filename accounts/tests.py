@@ -494,3 +494,27 @@ class EmailQueueAndCronTests(TestCase):
         self.assertEqual(setting.smtp_password, 'app-password-1234')
         self.assertEqual(setting.site_url, 'https://helpdesk.siet.edu.in')
 
+    def test_admin_toggle_mode_action(self):
+        from accounts.models import SiteEmailSetting
+        self.client.login(username='admin_queue_tester', password='Password123!')
+        
+        # Toggle to smtp
+        res = self.client.post(reverse('accounts:admin_email_settings'), {
+            'action': 'toggle_mode',
+            'mode': 'smtp',
+        }, follow=True)
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "Production (Live SMTP) mode")
+        setting = SiteEmailSetting.get_setting()
+        self.assertEqual(setting.smtp_backend, 'smtp')
+
+        # Toggle to console
+        res = self.client.post(reverse('accounts:admin_email_settings'), {
+            'action': 'toggle_mode',
+            'mode': 'console',
+        }, follow=True)
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "Development Console mode")
+        setting = SiteEmailSetting.get_setting()
+        self.assertEqual(setting.smtp_backend, 'console')
+
