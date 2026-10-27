@@ -58,15 +58,14 @@
             width: 44px;
             height: 44px;
             border-radius: 10px;
-            background: #ecfdf5;
-            color: #047857;
+            background: #eff6ff;
+            color: #1d4ed8;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            font-weight: 700;
             flex-shrink: 0;
-            border: 1px solid #d1fae5;
+            border: 1.5px solid #bfdbfe;
+            box-shadow: 0 1px 3px rgba(29, 78, 216, 0.08);
         }
         .tg-title-box h3 {
             font-size: 16px;
@@ -153,6 +152,9 @@
             border-radius: 6px;
             font-size: 12px;
             font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
         .tg-pill-cat {
             background: #fef3c7;
@@ -161,6 +163,9 @@
             border-radius: 6px;
             font-size: 12px;
             font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
         .tg-pill-tech {
             background: #dcfce7;
@@ -169,6 +174,9 @@
             border-radius: 6px;
             font-size: 12px;
             font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
     </style>
 </head>
@@ -286,7 +294,8 @@
                         {% for loc in all_locations %}
                         <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; cursor: pointer;">
                             <input type="checkbox" name="campus_locations" value="{{ loc.id }}">
-                            🏢 {{ loc.name }}
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M3 21h18"></path><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path><path d="M9 9h1"></path><path d="M14 9h1"></path><path d="M9 13h1"></path><path d="M14 13h1"></path><path d="M10 21v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4"></path></svg>
+                            {{ loc.name }}
                         </label>
                         {% empty %}
                         <span class="muted" style="font-size: 12px;">No campus locations yet. <a href="{% url 'tickets:admin_locations' %}" style="color:#15803d; text-decoration:underline;">Add locations</a></span>
@@ -349,8 +358,13 @@
                 <article class="tg-card">
                     <div class="tg-card-header">
                         <div class="tg-info-row">
-                            <div class="tg-team-avatar">
-                                👥
+                            <div class="tg-team-avatar" aria-hidden="true">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
                             </div>
                             <div class="tg-title-box">
                                 <h3>{{ group.name }}</h3>
@@ -384,14 +398,20 @@
                             <span class="tg-col-title">Covered Locations</span>
                             <div class="tg-badge-list">
                                 {% for loc in group.campus_locations.all %}
-                                <span class="tg-pill-cat" style="background: #e0f2fe; color: #0369a1; font-weight: 600;">🏢 {{ loc.name }}</span>
+                                <span class="tg-pill-cat" style="background: #e0f2fe; color: #0369a1; font-weight: 600;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M3 21h18"></path><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path><path d="M9 9h1"></path><path d="M14 9h1"></path><path d="M9 13h1"></path><path d="M14 13h1"></path><path d="M10 21v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4"></path></svg>
+                                    {{ loc.name }}
+                                </span>
                                 {% empty %}
                                 {% if not group.location_condition %}
                                 <span class="muted" style="font-size: 12px;">All Locations (Default)</span>
                                 {% endif %}
                                 {% endfor %}
                                 {% if group.location_condition %}
-                                <span class="tg-pill-cat" style="background: #fef3c7; color: #92400e; font-weight: 700;">📍 {{ group.location_condition }}</span>
+                                <span class="tg-pill-cat" style="background: #fef3c7; color: #92400e; font-weight: 700;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                    {{ group.location_condition }}
+                                </span>
                                 {% endif %}
                             </div>
                         </div>
@@ -465,7 +485,8 @@
                         {% for loc in all_locations %}
                         <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; cursor: pointer;">
                             <input type="checkbox" name="campus_locations" value="{{ loc.id }}" class="edit-loc-checkbox">
-                            🏢 {{ loc.name }}
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M3 21h18"></path><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path><path d="M9 9h1"></path><path d="M14 9h1"></path><path d="M9 13h1"></path><path d="M14 13h1"></path><path d="M10 21v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4"></path></svg>
+                            {{ loc.name }}
                         </label>
                         {% endfor %}
                     </div>

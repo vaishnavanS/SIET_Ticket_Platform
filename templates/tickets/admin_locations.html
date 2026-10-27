@@ -57,15 +57,14 @@
             width: 44px;
             height: 44px;
             border-radius: 10px;
-            background: #ecfdf5;
-            color: #047857;
+            background: #f0fdf4;
+            color: #15803d;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            font-weight: 700;
             flex-shrink: 0;
-            border: 1px solid #d1fae5;
+            border: 1.5px solid #bbf7d0;
+            box-shadow: 0 1px 3px rgba(21, 128, 61, 0.08);
         }
         .loc-title-box h3 {
             font-size: 16px;
@@ -170,13 +169,14 @@
         .loc-pill-badge {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            background: #e0f2fe;
-            color: #0369a1;
-            padding: 3px 8px;
+            gap: 6px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 4px 9px;
             border-radius: 6px;
             font-size: 12px;
             font-weight: 600;
+            border: 1px solid #bfdbfe;
         }
         .stat-banner {
             display: grid;
@@ -358,8 +358,18 @@
                 <article class="loc-card">
                     <div class="loc-card-header">
                         <div class="loc-info-row">
-                            <div class="loc-avatar">
-                                🏢
+                            <div class="loc-avatar" aria-hidden="true">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 21h18"></path>
+                                    <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
+                                    <path d="M9 9h1"></path>
+                                    <path d="M14 9h1"></path>
+                                    <path d="M9 13h1"></path>
+                                    <path d="M14 13h1"></path>
+                                    <path d="M9 17h1"></path>
+                                    <path d="M14 17h1"></path>
+                                    <path d="M10 21v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4"></path>
+                                </svg>
                             </div>
                             <div class="loc-title-box">
                                 <h3>
@@ -400,8 +410,9 @@
                     <div class="loc-meta-grid">
                         <div class="loc-meta-col">
                             <span class="loc-meta-title">Ticket Activity</span>
-                            <span style="font-size: 13px; font-weight: 700; color: #0f172a;">
-                                📊 {{ loc.ticket_count }} Issue{{ loc.ticket_count|pluralize }}
+                            <span style="font-size: 13px; font-weight: 700; color: #0f172a; display: inline-flex; align-items: center; gap: 6px;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                                {{ loc.ticket_count }} Issue{{ loc.ticket_count|pluralize }}
                             </span>
                         </div>
 
@@ -409,7 +420,10 @@
                             <span class="loc-meta-title">Dedicated Support Groups</span>
                             <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
                                 {% for tg in loc.technician_groups.all %}
-                                <span class="loc-pill-badge">👥 {{ tg.name }}</span>
+                                <span class="loc-pill-badge">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                    {{ tg.name }}
+                                </span>
                                 {% empty %}
                                 <span class="muted" style="font-size: 12px;">Covered by General Support Pool</span>
                                 {% endfor %}

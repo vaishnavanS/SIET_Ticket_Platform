@@ -546,7 +546,8 @@
                                     <span style="font-size: 11px; color: #64748b; font-weight: 600;">Quick Select:</span>
                                     {% for loc in campus_locations %}
                                     <button type="button" class="location-chip-btn" onclick="selectCampusLocation('{{ loc.id }}', '{{ loc.name|escapejs }}')">
-                                        🏢 {{ loc.name }}
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M3 21h18"></path><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path><path d="M9 9h1"></path><path d="M14 9h1"></path><path d="M9 13h1"></path><path d="M14 13h1"></path><path d="M10 21v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4"></path></svg>
+                                        {{ loc.name }}
                                     </button>
                                     {% empty %}
                                     <span class="muted" style="font-size: 11.5px;">All campus blocks</span>
@@ -567,7 +568,10 @@
 
                         <!-- Live Dispatch Target Preview Pill -->
                         <div id="location-preview-box" class="location-preview-pill" style="display: none;">
-                            <span class="preview-tag">📍 DISPATCH TARGET</span>
+                            <span class="preview-tag" style="display: inline-flex; align-items: center; gap: 4px;">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                DISPATCH TARGET
+                            </span>
                             <span id="location-preview-text" class="preview-val"></span>
                         </div>
 
