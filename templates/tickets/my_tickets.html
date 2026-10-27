@@ -174,7 +174,7 @@
 
                         <!-- Step 3: In Progress -->
                         <div class="stepper-step {% if ticket.status == 'in_progress' %}active{% elif ticket.status == 'resolved' or ticket.status == 'closed' %}completed{% else %}pending{% endif %}">
-                            <div class="stepper-circle">{% if ticket.status == 'resolved' or ticket.status == 'closed' %}✓{% elif ticket.status == 'in_progress' %}⚡{% else %}3{% endif %}</div>
+                            <div class="stepper-circle">{% if ticket.status == 'resolved' or ticket.status == 'closed' %}✓{% else %}3{% endif %}</div>
                             <div class="stepper-content">
                                 <span class="stepper-title">In Progress</span>
                                 <small class="stepper-subtitle">{% if ticket.assigned_at %}{{ ticket.assigned_at|date:"M d, H:i" }}{% else %}Diagnosing{% endif %}</small>
@@ -184,7 +184,7 @@
 
                         <!-- Step 4: Resolved -->
                         <div class="stepper-step {% if ticket.status == 'resolved' %}awaiting{% elif ticket.status == 'closed' %}completed{% else %}pending{% endif %}">
-                            <div class="stepper-circle">{% if ticket.status == 'closed' %}✓{% elif ticket.status == 'resolved' %}⏳{% else %}4{% endif %}</div>
+                            <div class="stepper-circle">{% if ticket.status == 'closed' %}✓{% else %}4{% endif %}</div>
                             <div class="stepper-content">
                                 <span class="stepper-title">Resolved</span>
                                 <small class="stepper-subtitle">{% if ticket.resolved_at %}{{ ticket.resolved_at|date:"M d, H:i" }}{% else %}Awaiting fix{% endif %}</small>
@@ -215,8 +215,11 @@
                     </div>
                     <div>
                         {% if ticket.status == 'resolved' %}
-                        <a href="{% url 'tickets:detail' ticket.pk %}" class="primary-button" style="padding: 0 18px; min-height: 36px; font-size: 13px; background: #16a34a; text-decoration: none;">
-                            ✔ Confirm Resolution &rarr;
+                        <a href="{% url 'tickets:detail' ticket.pk %}" class="primary-button" style="padding: 0 18px; min-height: 36px; font-size: 13px; background: #16a34a; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Confirm Resolution</span>
                         </a>
                         {% else %}
                         <a href="{% url 'tickets:detail' ticket.pk %}" class="secondary-button" style="padding: 0 16px; min-height: 36px; font-size: 13px; text-decoration: none;">

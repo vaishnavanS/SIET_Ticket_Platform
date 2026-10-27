@@ -170,6 +170,9 @@
             font-weight: 700;
             cursor: pointer;
             transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
         .quick-mode-switch-btn:hover {
             background: #f1f5f9;
@@ -188,7 +191,7 @@
             transition: all 0.15s ease;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
         }
         .quick-mode-switch-btn-live:hover {
             background: #166534;
@@ -289,7 +292,11 @@
                     <input type="hidden" name="action" value="toggle_mode">
                     <input type="hidden" name="mode" value="console">
                     <button type="submit" class="quick-mode-switch-btn" title="Temporarily switch to Console mode for testing without sending real emails">
-                        Switch to Console Mode
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="4 17 10 11 4 5"></polyline>
+                            <line x1="12" y1="19" x2="20" y2="19"></line>
+                        </svg>
+                        <span>Switch to Console Mode</span>
                     </button>
                 </form>
                 {% else %}
@@ -302,7 +309,11 @@
                     <input type="hidden" name="action" value="toggle_mode">
                     <input type="hidden" name="mode" value="smtp">
                     <button type="submit" class="quick-mode-switch-btn-live" title="Instantly activate Live SMTP mode for production email delivery">
-                        ⚡ Activate Live SMTP
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                        <span>Activate Live SMTP</span>
                     </button>
                 </form>
                 {% endif %}
@@ -368,7 +379,14 @@
 
                 <!-- Unsaved Changes Prompt Banner -->
                 <div id="unsavedChangesBanner" class="unsaved-banner">
-                    <span id="unsavedChangesText">⚡ You changed the delivery engine. Click <strong>Save Settings</strong> to apply changes.</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <span id="unsavedChangesText">You changed the delivery engine. Click <strong>Save Settings</strong> to apply changes.</span>
+                    </div>
                     <button type="submit" class="primary-button" style="background: #15803d; padding: 4px 12px; font-size: 11.5px; border-radius: 5px;">
                         Save Now
                     </button>
@@ -547,8 +565,13 @@
                 <form method="post" action="{% url 'accounts:admin_email_settings' %}" style="margin-bottom: 14px;">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="process_queue">
-                    <button type="submit" class="secondary-button" style="width: 100%; justify-content: center; font-weight: 700; font-size: 13px; padding: 10px;">
-                        ⚡ Dispatch Queued Emails Now ({{ queue_stats.pending }} Pending)
+                    <button type="submit" class="secondary-button" style="width: 100%; justify-content: center; font-weight: 700; font-size: 13px; padding: 10px; display: inline-flex; align-items: center; gap: 8px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        <span>Dispatch Queued Emails Now ({{ queue_stats.pending }} Pending)</span>
                     </button>
                 </form>
 
@@ -595,7 +618,7 @@
         if (mode !== currentSavedMode) {
             banner.style.display = 'flex';
             if (mode === 'smtp') {
-                bannerText.innerHTML = '⚡ You selected <strong>Live SMTP (Production)</strong>. Click <strong>Save Settings</strong> to activate real email delivery on the server.';
+                bannerText.innerHTML = 'You selected <strong>Live SMTP (Production)</strong>. Click <strong>Save Settings</strong> to activate real email delivery on the server.';
                 if (headerBadge) {
                     headerBadge.innerHTML = '<span style="width: 8px; height: 8px; border-radius: 50%; background: #15803d; box-shadow: 0 0 6px #15803d;"></span> Production SMTP (Unsaved — Click Save)';
                     headerBadge.style.background = '#dcfce7';
@@ -603,7 +626,7 @@
                     headerBadge.style.borderColor = '#bbf7d0';
                 }
             } else {
-                bannerText.innerHTML = 'ℹ️ You selected <strong>Local Console (Dev)</strong>. Click <strong>Save Settings</strong> to apply.';
+                bannerText.innerHTML = 'You selected <strong>Local Console (Dev)</strong>. Click <strong>Save Settings</strong> to apply.';
                 if (headerBadge) {
                     headerBadge.innerHTML = '<span style="width: 8px; height: 8px; border-radius: 50%; background: #d97706;"></span> Console Mode (Unsaved — Click Save)';
                     headerBadge.style.background = '#fef3c7';

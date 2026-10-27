@@ -257,7 +257,11 @@
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 {% if is_admin %}
                 <a href="{% url 'tickets:edit' ticket.pk %}" class="primary-button" style="background: #063b0c; padding: 7px 14px; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-                    ✏ Edit Specifications
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                    </svg>
+                    <span>Edit Specifications</span>
                 </a>
                 <a href="{% url 'accounts:admin_tickets' %}" class="secondary-button">&larr; Back to Issue Reports</a>
                 {% elif is_technician %}
@@ -272,7 +276,11 @@
         {% if awaiting_client_confirmation %}
         <section class="resolution-confirm-card" style="margin-bottom: 22px;">
             <div class="resolution-confirm-header">
-                <div class="icon-circle">✓</div>
+                <div class="icon-circle" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </div>
                 <div>
                     <h3>Technician Marked Issue as Resolved</h3>
                     <p style="margin: 2px 0 0; font-size: 13px; color: #15803d;">Action Required: Please test and verify if your issue is resolved.</p>
@@ -293,13 +301,20 @@
                     <form action="{% url 'tickets:confirm_resolution' ticket.pk %}" method="post" style="display: inline-block;">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="confirm_close">
-                        <button type="submit" class="btn-confirm-close">
-                            <span>✔</span> Yes, Confirm & Close Ticket
+                        <button type="submit" class="btn-confirm-close" style="display: inline-flex; align-items: center; gap: 7px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Yes, Confirm & Close Ticket</span>
                         </button>
                     </form>
 
-                    <button type="button" class="btn-reopen-toggle" id="toggleReopenBtn" onclick="toggleReopenForm()">
-                        <span>↺</span> Issue Not Resolved / Reopen
+                    <button type="button" class="btn-reopen-toggle" id="toggleReopenBtn" onclick="toggleReopenForm()" style="display: inline-flex; align-items: center; gap: 7px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="1 4 1 10 7 10"></polyline>
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                        </svg>
+                        <span>Issue Not Resolved / Reopen</span>
                     </button>
                 </div>
 
@@ -525,7 +540,7 @@
 
                         <!-- Step 3: In Progress -->
                         <div class="stepper-step {% if ticket.status == 'in_progress' %}active{% elif step_resolved %}completed{% else %}pending{% endif %}">
-                            <div class="stepper-circle">{% if step_resolved %}✓{% elif ticket.status == 'in_progress' %}⚡{% else %}3{% endif %}</div>
+                            <div class="stepper-circle">{% if step_resolved %}✓{% else %}3{% endif %}</div>
                             <div class="stepper-content">
                                 <span class="stepper-title">3. In Progress</span>
                                 <small class="stepper-subtitle">{% if ticket.assigned_at %}{{ ticket.assigned_at|date:"M d, H:i" }}{% else %}Diagnosing{% endif %}</small>
@@ -535,7 +550,7 @@
 
                         <!-- Step 4: Resolved (Awaiting Confirmation) -->
                         <div class="stepper-step {% if ticket.status == 'resolved' %}awaiting{% elif step_closed %}completed{% else %}pending{% endif %}">
-                            <div class="stepper-circle">{% if step_closed %}✓{% elif ticket.status == 'resolved' %}⏳{% else %}4{% endif %}</div>
+                            <div class="stepper-circle">{% if step_closed %}✓{% else %}4{% endif %}</div>
                             <div class="stepper-content">
                                 <span class="stepper-title">4. Resolved</span>
                                 <small class="stepper-subtitle">{% if ticket.resolved_at %}{{ ticket.resolved_at|date:"M d, H:i" }}{% else %}Awaiting fix{% endif %}</small>
@@ -598,14 +613,23 @@
                 {% if awaiting_client_confirmation %}
                 <!-- Client Action Alert -->
                 <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 18px 20px; margin-bottom: 20px;">
-                    <h3 style="color: #166534; font-size: 16px; margin: 0 0 8px;">⚡ Client Confirmation Needed</h3>
+                    <h3 style="color: #166534; font-size: 16px; margin: 0 0 8px; display: flex; align-items: center; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span>Client Confirmation Needed</span>
+                    </h3>
                     <p style="margin: 0 0 14px; font-size: 13.5px; color: #15803d;">The technician has marked this issue as resolved. Please test and confirm if your problem has been fixed.</p>
                     
                     <form action="{% url 'tickets:confirm_resolution' ticket.pk %}" method="post" style="display: inline-block;">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="confirm_close">
-                        <button type="submit" class="btn-confirm-close">
-                            <span>✔</span> Confirm Resolution & Close Ticket
+                        <button type="submit" class="btn-confirm-close" style="display: inline-flex; align-items: center; gap: 7px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Confirm Resolution & Close Ticket</span>
                         </button>
                     </form>
                 </div>
@@ -636,7 +660,13 @@
                 </form>
                 {% elif ticket.status == 'closed' %}
                 <div style="padding: 20px; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px;">
-                    <h3 style="color: #166534; font-size: 16px; margin: 0 0 6px;">✔ Ticket Closed & Verified</h3>
+                    <h3 style="color: #166534; font-size: 16px; margin: 0 0 6px; display: flex; align-items: center; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span>Ticket Closed & Verified</span>
+                    </h3>
                     <p style="margin: 0; font-size: 13.5px; color: #15803d;">This request has been successfully resolved and confirmed by the client.</p>
                 </div>
                 {% else %}

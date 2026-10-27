@@ -457,12 +457,24 @@
         <!-- Elevated Hero Banner -->
         <div class="report-hero-card">
             <div class="report-hero-content">
-                <span class="report-hero-badge">📍 SMART CAMPUS DISPATCH</span>
+                <span class="report-hero-badge" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>SMART CAMPUS DISPATCH</span>
+                </span>
                 <h1>Report an Issue</h1>
                 <p>Submit technical, classroom, laboratory, or network requests. Your issue is automatically dispatched to the allocated campus team based on category and location.</p>
             </div>
             <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-end;">
-                <span style="font-size: 12px; color: #d1fae5; font-weight: 600;">⚡ 1-Hour SLA Target Response</span>
+                <span style="font-size: 12px; color: #d1fae5; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>1-Hour SLA Target Response</span>
+                </span>
                 <span style="font-size: 11.5px; color: #a7f3d0;">Campus Technicians on Duty</span>
             </div>
         </div>
@@ -470,7 +482,13 @@
         <!-- Quick Solutions Notice Banner -->
         <div class="quick-solutions-banner">
             <div class="quick-solutions-text">
-                <span class="quick-solutions-icon">💡</span>
+                <span class="quick-solutions-icon" style="display: inline-flex; align-items: center; justify-content: center;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="9" y1="18" x2="15" y2="18"></line>
+                        <line x1="10" y1="22" x2="14" y2="22"></line>
+                        <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+                    </svg>
+                </span>
                 <div>
                     <strong class="quick-solutions-title">Experiencing a Wi-Fi, LAN, or SEB issue?</strong>
                     <span class="quick-solutions-sub">Check our self-help diagnostic guides to solve common problems in seconds without waiting for a technician.</span>
@@ -640,7 +658,11 @@
                     <div class="field">
                         <label for="{{ form.attachment.id_for_label }}">Attachment (Optional screenshot or error photo)</label>
                         <div class="attachment-drop-box">
-                            <span style="font-size: 20px; display: block; margin-bottom: 4px;">📎</span>
+                            <div style="display: flex; justify-content: center; margin-bottom: 6px;">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                                </svg>
+                            </div>
                             <span style="font-size: 13px; font-weight: 600; color: #334155;">Upload screenshot or photo</span>
                             {{ form.attachment }}
                             <small class="muted" style="display: block; margin-top: 6px; font-size: 11.5px; color: #64748b;">

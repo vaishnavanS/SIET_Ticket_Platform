@@ -86,7 +86,14 @@
         {% if pending_resolutions_count > 0 %}
         <div class="pending-resolution-alert">
             <div>
-                <strong>⚠️ You have {{ pending_resolutions_count }} ticket(s) marked as Resolved</strong>
+                <strong style="display: inline-flex; align-items: center; gap: 7px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span>You have {{ pending_resolutions_count }} ticket(s) marked as Resolved</span>
+                </strong>
                 <p>The technician has resolved your issue. Please review and confirm to close your request.</p>
             </div>
             <a href="{% url 'tickets:my_tickets' %}?status=resolved" class="primary-button" style="padding: 8px 16px; font-size: 13px; white-space: nowrap; text-decoration: none;">
