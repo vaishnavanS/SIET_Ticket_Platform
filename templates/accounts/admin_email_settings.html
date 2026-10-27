@@ -8,11 +8,139 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon.png' %}?v=3">
     <link rel="apple-touch-icon" href="{% static 'images/favicon.png' %}?v=3">
 
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email & SMTP Settings - SIET Helpdesk</title>
     <link rel="stylesheet" href="{% static 'css/role_dashboard.css' %}?v=4.0">
+    <style>
+        .email-settings-grid {
+            display: grid;
+            grid-template-columns: 1.25fr 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+        @media (max-width: 960px) {
+            .email-settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .config-panel {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .panel-title-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .panel-title-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1.5px solid #bbf7d0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .mode-selection-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        @media (max-width: 600px) {
+            .mode-selection-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .mode-card {
+            border: 1.5px solid #cbd5e1;
+            border-radius: 9px;
+            padding: 12px 14px;
+            background: #ffffff;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: block;
+        }
+        .mode-card:hover {
+            border-color: #94a3b8;
+            background: #f8fafc;
+        }
+        .mode-card.active {
+            border-color: #15803d;
+            background: #f0fdf4;
+            box-shadow: 0 0 0 1px #15803d;
+        }
+        .mode-card.active strong {
+            color: #15803d;
+        }
+        .preset-row {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+        }
+        .preset-chip {
+            background: #ffffff;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .preset-chip:hover {
+            background: #063b0c;
+            border-color: #063b0c;
+            color: #ffffff;
+        }
+        .password-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-input-wrap input {
+            padding-right: 42px !important;
+            width: 100%;
+        }
+        .password-toggle-btn {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        .password-toggle-btn:hover {
+            color: #0f172a;
+            background: #f1f5f9;
+        }
+        .stat-badge-box {
+            border-radius: 8px;
+            padding: 12px 8px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
 <header class="topbar">
@@ -86,175 +214,260 @@
     </div>
     {% endif %}
 
-    <div class="page-heading">
-        <div>
-            <p class="eyebrow">SYSTEM NOTIFICATIONS & OUTGOING MAIL</p>
-            <h1>Site Email & SMTP Configuration</h1>
-            <p>Configure the main system email account used for all notifications, email verification, and password resets.</p>
+    <!-- Top Heading & Status Header -->
+    <div class="page-heading" style="margin-bottom: 22px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 14px;">
+            <div>
+                <p class="eyebrow" style="color: #15803d; font-weight: 700; font-size: 11px; letter-spacing: 0.8px; margin: 0 0 4px 0;">SYSTEM NOTIFICATIONS & OUTGOING MAIL</p>
+                <h1 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">Site Email & SMTP Settings</h1>
+                <p style="font-size: 13.5px; color: #64748b; margin: 0;">Configure the production mail server for ticket alerts, email verification, and password resets.</p>
+            </div>
+            <div>
+                {% if setting.smtp_backend == 'smtp' %}
+                <span style="display: inline-flex; align-items: center; gap: 7px; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 6px 14px; border-radius: 9999px; font-size: 12.5px; font-weight: 700;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #15803d;"></span>
+                    Production SMTP Active
+                </span>
+                {% else %}
+                <span style="display: inline-flex; align-items: center; gap: 7px; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; padding: 6px 14px; border-radius: 9999px; font-size: 12.5px; font-weight: 700;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #d97706;"></span>
+                    Development Console Mode
+                </span>
+                {% endif %}
+            </div>
         </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: start;">
+    <!-- Main Balanced 2-Column Grid -->
+    <div class="email-settings-grid">
         
-        <!-- Left: SMTP Form -->
-        <section class="panel" style="padding: 24px;">
-            <h2 style="font-size: 17px; margin-top: 0; margin-bottom: 18px; color: #0f172a; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
-                Outgoing Mail Credentials
-            </h2>
+        <!-- LEFT COLUMN: Primary SMTP Credentials Form -->
+        <section class="config-panel">
+            <div class="panel-title-row">
+                <div class="panel-title-icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                </div>
+                <div>
+                    <h2 style="font-size: 17px; margin: 0; color: #0f172a; font-weight: 700;">Outgoing Mail Credentials</h2>
+                    <p style="font-size: 12.5px; color: #64748b; margin: 2px 0 0 0;">Production SMTP host, authentication, and sender details.</p>
+                </div>
+            </div>
 
             <form method="post" action="{% url 'accounts:admin_email_settings' %}">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="save_settings">
 
+                <!-- Delivery Mode Selection Cards -->
+                <div class="field" style="margin-bottom: 16px;">
+                    <label style="font-size: 12.5px; font-weight: 700; color: #0f172a; margin-bottom: 8px; display: block;">Outgoing Delivery Engine *</label>
+                    <div class="mode-selection-grid">
+                        <label class="mode-card {% if setting.smtp_backend == 'smtp' %}active{% endif %}" id="modeCardSmtp" onclick="selectDeliveryMode('smtp')">
+                            <input type="radio" name="smtp_backend" value="smtp" id="modeRadioSmtp" {% if setting.smtp_backend == 'smtp' %}checked{% endif %} style="display: none;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                <strong style="font-size: 13px;">Live SMTP (Production)</strong>
+                            </div>
+                            <small style="font-size: 11.5px; color: #64748b; margin-top: 4px; display: block;">Dispatches real emails to user inboxes</small>
+                        </label>
+                        <label class="mode-card {% if setting.smtp_backend == 'console' %}active{% endif %}" id="modeCardConsole" onclick="selectDeliveryMode('console')">
+                            <input type="radio" name="smtp_backend" value="console" id="modeRadioConsole" {% if setting.smtp_backend == 'console' %}checked{% endif %} style="display: none;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+                                <strong style="font-size: 13px;">Local Console (Dev)</strong>
+                            </div>
+                            <small style="font-size: 11.5px; color: #64748b; margin-top: 4px; display: block;">Logs email body to server terminal</small>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Provider 1-Click Presets -->
+                <div class="preset-row">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 11.5px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Auto-Fill Presets:</span>
+                        <span style="font-size: 11px; color: #94a3b8;">1-click host & port setup</span>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="preset-chip" onclick="applyPreset('gmail')">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            Google / Gmail
+                        </button>
+                        <button type="button" class="preset-chip" onclick="applyPreset('office365')">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                            Microsoft 365
+                        </button>
+                        <button type="button" class="preset-chip" onclick="applyPreset('custom')">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            Institutional SMTP
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sender Display Name & From Email -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
-                    <div class="field">
+                    <div class="field" style="margin-bottom: 0;">
                         <label for="id_site_name">Sender Display Name *</label>
                         <input type="text" name="site_name" id="id_site_name" value="{{ setting.site_name }}" required placeholder="e.g. SIET Helpdesk">
                     </div>
-                    <div class="field">
+                    <div class="field" style="margin-bottom: 0;">
                         <label for="id_from_email">Default From Email *</label>
                         <input type="email" name="from_email" id="id_from_email" value="{{ setting.from_email }}" required placeholder="helpdesk@siet.edu.in">
                     </div>
                 </div>
 
-                <div class="field" style="margin-bottom: 16px;">
-                    <label for="id_site_url">Site Public / LAN Base URL</label>
-                    <input type="text" name="site_url" id="id_site_url" value="{{ setting.site_url }}" placeholder="Auto-detected LAN: http://10.10.10.141:8000">
-                    <small class="field-help" style="color: #64748b; font-size: 12px; display: block; margin-top: 4px;">
-                        Leave blank to automatically auto-detect and use your active LAN IP address (e.g. <code>http://10.10.10.141:8000</code>) for all verification and reset links sent to phones/laptops on the network.
-                    </small>
-                </div>
-
-                <div class="field" style="margin-bottom: 16px;">
-                    <label for="id_smtp_backend">Delivery Engine / Mode *</label>
-                    <select name="smtp_backend" id="id_smtp_backend">
-                        <option value="smtp" {% if setting.smtp_backend == 'smtp' %}selected{% endif %}>Live SMTP (Dispatches real emails to inboxes)</option>
-                        <option value="console" {% if setting.smtp_backend == 'console' %}selected{% endif %}>Console / Development (Prints email content to server terminal)</option>
-                    </select>
-                    <small class="field-help" style="color: #64748b; font-size: 12px; display: block; margin-top: 4px;">
-                        Select <strong>Live SMTP</strong> when using Gmail App Password, Microsoft 365, or institutional SMTP.
-                    </small>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 16px;">
-                    <div class="field">
+                <!-- SMTP Server Host & Port -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px;">
+                    <div class="field" style="margin-bottom: 0;">
                         <label for="id_smtp_host">SMTP Server Host</label>
                         <input type="text" name="smtp_host" id="id_smtp_host" value="{{ setting.smtp_host }}" placeholder="e.g. smtp.gmail.com">
                     </div>
-                    <div class="field">
+                    <div class="field" style="margin-bottom: 0;">
                         <label for="id_smtp_port">Port</label>
                         <input type="number" name="smtp_port" id="id_smtp_port" value="{{ setting.smtp_port }}" placeholder="587">
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 24px; margin-bottom: 16px; align-items: center;">
-                    <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer;">
-                        <input type="checkbox" name="smtp_use_tls" {% if setting.smtp_use_tls %}checked{% endif %}>
+                <!-- Security Encryption Checkboxes -->
+                <div style="display: flex; gap: 20px; margin-bottom: 16px; align-items: center; background: #f8fafc; border: 1px solid #f1f5f9; padding: 10px 14px; border-radius: 6px;">
+                    <label style="display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer;">
+                        <input type="checkbox" name="smtp_use_tls" id="id_smtp_use_tls" {% if setting.smtp_use_tls %}checked{% endif %} onchange="handleSecurityToggle('tls')">
                         Use TLS (STARTTLS &bull; Port 587)
                     </label>
-                    <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer;">
-                        <input type="checkbox" name="smtp_use_ssl" {% if setting.smtp_use_ssl %}checked{% endif %}>
+                    <label style="display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer;">
+                        <input type="checkbox" name="smtp_use_ssl" id="id_smtp_use_ssl" {% if setting.smtp_use_ssl %}checked{% endif %} onchange="handleSecurityToggle('ssl')">
                         Use SSL (Port 465)
                     </label>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;">
-                    <div class="field">
+                <!-- Authentication Username & Password -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+                    <div class="field" style="margin-bottom: 0;">
                         <label for="id_smtp_user">SMTP Username / Email</label>
                         <input type="text" name="smtp_user" id="id_smtp_user" value="{{ setting.smtp_user }}" placeholder="helpdesk@siet.edu.in">
                     </div>
-                    <div class="field">
+                    <div class="field" style="margin-bottom: 0;">
                         <label for="id_smtp_password">SMTP App Password</label>
-                        <input type="password" name="smtp_password" id="id_smtp_password" placeholder="•••••••••••• (Leave blank to keep unchanged)">
+                        <div class="password-input-wrap">
+                            <input type="password" name="smtp_password" id="id_smtp_password" placeholder="•••••••••••• (Unchanged)">
+                            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility()" title="Show/Hide Password" aria-label="Toggle password visibility">
+                                <svg id="pwEyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <button type="submit" class="primary-button" style="background: #063b0c; width: 100%;">
+                <!-- Base Public URL -->
+                <div class="field" style="margin-bottom: 20px;">
+                    <label for="id_site_url">Site Public / LAN Base URL</label>
+                    <input type="text" name="site_url" id="id_site_url" value="{{ setting.site_url }}" placeholder="Auto-detected: {{ auto_detected_url|default:'http://127.0.0.1:8000' }}">
+                    <small style="color: #64748b; font-size: 11.5px; display: block; margin-top: 4px;">
+                        Base domain used in email links. Leave blank to auto-detect the active server host.
+                    </small>
+                </div>
+
+                <!-- Primary Submit Action -->
+                <button type="submit" class="primary-button" style="background: #063b0c; width: 100%; padding: 12px; font-size: 14px; font-weight: 700; border-radius: 8px;">
                     Save Email & SMTP Settings
                 </button>
             </form>
         </section>
 
-        <!-- Right: Test & Info Cards -->
+        <!-- RIGHT COLUMN: Operations, Testing & Queue Monitoring -->
         <div style="display: flex; flex-direction: column; gap: 20px;">
             
-            <!-- Live Test Email Card -->
-            <section class="panel" style="padding: 24px;">
-                <h2 style="font-size: 16px; margin-top: 0; margin-bottom: 12px; color: #0f172a;">
-                    Test Outgoing Mail Connection
-                </h2>
-                <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 14px;">
-                    Send a live test message to verify that your SMTP server host, authentication credentials, and TLS handshake are working properly.
-                </p>
+            <!-- Live Test Connection Card -->
+            <section class="config-panel">
+                <div class="panel-title-row">
+                    <div class="panel-title-icon" style="background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 style="font-size: 16px; margin: 0; color: #0f172a; font-weight: 700;">Test Outgoing Mail Connection</h2>
+                        <p style="font-size: 12.5px; color: #64748b; margin: 2px 0 0 0;">Verify SMTP server host, handshake, and credentials.</p>
+                    </div>
+                </div>
 
                 <form method="post" action="{% url 'accounts:admin_email_settings' %}">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="test_email">
-                    <div class="field" style="margin-bottom: 12px;">
-                        <label for="id_test_recipient">Recipient Test Email *</label>
+                    
+                    <div class="field" style="margin-bottom: 14px;">
+                        <label for="id_test_recipient" style="font-size: 12.5px; font-weight: 600;">Recipient Test Email Address *</label>
                         <input type="email" name="test_recipient" id="id_test_recipient" value="{{ request.user.email }}" required placeholder="your.email@gmail.com">
                     </div>
-                    <button type="submit" class="secondary-button" style="width: 100%; justify-content: center; font-weight: 600;">
+
+                    <button type="submit" class="secondary-button" style="width: 100%; justify-content: center; font-weight: 700; padding: 11px; font-size: 13.5px;">
                         Dispatch Test Email &rarr;
                     </button>
                 </form>
+
+                <p style="font-size: 11.5px; color: #64748b; margin: 12px 0 0 0; line-height: 1.45;">
+                    Sends a live message using the currently saved credentials to verify that outgoing mail delivers reliably to inboxes.
+                </p>
             </section>
 
-            <!-- Asynchronous Email Queue & Cron Card -->
-            <section class="panel" style="padding: 24px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <h2 style="font-size: 16px; margin: 0; color: #0f172a;">
-                        Outgoing Email Queue & Background Worker
-                    </h2>
-                    <span style="font-size: 11px; padding: 3px 8px; border-radius: 9999px; background: #e0f2fe; color: #0369a1; font-weight: 600;">
-                        Cron Driven
+            <!-- Asynchronous Email Queue & Background Worker Monitor -->
+            <section class="config-panel">
+                <div class="panel-title-row" style="justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="panel-title-icon" style="background: #f0fdf4; color: #15803d; border-color: #bbf7d0;" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 style="font-size: 16px; margin: 0; color: #0f172a; font-weight: 700;">Email Queue Monitor</h2>
+                            <p style="font-size: 12.5px; color: #64748b; margin: 2px 0 0 0;">Asynchronous background worker status</p>
+                        </div>
+                    </div>
+                    <span style="font-size: 11px; padding: 3px 9px; border-radius: 9999px; background: #dcfce7; color: #15803d; font-weight: 700; border: 1px solid #bbf7d0;">
+                        Auto-Worker Active
                     </span>
                 </div>
-                <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 14px; line-height: 1.5;">
-                    Emails are queued into the database instantly without blocking Gunicorn workers during user requests. A 1-minute server cron job dispatches them asynchronously.
-                </p>
 
-                <!-- Queue Metric Counters -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px;">
-                    <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px; text-align: center;">
-                        <span style="display: block; font-size: 20px; font-weight: 700; color: #b45309;">{{ queue_stats.pending }}</span>
-                        <span style="font-size: 11.5px; font-weight: 600; color: #92400e;">Pending</span>
+                <!-- 3 Metric Stat Counters -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+                    <div class="stat-badge-box" style="background: #fffbeb; border: 1.5px solid #fde68a;">
+                        <span style="display: block; font-size: 22px; font-weight: 800; color: #b45309; line-height: 1;">{{ queue_stats.pending }}</span>
+                        <span style="font-size: 11.5px; font-weight: 700; color: #92400e; margin-top: 5px; display: block;">Pending</span>
                     </div>
-                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px; text-align: center;">
-                        <span style="display: block; font-size: 20px; font-weight: 700; color: #15803d;">{{ queue_stats.sent }}</span>
-                        <span style="font-size: 11.5px; font-weight: 600; color: #166534;">Sent</span>
+                    <div class="stat-badge-box" style="background: #f0fdf4; border: 1.5px solid #bbf7d0;">
+                        <span style="display: block; font-size: 22px; font-weight: 800; color: #15803d; line-height: 1;">{{ queue_stats.sent }}</span>
+                        <span style="font-size: 11.5px; font-weight: 700; color: #166534; margin-top: 5px; display: block;">Dispatched</span>
                     </div>
-                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px; text-align: center;">
-                        <span style="display: block; font-size: 20px; font-weight: 700; color: #b91c1c;">{{ queue_stats.failed }}</span>
-                        <span style="font-size: 11.5px; font-weight: 600; color: #991b1b;">Failed</span>
+                    <div class="stat-badge-box" style="background: #fef2f2; border: 1.5px solid #fecaca;">
+                        <span style="display: block; font-size: 22px; font-weight: 800; color: #b91c1c; line-height: 1;">{{ queue_stats.failed }}</span>
+                        <span style="font-size: 11.5px; font-weight: 700; color: #991b1b; margin-top: 5px; display: block;">Failed</span>
                     </div>
                 </div>
 
+                <!-- Flush Queue Button -->
                 <form method="post" action="{% url 'accounts:admin_email_settings' %}" style="margin-bottom: 14px;">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="process_queue">
-                    <button type="submit" class="secondary-button" style="width: 100%; justify-content: center; font-weight: 600; font-size: 13px;">
+                    <button type="submit" class="secondary-button" style="width: 100%; justify-content: center; font-weight: 700; font-size: 13px; padding: 10px;">
                         ⚡ Dispatch Queued Emails Now ({{ queue_stats.pending }} Pending)
                     </button>
                 </form>
 
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 12px; color: #475569;">
-                    <div style="font-weight: 600; margin-bottom: 4px; color: #1e293b;">Server Cron Configuration (every 1 min):</div>
-                    <code style="display: block; word-break: break-all; background: #0f172a; color: #38bdf8; padding: 6px 8px; border-radius: 4px; font-size: 11px;">* * * * * cd {{ request.META.PWD|default:'/path/to/project' }} && ./venv/bin/python manage.py send_queued_emails &gt;&gt; logs/email_cron.log 2&gt;&amp;1</code>
+                <!-- Zero-Latency Worker Notice -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 12px; color: #475569; display: flex; align-items: flex-start; gap: 10px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span style="line-height: 1.45;">
+                        <strong>Zero Request Latency:</strong> All system emails (tickets, verifications, password resets) are enqueued instantly into the local database so web requests respond in milliseconds without waiting on external SMTP networks.
+                    </span>
                 </div>
-            </section>
-
-            <!-- Automated System Email Coverage Info -->
-            <section class="panel" style="padding: 24px; background: #ffffff;">
-                <h3 style="font-size: 15px; margin-top: 0; margin-bottom: 12px; color: #0f172a;">
-                    Automated System Email Workflows
-                </h3>
-                <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: #334155; line-height: 1.6;">
-                    <li><strong>User Email Verification:</strong> Sends cryptographic verification link to new/updated email addresses.</li>
-                    <li><strong>Password Reset Links:</strong> Sends secure recovery link to users requesting password change.</li>
-                    <li><strong>Technician Allocation Alerts:</strong> Automatically emails assigned technician with ticket priority and details upon ticket submission.</li>
-                    <li><strong>Resolution Confirmations:</strong> Alerts client when technician marks their ticket as Resolved.</li>
-                </ul>
             </section>
 
         </div>
@@ -263,5 +476,79 @@
 </main>
 
 <script src="{% static 'js/mobile_nav.js' %}?v=4.0"></script>
+<script>
+    function selectDeliveryMode(mode) {
+        var smtpCard = document.getElementById('modeCardSmtp');
+        var consoleCard = document.getElementById('modeCardConsole');
+        var smtpRadio = document.getElementById('modeRadioSmtp');
+        var consoleRadio = document.getElementById('modeRadioConsole');
+
+        if (mode === 'smtp') {
+            smtpCard.classList.add('active');
+            consoleCard.classList.remove('active');
+            smtpRadio.checked = true;
+        } else {
+            consoleCard.classList.add('active');
+            smtpCard.classList.remove('active');
+            consoleRadio.checked = true;
+        }
+    }
+
+    function applyPreset(provider) {
+        var hostInput = document.getElementById('id_smtp_host');
+        var portInput = document.getElementById('id_smtp_port');
+        var tlsCheckbox = document.getElementById('id_smtp_use_tls');
+        var sslCheckbox = document.getElementById('id_smtp_use_ssl');
+
+        // Automatically switch delivery mode to Production SMTP
+        selectDeliveryMode('smtp');
+
+        if (provider === 'gmail') {
+            hostInput.value = 'smtp.gmail.com';
+            portInput.value = '587';
+            tlsCheckbox.checked = true;
+            sslCheckbox.checked = false;
+        } else if (provider === 'office365') {
+            hostInput.value = 'smtp.office365.com';
+            portInput.value = '587';
+            tlsCheckbox.checked = true;
+            sslCheckbox.checked = false;
+        } else if (provider === 'custom') {
+            hostInput.focus();
+            hostInput.select();
+        }
+    }
+
+    function handleSecurityToggle(changed) {
+        var tlsCheckbox = document.getElementById('id_smtp_use_tls');
+        var sslCheckbox = document.getElementById('id_smtp_use_ssl');
+        var portInput = document.getElementById('id_smtp_port');
+
+        if (changed === 'tls' && tlsCheckbox.checked) {
+            sslCheckbox.checked = false;
+            if (portInput.value === '465') {
+                portInput.value = '587';
+            }
+        } else if (changed === 'ssl' && sslCheckbox.checked) {
+            tlsCheckbox.checked = false;
+            if (portInput.value === '587' || !portInput.value) {
+                portInput.value = '465';
+            }
+        }
+    }
+
+    function togglePasswordVisibility() {
+        var pwdInput = document.getElementById('id_smtp_password');
+        var eyeIcon = document.getElementById('pwEyeIcon');
+
+        if (pwdInput.type === 'password') {
+            pwdInput.type = 'text';
+            eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+        } else {
+            pwdInput.type = 'password';
+            eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        }
+    }
+</script>
 </body>
 </html>

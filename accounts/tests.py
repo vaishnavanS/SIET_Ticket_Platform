@@ -465,3 +465,32 @@ class EmailQueueAndCronTests(TestCase):
         pending = EmailQueue.objects.filter(recipient_email='admin_flush@siet.edu.in', status=EmailQueue.Status.PENDING).count()
         self.assertEqual(pending, 0)
 
+    def test_admin_save_email_settings(self):
+        from accounts.models import SiteEmailSetting
+        self.client.login(username='admin_queue_tester', password='Password123!')
+        res = self.client.post(reverse('accounts:admin_email_settings'), {
+            'action': 'save_settings',
+            'site_name': 'SIET Production Helpdesk',
+            'from_email': 'support@siet.edu.in',
+            'smtp_backend': 'smtp',
+            'smtp_host': 'smtp.gmail.com',
+            'smtp_port': 587,
+            'smtp_use_tls': 'on',
+            'smtp_user': 'support@siet.edu.in',
+            'smtp_password': 'app-password-1234',
+            'site_url': 'https://helpdesk.siet.edu.in',
+        }, follow=True)
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "updated successfully")
+
+        setting = SiteEmailSetting.get_setting()
+        self.assertEqual(setting.site_name, 'SIET Production Helpdesk')
+        self.assertEqual(setting.from_email, 'support@siet.edu.in')
+        self.assertEqual(setting.smtp_backend, 'smtp')
+        self.assertEqual(setting.smtp_host, 'smtp.gmail.com')
+        self.assertEqual(setting.smtp_port, 587)
+        self.assertTrue(setting.smtp_use_tls)
+        self.assertFalse(setting.smtp_use_ssl)
+        self.assertEqual(setting.smtp_password, 'app-password-1234')
+        self.assertEqual(setting.site_url, 'https://helpdesk.siet.edu.in')
+

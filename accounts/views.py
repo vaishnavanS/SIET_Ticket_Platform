@@ -358,7 +358,7 @@ def admin_categories(request):
 @require_http_methods(['GET', 'POST'])
 def admin_email_settings(request):
     from .models import SiteEmailSetting, EmailQueue
-    from .utils import get_site_email_connection, process_email_queue
+    from .utils import get_site_email_connection, process_email_queue, get_site_base_url
     from django.core.mail import EmailMessage
 
     setting = SiteEmailSetting.get_setting()
@@ -431,9 +431,12 @@ def admin_email_settings(request):
         'recent': EmailQueue.objects.select_related('ticket').order_by('-created_at')[:6],
     }
 
+    auto_detected_url = get_site_base_url(request)
+
     return render(request, 'accounts/admin_email_settings.html', {
         'setting': setting,
         'queue_stats': queue_stats,
+        'auto_detected_url': auto_detected_url,
     })
 
 
