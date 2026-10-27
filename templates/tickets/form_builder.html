@@ -138,6 +138,79 @@
             border-color: #15803d;
             box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
         }
+
+        /* Live Preview Styling in Form Studio */
+        .preview-step-card {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px 20px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+        }
+        .preview-step-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .preview-step-num {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1.5px solid #bbf7d0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+        .preview-step-title {
+            margin: 0;
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .preview-step-desc {
+            margin: 2px 0 0 0;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .preview-loc-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-top: 14px;
+        }
+        .preview-chip-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #1e293b;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .preview-chip-btn:hover {
+            background: #f0fdf4;
+            border-color: #86efac;
+            color: #166534;
+        }
+        .preview-chip-btn.active {
+            background: #15803d;
+            border-color: #15803d;
+            color: #ffffff;
+        }
     </style>
 </head>
 <body>
@@ -603,372 +676,31 @@
 
     <!-- IN-STUDIO LIVE PREVIEW MODAL -->
     <div class="modal-overlay" id="preview-modal">
-        <div class="modal-box">
+        <div class="modal-box" style="max-width: 760px; width: 100%; max-height: 90vh; display: flex; flex-direction: column;">
             <div class="modal-header">
-                <h3>Live Interactive Form Preview</h3>
+                <div>
+                    <h3 style="margin: 0; font-size: 17px; display: flex; align-items: center; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        Live Test Preview (Current Configuration)
+                    </h3>
+                    <p class="muted" style="margin: 3px 0 0; font-size: 12px;">Real-time interactive sandbox reflecting active campus blocks, SLA targets, and branching logic.</p>
+                </div>
                 <button type="button" class="modal-close" id="close-preview-btn">&times;</button>
             </div>
 
-            <div class="modal-body">
-                <p class="muted" style="margin-bottom: 20px;">Test the dynamic branching rules and "Other" expansion exactly as a student or staff member would experience it:</p>
-                <div id="preview-form-content" style="display: flex; flex-direction: column; gap: 18px;">
+            <div class="modal-body" style="overflow-y: auto; padding: 20px 24px;">
+                <p class="muted" style="margin-bottom: 16px; font-size: 13px;">Test the dynamic branching rules, campus selection, and "Other" expansion exactly as an end user would experience it:</p>
+                <div id="preview-form-content" style="display: flex; flex-direction: column; gap: 16px;">
                     <!-- Dynamically generated preview fields -->
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 12px; color: #64748b;">Interactive Sandbox &bull; Changes here are for testing only</span>
                 <button type="button" class="secondary-button" id="close-preview-footer-btn">Close Preview</button>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript for Tab Switching, Condition Toggling, and Live Interactive Preview -->
-    <script>
-        const fieldsSchema = {{ fields_schema_json|safe }};
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // Tab switching
-            const tabButtons = document.querySelectorAll('.studio-tab-btn');
-            const tabPanes = document.querySelectorAll('.studio-tab-pane');
-
-            tabButtons.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    tabButtons.forEach(b => b.classList.remove('active'));
-                    tabPanes.forEach(p => p.classList.remove('active'));
-                    btn.classList.add('active');
-                    const target = document.getElementById(btn.getAttribute('data-tab'));
-                    if (target) target.classList.add('active');
-                });
-            });
-
-            // Field Type toggle in Add Question form (hide options for text / textarea / file, show max file size for file)
-            const fieldTypeSelect = document.getElementById('id_field_type');
-            const optionsContainer = document.getElementById('options-container');
-            const maxFileSizeContainer = document.getElementById('max-file-size-container');
-
-            function updateOptionsContainer() {
-                if (!fieldTypeSelect) return;
-                const type = fieldTypeSelect.value;
-                if (optionsContainer) {
-                    if (type === 'text' || type === 'textarea' || type === 'file') {
-                        optionsContainer.style.display = 'none';
-                    } else {
-                        optionsContainer.style.display = 'block';
-                    }
-                }
-                if (maxFileSizeContainer) {
-                    if (type === 'file') {
-                        maxFileSizeContainer.style.display = 'block';
-                    } else {
-                        maxFileSizeContainer.style.display = 'none';
-                    }
-                }
-            }
-
-            if (fieldTypeSelect) {
-                fieldTypeSelect.addEventListener('change', updateOptionsContainer);
-                updateOptionsContainer();
-            }
-
-
-            // Visual Condition Parent & Option Selector in Studio
-            const conditionTypeSelect = document.getElementById('id_condition_type');
-            const conditionWrap = document.getElementById('condition-fields-wrap');
-            const parentSelector = document.getElementById('condition-parent-selector');
-            const optionSelector = document.getElementById('condition-option-selector');
-            const rawFieldKeyInput = document.getElementById('id_condition_field_key');
-            const rawValueInput = document.getElementById('id_condition_value');
-
-            function updateConditionWrap() {
-                if (!conditionTypeSelect || !conditionWrap) return;
-                if (conditionTypeSelect.value === 'visible_if' || conditionTypeSelect.value === 'hidden_if') {
-                    conditionWrap.style.display = 'flex';
-                } else {
-                    conditionWrap.style.display = 'none';
-                }
-            }
-
-            function syncConditionOptions() {
-                if (!parentSelector || !optionSelector) return;
-                const selectedOpt = parentSelector.options[parentSelector.selectedIndex];
-                const rawOptionsStr = selectedOpt ? (selectedOpt.getAttribute('data-options') || '') : '';
-                const currentVal = (rawValueInput ? rawValueInput.value : '').trim();
-
-                optionSelector.innerHTML = '<option value="">-- Choose Parent Option --</option>';
-                
-                if (rawOptionsStr) {
-                    const opts = rawOptionsStr.split('|||').filter(Boolean);
-                    opts.forEach(opt => {
-                        const o = document.createElement('option');
-                        o.value = opt;
-                        o.textContent = opt;
-                        if (opt.toLowerCase() === currentVal.toLowerCase()) o.selected = true;
-                        optionSelector.appendChild(o);
-                    });
-                }
-                const customOpt = document.createElement('option');
-                customOpt.value = '__custom__';
-                customOpt.textContent = '+ Custom text value...';
-                optionSelector.appendChild(customOpt);
-
-                if (currentVal && !Array.from(optionSelector.options).some(o => o.value.toLowerCase() === currentVal.toLowerCase() && o.value !== '__custom__')) {
-                    customOpt.selected = true;
-                    if (rawValueInput) rawValueInput.style.display = 'block';
-                }
-            }
-
-            if (conditionTypeSelect) {
-                conditionTypeSelect.addEventListener('change', updateConditionWrap);
-                updateConditionWrap();
-            }
-
-            if (parentSelector) {
-                if (rawFieldKeyInput && rawFieldKeyInput.value) {
-                    parentSelector.value = rawFieldKeyInput.value;
-                }
-                parentSelector.addEventListener('change', function() {
-                    if (rawFieldKeyInput) rawFieldKeyInput.value = this.value;
-                    syncConditionOptions();
-                });
-                syncConditionOptions();
-            }
-
-            if (optionSelector) {
-                optionSelector.addEventListener('change', function() {
-                    if (this.value === '__custom__') {
-                        if (rawValueInput) {
-                            rawValueInput.style.display = 'block';
-                            rawValueInput.focus();
-                        }
-                    } else {
-                        if (rawValueInput) {
-                            rawValueInput.value = this.value;
-                            rawValueInput.style.display = 'none';
-                        }
-                    }
-                });
-            }
-
-            // In-Studio Live Preview Modal
-            const previewModal = document.getElementById('preview-modal');
-            const openPreviewBtn = document.getElementById('open-preview-btn');
-            const closePreviewBtn = document.getElementById('close-preview-btn');
-            const closePreviewFooterBtn = document.getElementById('close-preview-footer-btn');
-            const previewContainer = document.getElementById('preview-form-content');
-
-            function openPreview() {
-                if (!previewModal || !previewContainer) return;
-                renderPreviewForm();
-                previewModal.classList.add('open');
-            }
-
-            function closePreview() {
-                if (previewModal) previewModal.classList.remove('open');
-            }
-
-            if (openPreviewBtn) openPreviewBtn.addEventListener('click', openPreview);
-            if (closePreviewBtn) closePreviewBtn.addEventListener('click', closePreview);
-            if (closePreviewFooterBtn) closePreviewFooterBtn.addEventListener('click', closePreview);
-
-            // Render interactive preview form
-            function renderPreviewForm() {
-                previewContainer.innerHTML = '';
-                
-                // Add Standard Top Inputs (Title, Urgency, Location)
-                const titleBlock = document.createElement('div');
-                titleBlock.className = 'field';
-                titleBlock.innerHTML = `
-                    <label>Issue Title *</label>
-                    <input type="text" placeholder="e.g., WiFi disconnected in CS Lab 2" disabled style="background:#fafafa;">
-                `;
-                previewContainer.appendChild(titleBlock);
-
-                const urgencyBlock = document.createElement('div');
-                urgencyBlock.className = 'field';
-                urgencyBlock.innerHTML = `
-                    <label>Urgency Level *</label>
-                    <select disabled style="background:#fafafa;">
-                        <option>Medium</option>
-                        <option>Low</option>
-                        <option>High</option>
-                        <option>Critical</option>
-                    </select>
-                `;
-                previewContainer.appendChild(urgencyBlock);
-
-                const locBlock = document.createElement('div');
-                locBlock.className = 'field';
-                locBlock.innerHTML = `
-                    <label>Location / Room / Lab *</label>
-                    <input type="text" placeholder="e.g., Block B - Room 204 / Lab 3" disabled style="background:#fafafa;">
-                `;
-                previewContainer.appendChild(locBlock);
-
-                // Render dynamic question blocks WITH STYLED BUTTON PILLS
-                fieldsSchema.forEach(field => {
-                    const block = document.createElement('div');
-                    block.className = 'field dynamic-field-wrapper';
-                    block.id = `preview-field-${field.key}`;
-                    block.setAttribute('data-key', field.key);
-                    block.setAttribute('data-cond-type', field.condition_type || 'always');
-                    block.setAttribute('data-cond-parent', field.condition_field_key || '');
-                    block.setAttribute('data-cond-op', field.condition_operator || 'equals');
-                    block.setAttribute('data-cond-val', (field.condition_value || '').toLowerCase());
-
-                    let inputHtml = '';
-                    if (field.type === 'radio') {
-                        inputHtml = `<ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">` +
-                            field.options.map(opt => `
-                                <li>
-                                    <label style="display:flex; align-items:center; gap:10px; padding:10px 14px; border:1px solid #dcebda; border-radius:6px; background:#fff; cursor:pointer;">
-                                        <input type="radio" name="preview_${field.key}" value="${opt}" class="preview-input">
-                                        <span style="font-weight:500; font-size:13.5px; color:#173b1c;">${opt}</span>
-                                    </label>
-                                </li>
-                            `).join('') + `</ul>`;
-                    } else if (field.type === 'checkbox') {
-                        inputHtml = `<ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">` +
-                            field.options.map(opt => `
-                                <li>
-                                    <label style="display:flex; align-items:center; gap:10px; padding:10px 14px; border:1px solid #dcebda; border-radius:6px; background:#fff; cursor:pointer;">
-                                        <input type="checkbox" name="preview_${field.key}" value="${opt}" class="preview-input">
-                                        <span style="font-weight:500; font-size:13.5px; color:#173b1c;">${opt}</span>
-                                    </label>
-                                </li>
-                            `).join('') + `</ul>`;
-                    } else if (field.type === 'select') {
-                        inputHtml = `<select name="preview_${field.key}" class="preview-input">
-                            <option value="">-- Select an option --</option>
-                            ${field.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
-                        </select>`;
-                    } else if (field.type === 'textarea') {
-                        inputHtml = `<textarea placeholder="${field.help_text || 'Enter details...'}" rows="3" class="preview-input"></textarea>`;
-                    } else if (field.type === 'file') {
-                        inputHtml = `<input type="file" disabled style="background:#fafafa;">`;
-                    } else {
-                        inputHtml = `<input type="text" placeholder="${field.help_text || 'Enter details...'}" class="preview-input">`;
-                    }
-
-                    block.innerHTML = `
-                        <label>
-                            ${field.label} ${field.required ? '<span style="color:#b33e34;">*</span>' : ''}
-                        </label>
-                        ${inputHtml}
-                        ${field.help_text ? `<small class="field-help">${field.help_text}</small>` : ''}
-                    `;
-                    previewContainer.appendChild(block);
-                });
-
-                // Add "Other issue details" dynamic expander
-                const otherBlock = document.createElement('div');
-                otherBlock.className = 'field dynamic-field-wrapper';
-                otherBlock.id = 'preview-other-details';
-                otherBlock.style.display = 'none';
-                otherBlock.style.background = '#fffcf5';
-                otherBlock.style.padding = '14px';
-                otherBlock.style.border = '1px solid #f9e2aa';
-                otherBlock.style.borderRadius = '6px';
-                otherBlock.innerHTML = `
-                    <label style="color:#7a5a0d;">Describe other issue details</label>
-                    <textarea rows="3" placeholder="Please specify your other problem here..."></textarea>
-                `;
-                previewContainer.appendChild(otherBlock);
-
-                // Add Attachment if not present in schema
-                const hasAttachmentInSchema = fieldsSchema.some(f => f.key === 'attachment' || f.type === 'file');
-                if (!hasAttachmentInSchema) {
-                    const attachBlock = document.createElement('div');
-                    attachBlock.className = 'field';
-                    attachBlock.innerHTML = `
-                        <label>Attachment (Optional screenshot / photo)</label>
-                        <input type="file" disabled style="background:#fafafa;">
-                        <small class="field-help">Allowed formats: JPG, PNG, GIF. Max file size: 5MB.</small>
-                    `;
-                    previewContainer.appendChild(attachBlock);
-                }
-
-                // Attach reactive event listener to preview inputs
-                const previewInputs = previewContainer.querySelectorAll('.preview-input');
-                previewInputs.forEach(input => {
-                    input.addEventListener('change', evaluatePreviewConditions);
-                    input.addEventListener('input', evaluatePreviewConditions);
-                });
-
-                evaluatePreviewConditions();
-            }
-
-            // Evaluates conditional branching in preview
-            function evaluatePreviewConditions() {
-                const values = {};
-                let hasOtherSelected = false;
-
-                // Collect current values
-                fieldsSchema.forEach(field => {
-                    if (field.type === 'radio') {
-                        const checked = previewContainer.querySelector(`input[name="preview_${field.key}"]:checked`);
-                        values[field.key] = checked ? checked.value : '';
-                        if (checked && checked.value.toLowerCase().includes('other')) hasOtherSelected = true;
-                    } else if (field.type === 'checkbox') {
-                        const checkedNodes = previewContainer.querySelectorAll(`input[name="preview_${field.key}"]:checked`);
-                        const vals = Array.from(checkedNodes).map(n => n.value);
-                        values[field.key] = vals;
-                        if (vals.some(v => v.toLowerCase().includes('other'))) hasOtherSelected = true;
-                    } else if (field.type === 'select') {
-                        const sel = previewContainer.querySelector(`select[name="preview_${field.key}"]`);
-                        values[field.key] = sel ? sel.value : '';
-                        if (sel && sel.value.toLowerCase().includes('other')) hasOtherSelected = true;
-                    }
-                });
-
-                // Evaluate each dynamic block
-                const blocks = previewContainer.querySelectorAll('.dynamic-field-wrapper[data-key]');
-                blocks.forEach(block => {
-                    const condType = block.getAttribute('data-cond-type') || 'always';
-                    const parentKey = block.getAttribute('data-cond-parent');
-                    const condOp = block.getAttribute('data-cond-op') || 'equals';
-                    const targetVal = (block.getAttribute('data-cond-val') || '').toLowerCase().trim();
-
-                    if (condType === 'always' || !parentKey || !parentKey.trim()) {
-                        block.style.display = 'block';
-                        return;
-                    }
-
-                    const parentVal = values[parentKey];
-                    let match = false;
-
-                    if (parentVal !== undefined && parentVal !== null && parentVal !== '') {
-                        if (Array.isArray(parentVal) && parentVal.length > 0) {
-                            if (condOp === 'equals') {
-                                match = parentVal.some(pv => pv.toLowerCase().trim() === targetVal);
-                            } else if (condOp === 'not_equals') {
-                                match = !parentVal.some(pv => pv.toLowerCase().trim() === targetVal);
-                            } else {
-                                match = parentVal.some(pv => pv.toLowerCase().includes(targetVal));
-                            }
-                        } else if (typeof parentVal === 'string' && parentVal.trim() !== '') {
-                            const pLower = parentVal.toLowerCase().trim();
-                            if (condOp === 'equals') {
-                                match = (pLower === targetVal);
-                            } else if (condOp === 'not_equals') {
-                                match = (pLower !== targetVal);
-                            } else {
-                                match = pLower.includes(targetVal);
-                            }
-                        }
-                    }
-
-                    if (condType === 'visible_if') {
-                        block.style.display = match ? 'block' : 'none';
-                    } else if (condType === 'hidden_if') {
-                        block.style.display = match ? 'none' : 'block';
-                    }
-                });
-
-                const otherBox = document.getElementById('preview-other-details');
-                if (otherBox) {
-                    otherBox.style.display = hasOtherSelected ? 'block' : 'none';
-                }
-            }
-        });
     <!-- ========================================== -->
     <!-- CORE FIELD CONFIGURATION MODALS              -->
     <!-- ========================================== -->
@@ -1286,26 +1018,549 @@
         </div>
     </div>
 
+    <!-- JavaScript for Tab Switching, Condition Toggling, Core Modals, and Live Interactive Preview -->
     <script>
-        function openCoreModal(fieldKey) {
+        // Global Core Modal Controls (accessible by inline onclick handlers)
+        window.openCoreModal = function(fieldKey) {
             const m = document.getElementById('modal-core-' + fieldKey);
             if (m) m.classList.add('open');
-        }
+        };
 
-        function closeCoreModal(fieldKey) {
+        window.closeCoreModal = function(fieldKey) {
             const m = document.getElementById('modal-core-' + fieldKey);
             if (m) m.classList.remove('open');
-        }
+        };
 
+        // Close any open modal on overlay click
         document.addEventListener('click', function(e) {
             if (e.target && e.target.classList.contains('modal-overlay')) {
                 e.target.classList.remove('open');
             }
         });
 
+        // Close any open modal on Escape key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+            }
+        });
+
+        const fieldsSchema = {{ fields_schema_json|safe }};
+
+        const currentCampusLocations = [
+            {% for loc in campus_locations %}
+            { id: "{{ loc.id }}", name: "{{ loc.name|escapejs }}", code: "{{ loc.code|escapejs }}" },
+            {% endfor %}
+        ];
+
+        const currentCoreSettings = {
+            title: {
+                label: "{{ core_settings.title.label|default:'Issue Title'|escapejs }}",
+                placeholder: "{{ core_settings.title.placeholder|default:'e.g., WiFi disconnected in CS Lab 2'|escapejs }}",
+                help_text: "{{ core_settings.title.help_text|escapejs }}"
+            },
+            urgency: {
+                label: "{{ core_settings.urgency.label|default:'Urgency Level'|escapejs }}",
+                help_text: "{{ core_settings.urgency.help_text|escapejs }}",
+                default_urgency: "{{ core_settings.urgency.extra_config.default_urgency|default:'medium'|escapejs }}",
+                sla_urgent_hours: {{ core_settings.urgency.extra_config.sla_urgent_hours|default:1 }},
+                sla_high_hours: {{ core_settings.urgency.extra_config.sla_high_hours|default:4 }},
+                sla_medium_hours: {{ core_settings.urgency.extra_config.sla_medium_hours|default:8 }},
+                sla_low_hours: {{ core_settings.urgency.extra_config.sla_low_hours|default:24 }}
+            },
+            location: {
+                label: "{{ core_settings.location.label|default:'Campus Block / Location'|escapejs }}",
+                room_label: "{{ core_settings.location.extra_config.room_details_label|default:'Room / Lab / Specific Details'|escapejs }}",
+                placeholder: "{{ core_settings.location.placeholder|default:'e.g. VLSI Lab, Lab 2 - Table 4, Room 304'|escapejs }}",
+                help_text: "{{ core_settings.location.help_text|escapejs }}"
+            },
+            description: {
+                label: "{{ core_settings.description.label|default:'Detailed Problem Description'|escapejs }}",
+                placeholder: "{{ core_settings.description.placeholder|default:'Provide details about what happened...'|escapejs }}",
+                help_text: "{{ core_settings.description.help_text|escapejs }}"
+            },
+            attachment: {
+                label: "{{ core_settings.attachment.label|default:'File Attachment'|escapejs }}",
+                help_text: "{{ core_settings.attachment.help_text|escapejs }}",
+                max_file_size_mb: {{ max_attachment_size_mb|default:5 }},
+                allowed_extensions: "{{ core_settings.attachment.extra_config.allowed_extensions|default:'JPG, JPEG, PNG, GIF, PDF'|escapejs }}"
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching
+            const tabButtons = document.querySelectorAll('.studio-tab-btn');
+            const tabPanes = document.querySelectorAll('.studio-tab-pane');
+
+            tabButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    tabButtons.forEach(b => b.classList.remove('active'));
+                    tabPanes.forEach(p => p.classList.remove('active'));
+                    btn.classList.add('active');
+                    const target = document.getElementById(btn.getAttribute('data-tab'));
+                    if (target) target.classList.add('active');
+                });
+            });
+
+            // Field Type toggle in Add Question form (hide options for text / textarea / file, show max file size for file)
+            const fieldTypeSelect = document.getElementById('id_field_type');
+            const optionsContainer = document.getElementById('options-container');
+            const maxFileSizeContainer = document.getElementById('max-file-size-container');
+
+            function updateOptionsContainer() {
+                if (!fieldTypeSelect) return;
+                const type = fieldTypeSelect.value;
+                if (optionsContainer) {
+                    if (type === 'text' || type === 'textarea' || type === 'file') {
+                        optionsContainer.style.display = 'none';
+                    } else {
+                        optionsContainer.style.display = 'block';
+                    }
+                }
+                if (maxFileSizeContainer) {
+                    if (type === 'file') {
+                        maxFileSizeContainer.style.display = 'block';
+                    } else {
+                        maxFileSizeContainer.style.display = 'none';
+                    }
+                }
+            }
+
+            if (fieldTypeSelect) {
+                fieldTypeSelect.addEventListener('change', updateOptionsContainer);
+                updateOptionsContainer();
+            }
+
+            // Visual Condition Parent & Option Selector in Studio
+            const conditionTypeSelect = document.getElementById('id_condition_type');
+            const conditionWrap = document.getElementById('condition-fields-wrap');
+            const parentSelector = document.getElementById('condition-parent-selector');
+            const optionSelector = document.getElementById('condition-option-selector');
+            const rawFieldKeyInput = document.getElementById('id_condition_field_key');
+            const rawValueInput = document.getElementById('id_condition_value');
+
+            function updateConditionWrap() {
+                if (!conditionTypeSelect || !conditionWrap) return;
+                if (conditionTypeSelect.value === 'visible_if' || conditionTypeSelect.value === 'hidden_if') {
+                    conditionWrap.style.display = 'flex';
+                } else {
+                    conditionWrap.style.display = 'none';
+                }
+            }
+
+            function syncConditionOptions() {
+                if (!parentSelector || !optionSelector) return;
+                const selectedOpt = parentSelector.options[parentSelector.selectedIndex];
+                const rawOptionsStr = selectedOpt ? (selectedOpt.getAttribute('data-options') || '') : '';
+                const currentVal = (rawValueInput ? rawValueInput.value : '').trim();
+
+                optionSelector.innerHTML = '<option value="">-- Choose Parent Option --</option>';
+                
+                if (rawOptionsStr) {
+                    const opts = rawOptionsStr.split('|||').filter(Boolean);
+                    opts.forEach(opt => {
+                        const o = document.createElement('option');
+                        o.value = opt;
+                        o.textContent = opt;
+                        if (opt.toLowerCase() === currentVal.toLowerCase()) o.selected = true;
+                        optionSelector.appendChild(o);
+                    });
+                }
+                const customOpt = document.createElement('option');
+                customOpt.value = '__custom__';
+                customOpt.textContent = '+ Custom text value...';
+                optionSelector.appendChild(customOpt);
+
+                if (currentVal && !Array.from(optionSelector.options).some(o => o.value.toLowerCase() === currentVal.toLowerCase() && o.value !== '__custom__')) {
+                    customOpt.selected = true;
+                    if (rawValueInput) rawValueInput.style.display = 'block';
+                }
+            }
+
+            if (conditionTypeSelect) {
+                conditionTypeSelect.addEventListener('change', updateConditionWrap);
+                updateConditionWrap();
+            }
+
+            if (parentSelector) {
+                if (rawFieldKeyInput && rawFieldKeyInput.value) {
+                    parentSelector.value = rawFieldKeyInput.value;
+                }
+                parentSelector.addEventListener('change', function() {
+                    if (rawFieldKeyInput) rawFieldKeyInput.value = this.value;
+                    syncConditionOptions();
+                });
+                syncConditionOptions();
+            }
+
+            if (optionSelector) {
+                optionSelector.addEventListener('change', function() {
+                    if (this.value === '__custom__') {
+                        if (rawValueInput) {
+                            rawValueInput.style.display = 'block';
+                            rawValueInput.focus();
+                        }
+                    } else {
+                        if (rawValueInput) {
+                            rawValueInput.value = this.value;
+                            rawValueInput.style.display = 'none';
+                        }
+                    }
+                });
+            }
+
+            // In-Studio Live Preview Modal
+            const previewModal = document.getElementById('preview-modal');
+            const openPreviewBtn = document.getElementById('open-preview-btn');
+            const closePreviewBtn = document.getElementById('close-preview-btn');
+            const closePreviewFooterBtn = document.getElementById('close-preview-footer-btn');
+            const previewContainer = document.getElementById('preview-form-content');
+
+            function openPreview() {
+                if (!previewModal || !previewContainer) return;
+                renderPreviewForm();
+                previewModal.classList.add('open');
+            }
+
+            function closePreview() {
+                if (previewModal) previewModal.classList.remove('open');
+            }
+
+            if (openPreviewBtn) openPreviewBtn.addEventListener('click', openPreview);
+            if (closePreviewBtn) closePreviewBtn.addEventListener('click', closePreview);
+            if (closePreviewFooterBtn) closePreviewFooterBtn.addEventListener('click', closePreview);
+
+            // Render interactive preview form with current live settings
+            function renderPreviewForm() {
+                previewContainer.innerHTML = '';
+                
+                // CARD 1: Classification & Campus Location
+                const card1 = document.createElement('div');
+                card1.className = 'preview-step-card';
+
+                const locOptionsHtml = currentCampusLocations.map((loc, idx) => 
+                    `<option value="${loc.name}" ${idx === 0 ? 'selected' : ''}>${loc.name}</option>`
+                ).join('');
+
+                const locChipsHtml = currentCampusLocations.map((loc, idx) => 
+                    `<button type="button" class="preview-chip-btn ${idx === 0 ? 'active' : ''}" data-loc="${loc.name}">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 21h18"></path><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path></svg>
+                        ${loc.name}
+                    </button>`
+                ).join('');
+
+                const initialDispatchLoc = currentCampusLocations.length > 0 ? currentCampusLocations[0].name : 'Campus Tech Team';
+
+                card1.innerHTML = `
+                    <div class="preview-step-header">
+                        <div class="preview-step-num">1</div>
+                        <div>
+                            <h4 class="preview-step-title">Classification &amp; Campus Location</h4>
+                            <p class="preview-step-desc">Core fields configured under Standard Global Fields</p>
+                        </div>
+                    </div>
+
+                    <div class="field" style="margin-bottom: 14px;">
+                        <label style="font-weight: 700; font-size: 13px; color: #1e293b; display: block; margin-bottom: 6px;">
+                            ${currentCoreSettings.title.label} <span style="color:#b33e34;">*</span>
+                        </label>
+                        <input type="text" class="preview-input" placeholder="${currentCoreSettings.title.placeholder}" value="WiFi network connection dropping intermittently" style="width:100%; padding:9px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; box-sizing:border-box;">
+                        ${currentCoreSettings.title.help_text ? `<small class="field-help" style="color:#64748b; font-size:11.5px; margin-top:4px; display:block;">${currentCoreSettings.title.help_text}</small>` : ''}
+                    </div>
+
+                    <div class="field" style="margin-bottom: 14px;">
+                        <label style="font-weight: 700; font-size: 13px; color: #1e293b; display: block; margin-bottom: 6px;">
+                            ${currentCoreSettings.urgency.label} <span style="color:#b33e34;">*</span>
+                        </label>
+                        <select class="preview-input" id="preview-urgency-select" style="width:100%; padding:9px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; box-sizing:border-box;">
+                            <option value="low" ${currentCoreSettings.urgency.default_urgency === 'low' ? 'selected' : ''}>Low (${currentCoreSettings.urgency.sla_low_hours}h SLA Resolution)</option>
+                            <option value="medium" ${currentCoreSettings.urgency.default_urgency === 'medium' || !currentCoreSettings.urgency.default_urgency ? 'selected' : ''}>Medium (${currentCoreSettings.urgency.sla_medium_hours}h SLA Resolution)</option>
+                            <option value="high" ${currentCoreSettings.urgency.default_urgency === 'high' ? 'selected' : ''}>High (${currentCoreSettings.urgency.sla_high_hours}h SLA Resolution)</option>
+                            <option value="critical" ${currentCoreSettings.urgency.default_urgency === 'critical' ? 'selected' : ''}>Urgent / Critical (${currentCoreSettings.urgency.sla_urgent_hours}h SLA Resolution)</option>
+                        </select>
+                        ${currentCoreSettings.urgency.help_text ? `<small class="field-help" style="color:#64748b; font-size:11.5px; margin-top:4px; display:block;">${currentCoreSettings.urgency.help_text}</small>` : ''}
+                    </div>
+
+                    <div class="preview-loc-box">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                            <div>
+                                <strong style="font-size: 13px; color: #0f172a;">Campus Block &amp; Room Details</strong>
+                                <span style="font-size: 11.5px; color: #64748b; display: block;">Configured with ${currentCampusLocations.length} active campus block(s)</span>
+                            </div>
+                            <span style="font-size: 10px; font-weight: 800; background: #e0f2fe; color: #0369a1; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.5px;">AUTO ROUTING</span>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                            <div>
+                                <label style="font-weight: 600; font-size: 12px; color: #334155; display: block; margin-bottom: 5px;">
+                                    ${currentCoreSettings.location.label} <span style="color:#b33e34;">*</span>
+                                </label>
+                                <select id="preview-campus-select" class="preview-input" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:12.5px; box-sizing:border-box;">
+                                    <option value="">-- Choose Campus Block --</option>
+                                    ${locOptionsHtml}
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-weight: 600; font-size: 12px; color: #334155; display: block; margin-bottom: 5px;">
+                                    ${currentCoreSettings.location.room_label} <span style="color:#b33e34;">*</span>
+                                </label>
+                                <input type="text" id="preview-room-input" class="preview-input" placeholder="${currentCoreSettings.location.placeholder}" value="Lab 2 - Table 4" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:12.5px; box-sizing:border-box;">
+                            </div>
+                        </div>
+
+                        ${currentCampusLocations.length > 0 ? `
+                        <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:12px; padding-top:10px; border-top:1px dashed #e2e8f0;">
+                            <span style="font-size:11px; color:#64748b; font-weight:600;">Quick Select:</span>
+                            ${locChipsHtml}
+                        </div>` : ''}
+
+                        <div id="preview-dispatch-box" style="display:inline-flex; align-items:center; gap:6px; margin-top:12px; background:#f0fdf4; border:1px solid #bbf7d0; padding:5px 12px; border-radius:6px; font-size:12px; color:#166534; font-weight:600;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            DISPATCH TARGET: <span id="preview-dispatch-text">${initialDispatchLoc}</span>
+                        </div>
+                    </div>
+                `;
+                previewContainer.appendChild(card1);
+
+                // Wire Card 1 Campus Location Quick Select chips & Dropdown
+                const campusSelect = card1.querySelector('#preview-campus-select');
+                const dispatchText = card1.querySelector('#preview-dispatch-text');
+                const chipButtons = card1.querySelectorAll('.preview-chip-btn');
+
+                if (campusSelect && dispatchText) {
+                    campusSelect.addEventListener('change', function() {
+                        const val = this.value || 'Campus Tech Team';
+                        dispatchText.textContent = val;
+                        chipButtons.forEach(btn => {
+                            if (btn.getAttribute('data-loc') === val) {
+                                btn.classList.add('active');
+                            } else {
+                                btn.classList.remove('active');
+                            }
+                        });
+                    });
+                }
+
+                chipButtons.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const locName = this.getAttribute('data-loc');
+                        if (campusSelect) {
+                            campusSelect.value = locName;
+                            campusSelect.dispatchEvent(new Event('change'));
+                        }
+                    });
+                });
+
+                // CARD 2: Dynamic Diagnostic Questionnaire
+                const card2 = document.createElement('div');
+                card2.className = 'preview-step-card';
+                card2.innerHTML = `
+                    <div class="preview-step-header">
+                        <div class="preview-step-num">2</div>
+                        <div>
+                            <h4 class="preview-step-title">Diagnostic Questionnaire</h4>
+                            <p class="preview-step-desc">${fieldsSchema.length} dynamic field(s) with conditional branching logic</p>
+                        </div>
+                    </div>
+                    <div id="preview-dynamic-fields-container" style="display:flex; flex-direction:column; gap:14px;"></div>
+                `;
+                previewContainer.appendChild(card2);
+
+                const dynamicContainer = card2.querySelector('#preview-dynamic-fields-container');
+
+                if (fieldsSchema.length === 0) {
+                    dynamicContainer.innerHTML = `
+                        <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:6px; padding:18px; text-align:center;">
+                            <p class="muted" style="margin:0; font-size:12.5px;">No dynamic branching questions added yet. Use the Questions tab on the left to add your first question.</p>
+                        </div>
+                    `;
+                } else {
+                    fieldsSchema.forEach(field => {
+                        const block = document.createElement('div');
+                        block.className = 'field dynamic-field-wrapper';
+                        block.id = `preview-field-${field.key}`;
+                        block.setAttribute('data-key', field.key);
+                        block.setAttribute('data-cond-type', field.condition_type || 'always');
+                        block.setAttribute('data-cond-parent', field.condition_field_key || '');
+                        block.setAttribute('data-cond-op', field.condition_operator || 'equals');
+                        block.setAttribute('data-cond-val', (field.condition_value || '').toLowerCase());
+
+                        let inputHtml = '';
+                        if (field.type === 'radio') {
+                            inputHtml = `<ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">` +
+                                field.options.map(opt => `
+                                    <li>
+                                        <label style="display:flex; align-items:center; gap:10px; padding:8px 12px; border:1px solid #dcebda; border-radius:6px; background:#fff; cursor:pointer; font-size:13px; color:#173b1c; transition: background 0.15s ease;">
+                                            <input type="radio" name="preview_${field.key}" value="${opt}" class="preview-input">
+                                            <span>${opt}</span>
+                                        </label>
+                                    </li>
+                                `).join('') + `</ul>`;
+                        } else if (field.type === 'checkbox') {
+                            inputHtml = `<ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">` +
+                                field.options.map(opt => `
+                                    <li>
+                                        <label style="display:flex; align-items:center; gap:10px; padding:8px 12px; border:1px solid #dcebda; border-radius:6px; background:#fff; cursor:pointer; font-size:13px; color:#173b1c; transition: background 0.15s ease;">
+                                            <input type="checkbox" name="preview_${field.key}" value="${opt}" class="preview-input">
+                                            <span>${opt}</span>
+                                        </label>
+                                    </li>
+                                `).join('') + `</ul>`;
+                        } else if (field.type === 'select') {
+                            inputHtml = `<select name="preview_${field.key}" class="preview-input" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; box-sizing:border-box;">
+                                <option value="">-- Select an option --</option>
+                                ${field.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                            </select>`;
+                        } else if (field.type === 'textarea') {
+                            inputHtml = `<textarea placeholder="${field.help_text || 'Enter details...'}" rows="3" class="preview-input" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; box-sizing:border-box;"></textarea>`;
+                        } else if (field.type === 'file') {
+                            inputHtml = `<input type="file" disabled style="background:#fafafa; width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; box-sizing:border-box;">`;
+                        } else {
+                            inputHtml = `<input type="text" placeholder="${field.help_text || 'Enter details...'}" class="preview-input" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; box-sizing:border-box;">`;
+                        }
+
+                        block.innerHTML = `
+                            <label style="font-weight: 700; font-size: 13px; color: #1e293b; display: block; margin-bottom: 6px;">
+                                ${field.label} ${field.required ? '<span style="color:#b33e34;">*</span>' : ''}
+                            </label>
+                            ${inputHtml}
+                            ${field.help_text ? `<small class="field-help" style="color:#64748b; font-size:11.5px; margin-top:4px; display:block;">${field.help_text}</small>` : ''}
+                        `;
+                        dynamicContainer.appendChild(block);
+                    });
+
+                    // Add "Other issue details" dynamic expander
+                    const otherBlock = document.createElement('div');
+                    otherBlock.className = 'field dynamic-field-wrapper';
+                    otherBlock.id = 'preview-other-details';
+                    otherBlock.style.display = 'none';
+                    otherBlock.style.background = '#fffcf5';
+                    otherBlock.style.padding = '14px';
+                    otherBlock.style.border = '1px solid #f9e2aa';
+                    otherBlock.style.borderRadius = '6px';
+                    otherBlock.innerHTML = `
+                        <label style="color:#7a5a0d; font-weight:700; font-size:13px; display:block; margin-bottom:6px;">Describe other issue details</label>
+                        <textarea rows="3" placeholder="Please specify your other problem here..." style="width:100%; padding:8px 10px; border:1px solid #e5c07b; border-radius:6px; font-size:13px; box-sizing:border-box; background:#ffffff;"></textarea>
+                    `;
+                    dynamicContainer.appendChild(otherBlock);
+                }
+
+                // CARD 3: Problem Description & Attachment
+                const card3 = document.createElement('div');
+                card3.className = 'preview-step-card';
+                card3.innerHTML = `
+                    <div class="preview-step-header">
+                        <div class="preview-step-num">3</div>
+                        <div>
+                            <h4 class="preview-step-title">Problem Description &amp; Evidence</h4>
+                            <p class="preview-step-desc">Core descriptive input and file attachments</p>
+                        </div>
+                    </div>
+
+                    <div class="field" style="margin-bottom: 14px;">
+                        <label style="font-weight: 700; font-size: 13px; color: #1e293b; display: block; margin-bottom: 6px;">
+                            ${currentCoreSettings.description.label} <span style="color:#b33e34;">*</span>
+                        </label>
+                        <textarea rows="3" class="preview-input" placeholder="${currentCoreSettings.description.placeholder}" style="width:100%; padding:9px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; box-sizing:border-box;">The laboratory workstations are failing to acquire an IP lease from the subnetwork router after system restart.</textarea>
+                        ${currentCoreSettings.description.help_text ? `<small class="field-help" style="color:#64748b; font-size:11.5px; margin-top:4px; display:block;">${currentCoreSettings.description.help_text}</small>` : ''}
+                    </div>
+
+                    <div class="field">
+                        <label style="font-weight: 700; font-size: 13px; color: #1e293b; display: block; margin-bottom: 6px;">
+                            ${currentCoreSettings.attachment.label} (Optional screenshot / photo)
+                        </label>
+                        <div style="background:#f8fafc; border:1.5px dashed #cbd5e1; border-radius:8px; padding:18px; text-align:center;">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:6px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                            <span style="font-size:12.5px; font-weight:600; color:#334155; display:block;">Drag &amp; drop screenshot or click to browse</span>
+                            <small style="color:#64748b; font-size:11.5px; display:block; margin-top:4px;">
+                                Allowed formats: ${currentCoreSettings.attachment.allowed_extensions}. Max file size: ${currentCoreSettings.attachment.max_file_size_mb} MB.
+                            </small>
+                        </div>
+                    </div>
+                `;
+                previewContainer.appendChild(card3);
+
+                // Attach reactive event listener to all preview inputs
+                const previewInputs = previewContainer.querySelectorAll('.preview-input');
+                previewInputs.forEach(input => {
+                    input.addEventListener('change', evaluatePreviewConditions);
+                    input.addEventListener('input', evaluatePreviewConditions);
+                });
+
+                evaluatePreviewConditions();
+            }
+
+            // Evaluates conditional branching in preview
+            function evaluatePreviewConditions() {
+                const values = {};
+                let hasOtherSelected = false;
+
+                // Collect current values
+                fieldsSchema.forEach(field => {
+                    if (field.type === 'radio') {
+                        const checked = previewContainer.querySelector(`input[name="preview_${field.key}"]:checked`);
+                        values[field.key] = checked ? checked.value : '';
+                        if (checked && checked.value.toLowerCase().includes('other')) hasOtherSelected = true;
+                    } else if (field.type === 'checkbox') {
+                        const checkedNodes = previewContainer.querySelectorAll(`input[name="preview_${field.key}"]:checked`);
+                        const vals = Array.from(checkedNodes).map(n => n.value);
+                        values[field.key] = vals;
+                        if (vals.some(v => v.toLowerCase().includes('other'))) hasOtherSelected = true;
+                    } else if (field.type === 'select') {
+                        const sel = previewContainer.querySelector(`select[name="preview_${field.key}"]`);
+                        values[field.key] = sel ? sel.value : '';
+                        if (sel && sel.value.toLowerCase().includes('other')) hasOtherSelected = true;
+                    }
+                });
+
+                // Evaluate each dynamic block
+                const blocks = previewContainer.querySelectorAll('.dynamic-field-wrapper[data-key]');
+                blocks.forEach(block => {
+                    const condType = block.getAttribute('data-cond-type') || 'always';
+                    const parentKey = block.getAttribute('data-cond-parent');
+                    const condOp = block.getAttribute('data-cond-op') || 'equals';
+                    const targetVal = (block.getAttribute('data-cond-val') || '').toLowerCase().trim();
+
+                    if (condType === 'always' || !parentKey || !parentKey.trim()) {
+                        block.style.display = 'block';
+                        return;
+                    }
+
+                    const parentVal = values[parentKey];
+                    let match = false;
+
+                    if (parentVal !== undefined && parentVal !== null && parentVal !== '') {
+                        if (Array.isArray(parentVal) && parentVal.length > 0) {
+                            if (condOp === 'equals') {
+                                match = parentVal.some(pv => pv.toLowerCase().trim() === targetVal);
+                            } else if (condOp === 'not_equals') {
+                                match = !parentVal.some(pv => pv.toLowerCase().trim() === targetVal);
+                            } else {
+                                match = parentVal.some(pv => pv.toLowerCase().includes(targetVal));
+                            }
+                        } else if (typeof parentVal === 'string' && parentVal.trim() !== '') {
+                            const pLower = parentVal.toLowerCase().trim();
+                            if (condOp === 'equals') {
+                                match = (pLower === targetVal);
+                            } else if (condOp === 'not_equals') {
+                                match = (pLower !== targetVal);
+                            } else {
+                                match = pLower.includes(targetVal);
+                            }
+                        }
+                    }
+
+                    if (condType === 'visible_if') {
+                        block.style.display = match ? 'block' : 'none';
+                    } else if (condType === 'hidden_if') {
+                        block.style.display = match ? 'none' : 'block';
+                    }
+                });
+
+                const otherBox = document.getElementById('preview-other-details');
+                if (otherBox) {
+                    otherBox.style.display = hasOtherSelected ? 'block' : 'none';
+                }
             }
         });
     </script>

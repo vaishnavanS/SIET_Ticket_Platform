@@ -356,6 +356,21 @@ class FormBuilderTests(TestCase):
         self.assertEqual(form.fields['urgency'].label, 'Severity Level')
         self.assertEqual(form.fields['urgency'].initial, 'high')
 
+        # 4. Verify Form Studio page renders modals, current settings, and balanced script tags
+        res_studio = self.client.get(reverse('tickets:form_builder'))
+        self.assertEqual(res_studio.status_code, 200)
+        self.assertContains(res_studio, 'id="modal-core-location"')
+        self.assertContains(res_studio, 'id="modal-core-urgency"')
+        self.assertContains(res_studio, 'id="modal-core-title"')
+        self.assertContains(res_studio, 'id="modal-core-description"')
+        self.assertContains(res_studio, 'id="modal-core-attachment"')
+        self.assertContains(res_studio, 'id="preview-modal"')
+        self.assertContains(res_studio, 'openCoreModal')
+        self.assertContains(res_studio, 'currentCoreSettings')
+        self.assertContains(res_studio, 'currentCampusLocations')
+        studio_html = res_studio.content.decode('utf-8')
+        self.assertEqual(studio_html.count('<script'), studio_html.count('</script>'))
+
     def test_ticket_creation_with_dynamic_custom_answers_and_routing(self):
         from django.core.management import call_command
         from accounts.models import UserProfile
