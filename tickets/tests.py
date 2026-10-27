@@ -1086,6 +1086,61 @@ class CampusLocationAndRoutingTests(TestCase):
         self.assertEqual(ticket.location_details, '1st Floor - Dean Chamber')
         self.assertEqual(ticket.location, 'Admin Block - 1st Floor - Dean Chamber')
 
+    def test_reporter_can_view_resolved_ticket_and_confirm_resolution(self):
+        # 1. Ticket in RESOLVED state
+        ticket = Ticket.objects.create(
+            title='Lab 2 Switch Issue',
+            description='Port disconnected',
+            category=self.category,
+            reporter=self.student,
+            assigned_technician=self.tech_park_tech,
+            status=TicketStatus.RESOLVED,
+            location='Tech Park - Lab 2'
+        )
+
+        # 2. Reporter views resolved ticket (must not raise NoReverseMatch)
+        self.client.login(username='vlsi_student', password='Password123!')
+        detail_res = self.client.get(reverse('tickets:detail', kwargs={'pk': ticket.pk}))
+        self.assertEqual(detail_res.status_code, 200)
+        self.assertContains(detail_res, reverse('tickets:confirm_resolution', kwargs={'pk': ticket.pk}))
+
+        # 3. Reporter confirms resolution and closes ticket
+        confirm_res = self.client.post(
+            reverse('tickets:confirm_resolution', kwargs={'pk': ticket.pk}),
+            {'action': 'confirm_close', 'closing_notes': 'Verified working in lab!'}
+        )
+        self.assertEqual(confirm_res.status_code, 302)
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.status, TicketStatus.CLOSED)
+
+        # Verify comment & history
+        last_comment = TicketComment.objects.filter(ticket=ticket).last()
+        self.assertIn('Verified working in lab!', last_comment.content)
+
+    def test_reporter_can_reopen_resolved_ticket(self):
+        ticket = Ticket.objects.create(
+            title='Projector Flicker',
+            description='HDMI port flickering',
+            category=self.category,
+            reporter=self.student,
+            assigned_technician=self.tech_park_tech,
+            status=TicketStatus.RESOLVED,
+            location='Tech Park - Lab 2'
+        )
+        self.client.login(username='vlsi_student', password='Password123!')
+
+        reopen_res = self.client.post(
+            reverse('tickets:confirm_resolution', kwargs={'pk': ticket.pk}),
+            {'action': 'reopen', 'reopen_reason': 'Still flickering on 1080p mode'}
+        )
+        self.assertEqual(reopen_res.status_code, 302)
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.status, TicketStatus.IN_PROGRESS)
+
+        last_comment = TicketComment.objects.filter(ticket=ticket).last()
+        self.assertIn('Still flickering on 1080p mode', last_comment.content)
+
+
 
 
 

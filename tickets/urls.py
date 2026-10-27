@@ -17,6 +17,7 @@ urlpatterns = [
     path('<int:pk>/edit/', views.ticket_edit, name='edit'),
     path('<int:pk>/status/', views.ticket_update_status, name='update_status'),
     path('<int:pk>/comment/', views.ticket_add_comment, name='add_comment'),
+    path('<int:pk>/confirm/', views.ticket_confirm_resolution, name='confirm_resolution'),
     path('solutions/', views.solutions_list, name='solutions'),
     path('solutions/list/', views.solutions_list, name='solutions_list'),
     path('solutions/<int:pk>/feedback/', views.solution_feedback, name='solution_feedback'),
