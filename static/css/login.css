@@ -16,19 +16,31 @@ body {
 }
 
 .navbar {
-    height: 52px;
+    height: 56px;
     background: #063b0c;
-    padding: 0 5%;
+    padding: 0 4%;
     display: flex;
     align-items: center;
     justify-content: space-between;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: relative;
 }
 
-.navbar-brand-group {
+.navbar-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    flex: 1;
+}
+
+.navbar-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
+    flex-shrink: 0;
 }
 
 .logo-text {
@@ -41,25 +53,24 @@ body {
     white-space: nowrap;
 }
 
-.navbar-divider {
-    color: rgba(255, 255, 255, 0.35);
-    font-size: 14px;
-    font-weight: 300;
+.navbar-center {
+    flex: 2;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .navbar-college-name {
-    color: #c8ecc2;
-    font-size: 13.5px;
-    font-weight: 600;
-    letter-spacing: 0.2px;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
     white-space: nowrap;
 }
 
-.service-text {
-    color: #d7c800;
-    font-size: 13px;
-    font-weight: 600;
-    white-space: nowrap;
+.navbar-right {
+    flex: 1;
 }
 
 .login-container {
@@ -93,22 +104,13 @@ body {
 }
 
 .college-name {
-    margin-top: 12px;
-    margin-bottom: 4px;
+    margin-top: 14px;
+    margin-bottom: 16px;
     color: #064b0d;
     font-size: 18px;
     font-weight: 800;
     line-height: 1.35;
     letter-spacing: -0.2px;
-}
-
-.college-sub {
-    margin: 0 0 14px 0;
-    color: #1b5e20;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
 
 .login-card h1 {
@@ -261,9 +263,15 @@ body {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
-    .navbar-divider,
+@media (max-width: 860px) {
     .navbar-college-name {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 700px) {
+    .navbar-center,
+    .navbar-right {
         display: none;
     }
 }
@@ -271,10 +279,6 @@ body {
 @media (max-width: 600px) {
     .navbar {
         padding: 0 16px;
-    }
-
-    .service-text { 
-        font-size: 11px; 
     }
 
     .login-card {

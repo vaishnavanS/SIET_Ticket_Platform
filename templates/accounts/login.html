@@ -16,12 +16,14 @@
 </head>
 <body>
     <header class="navbar">
-        <div class="navbar-brand-group">
+        <div class="navbar-brand">
+            <img src="{% static 'images/logo.jpg' %}" alt="SIET Logo" class="navbar-logo">
             <span class="logo-text">SIET-Helpdesk</span>
-            <span class="navbar-divider">|</span>
+        </div>
+        <div class="navbar-center">
             <span class="navbar-college-name">Sri Shakthi Institute of Engineering and Technology</span>
         </div>
-        <span class="service-text">&#9881; &nbsp;Campus IT Service Desk</span>
+        <div class="navbar-right"></div>
     </header>
 
     <main class="login-container">
@@ -29,7 +31,6 @@
             <div class="logo-section">
                 <img src="{% static 'images/logo.jpg' %}" alt="Sri Shakthi Institute of Engineering and Technology Logo" class="logo">
                 <h2 class="college-name">Sri Shakthi Institute of Engineering and Technology</h2>
-                <p class="college-sub">Campus IT Helpdesk &amp; Ticketing Portal</p>
             </div>
 
             <h1>Login to your account</h1>
