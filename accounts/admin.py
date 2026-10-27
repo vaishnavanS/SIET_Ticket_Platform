@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import UserProfile, TechnicianGroup
+from .models import UserProfile, TechnicianGroup, SiteEmailSetting, EmailQueue
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -30,4 +30,25 @@ class TechnicianGroupAdmin(admin.ModelAdmin):
     def get_technician_count(self, obj):
         return obj.technicians.count()
     get_technician_count.short_description = 'Number of Technicians'
+
+
+@admin.register(SiteEmailSetting)
+class SiteEmailSettingAdmin(admin.ModelAdmin):
+    list_display = ('site_name', 'from_email', 'smtp_backend', 'smtp_host', 'smtp_port', 'smtp_use_tls', 'updated_at')
+    readonly_fields = ('updated_at',)
+
+
+@admin.register(EmailQueue)
+class EmailQueueAdmin(admin.ModelAdmin):
+    list_display = ('id', 'recipient_email', 'subject', 'status', 'attempts', 'notification_type', 'created_at', 'sent_at')
+    list_filter = ('status', 'notification_type', 'created_at')
+    search_fields = ('recipient_email', 'recipient_name', 'subject', 'body', 'error_message')
+    readonly_fields = ('created_at', 'sent_at')
+    actions = ['retry_failed_emails']
+
+    def retry_failed_emails(self, request, queryset):
+        count = queryset.filter(status='failed').update(status='pending', attempts=0)
+        self.message_user(request, f"Marked {count} failed email(s) for retry.")
+    retry_failed_emails.short_description = "Retry selected failed emails"
+
 

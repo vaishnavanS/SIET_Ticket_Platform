@@ -354,3 +354,113 @@ class AdminUserActionTests(TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertTrue(User.objects.filter(id=self.admin.id).exists())
         self.assertContains(res, "cannot delete or modify your own active admin account")
+
+
+class EmailQueueAndCronTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            username='admin_queue_tester',
+            email='admin.queue@siet.edu.in',
+            password='Password123!'
+        )
+        self.admin.profile.role = UserRole.ADMIN
+        self.admin.profile.save()
+
+    def test_queue_email_creates_record(self):
+        from accounts.models import EmailQueue
+        from accounts.utils import queue_email
+
+        initial_count = EmailQueue.objects.count()
+        queued = queue_email(
+            recipient_email='student@siet.edu.in',
+            subject='Test Subject',
+            body='Test message body',
+            notification_type='general'
+        )
+        self.assertEqual(EmailQueue.objects.count(), initial_count + 1)
+        self.assertEqual(queued.recipient_email, 'student@siet.edu.in')
+        self.assertEqual(queued.subject, 'Test Subject')
+        self.assertEqual(queued.body, 'Test message body')
+
+    def test_process_email_queue_marks_as_sent(self):
+        from accounts.models import EmailQueue
+        from accounts.utils import process_email_queue
+
+        email_item = EmailQueue.objects.create(
+            recipient_email='faculty@siet.edu.in',
+            subject='Faculty Notification',
+            body='Campus LAN upgrade details',
+            status=EmailQueue.Status.PENDING
+        )
+
+        stats = process_email_queue(limit=10)
+        self.assertEqual(stats['processed'], 1)
+        self.assertEqual(stats['sent'], 1)
+        self.assertEqual(stats['failed'], 0)
+
+        email_item.refresh_from_db()
+        self.assertEqual(email_item.status, EmailQueue.Status.SENT)
+        self.assertIsNotNone(email_item.sent_at)
+        self.assertEqual(email_item.error_message, '')
+
+    def test_send_queued_emails_management_command(self):
+        from io import StringIO
+        from django.core.management import call_command
+        from accounts.models import EmailQueue
+
+        EmailQueue.objects.create(
+            recipient_email='cron_test@siet.edu.in',
+            subject='Cron Notification',
+            body='Automated cron dispatch',
+            status=EmailQueue.Status.PENDING
+        )
+
+        out = StringIO()
+        call_command('send_queued_emails', stdout=out)
+        output_str = out.getvalue()
+        self.assertIn("1 sent successfully", output_str)
+
+        pending = EmailQueue.objects.filter(recipient_email='cron_test@siet.edu.in', status=EmailQueue.Status.PENDING).count()
+        self.assertEqual(pending, 0)
+
+    def test_process_email_queue_handles_errors_and_retries(self):
+        from unittest.mock import patch
+        from accounts.models import EmailQueue
+        from accounts.utils import process_email_queue
+
+        failed_item = EmailQueue.objects.create(
+            recipient_email='bad_smtp@siet.edu.in',
+            subject='Error Handling Test',
+            body='Testing failure retry counter',
+            status=EmailQueue.Status.PENDING,
+            attempts=2,
+            max_attempts=3
+        )
+
+        with patch('django.core.mail.message.EmailMessage.send', side_effect=Exception("SMTP Connection Timeout")):
+            stats = process_email_queue(limit=10)
+            self.assertEqual(stats['failed'], 1)
+
+        failed_item.refresh_from_db()
+        self.assertEqual(failed_item.attempts, 3)
+        self.assertEqual(failed_item.status, EmailQueue.Status.FAILED)
+        self.assertIn("SMTP Connection Timeout", failed_item.error_message)
+
+    def test_admin_manual_process_queue_action(self):
+        from accounts.models import EmailQueue
+
+        EmailQueue.objects.create(
+            recipient_email='admin_flush@siet.edu.in',
+            subject='Manual Trigger Test',
+            body='Checking admin button',
+            status=EmailQueue.Status.PENDING
+        )
+
+        self.client.login(username='admin_queue_tester', password='Password123!')
+        res = self.client.post(reverse('accounts:admin_email_settings'), {'action': 'process_queue'}, follow=True)
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "dispatched successfully")
+
+        pending = EmailQueue.objects.filter(recipient_email='admin_flush@siet.edu.in', status=EmailQueue.Status.PENDING).count()
+        self.assertEqual(pending, 0)
+

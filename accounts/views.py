@@ -357,9 +357,8 @@ def admin_categories(request):
 @admin_required
 @require_http_methods(['GET', 'POST'])
 def admin_email_settings(request):
-    """Admin configuration for site outgoing email and SMTP connection"""
-    from .models import SiteEmailSetting
-    from .utils import get_site_email_connection
+    from .models import SiteEmailSetting, EmailQueue
+    from .utils import get_site_email_connection, process_email_queue
     from django.core.mail import EmailMessage
 
     setting = SiteEmailSetting.get_setting()
@@ -414,7 +413,28 @@ def admin_email_settings(request):
                     messages.error(request, f"❌ Failed to dispatch test email: {str(e)}")
             return redirect('accounts:admin_email_settings')
 
-    return render(request, 'accounts/admin_email_settings.html', {'setting': setting})
+        elif action == 'process_queue':
+            stats = process_email_queue(limit=50, retry_failed=True)
+            if stats['processed'] == 0:
+                messages.info(request, "The outgoing email queue is already clear. No pending emails were found.")
+            else:
+                messages.success(
+                    request,
+                    f"✔ Processed {stats['processed']} queued email(s): {stats['sent']} dispatched successfully, {stats['failed']} failed."
+                )
+            return redirect('accounts:admin_email_settings')
+
+    queue_stats = {
+        'pending': EmailQueue.objects.filter(status=EmailQueue.Status.PENDING).count(),
+        'sent': EmailQueue.objects.filter(status=EmailQueue.Status.SENT).count(),
+        'failed': EmailQueue.objects.filter(status=EmailQueue.Status.FAILED).count(),
+        'recent': EmailQueue.objects.select_related('ticket').order_by('-created_at')[:6],
+    }
+
+    return render(request, 'accounts/admin_email_settings.html', {
+        'setting': setting,
+        'queue_stats': queue_stats,
+    })
 
 
 
@@ -667,7 +687,7 @@ def password_reset_request_view(request):
                     base_url = get_site_base_url(request)
                     reset_link = f"{base_url}/accounts/password-reset/{uid}/{token}/"
 
-                    conn, from_email, site_name = get_site_email_connection()
+                    _, _, site_name = get_site_email_connection()
                     subject = f"[{site_name}] Password Reset Request"
                     context = {
                         'user': user,
@@ -677,17 +697,18 @@ def password_reset_request_view(request):
                     body = render_to_string('accounts/password_reset_email.html', context)
 
                     try:
-                        email_msg = EmailMessage(
+                        from .utils import queue_email
+                        queue_email(
+                            recipient_email=user.email,
+                            recipient_name=user.get_full_name() or user.username,
                             subject=subject,
                             body=body,
-                            from_email=from_email,
-                            to=[user.email],
-                            connection=conn,
+                            html_message=body,
+                            notification_type='password_reset',
                         )
-                        email_msg.send(fail_silently=False)
-                        logger.info(f"Password reset link sent to {user.email} for user {user.username}")
+                        logger.info(f"Password reset link queued for {user.email} for user {user.username}")
                     except Exception as e:
-                        logger.error(f"Failed to dispatch password reset email to {user.email}: {e}")
+                        logger.error(f"Failed to queue password reset email to {user.email}: {e}")
 
                     request.session['reset_email_masked'] = mask_email_display(user.email)
                     messages.info(request, "If an account matches, a reset link has been sent.")

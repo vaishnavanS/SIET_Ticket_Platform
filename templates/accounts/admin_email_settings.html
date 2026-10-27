@@ -200,6 +200,50 @@
                 </form>
             </section>
 
+            <!-- Asynchronous Email Queue & Cron Card -->
+            <section class="panel" style="padding: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h2 style="font-size: 16px; margin: 0; color: #0f172a;">
+                        Outgoing Email Queue & Background Worker
+                    </h2>
+                    <span style="font-size: 11px; padding: 3px 8px; border-radius: 9999px; background: #e0f2fe; color: #0369a1; font-weight: 600;">
+                        Cron Driven
+                    </span>
+                </div>
+                <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 14px; line-height: 1.5;">
+                    Emails are queued into the database instantly without blocking Gunicorn workers during user requests. A 1-minute server cron job dispatches them asynchronously.
+                </p>
+
+                <!-- Queue Metric Counters -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+                    <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px; text-align: center;">
+                        <span style="display: block; font-size: 20px; font-weight: 700; color: #b45309;">{{ queue_stats.pending }}</span>
+                        <span style="font-size: 11.5px; font-weight: 600; color: #92400e;">Pending</span>
+                    </div>
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px; text-align: center;">
+                        <span style="display: block; font-size: 20px; font-weight: 700; color: #15803d;">{{ queue_stats.sent }}</span>
+                        <span style="font-size: 11.5px; font-weight: 600; color: #166534;">Sent</span>
+                    </div>
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px; text-align: center;">
+                        <span style="display: block; font-size: 20px; font-weight: 700; color: #b91c1c;">{{ queue_stats.failed }}</span>
+                        <span style="font-size: 11.5px; font-weight: 600; color: #991b1b;">Failed</span>
+                    </div>
+                </div>
+
+                <form method="post" action="{% url 'accounts:admin_email_settings' %}" style="margin-bottom: 14px;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="process_queue">
+                    <button type="submit" class="secondary-button" style="width: 100%; justify-content: center; font-weight: 600; font-size: 13px;">
+                        ⚡ Dispatch Queued Emails Now ({{ queue_stats.pending }} Pending)
+                    </button>
+                </form>
+
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 12px; color: #475569;">
+                    <div style="font-weight: 600; margin-bottom: 4px; color: #1e293b;">Server Cron Configuration (every 1 min):</div>
+                    <code style="display: block; word-break: break-all; background: #0f172a; color: #38bdf8; padding: 6px 8px; border-radius: 4px; font-size: 11px;">* * * * * cd {{ request.META.PWD|default:'/path/to/project' }} && ./venv/bin/python manage.py send_queued_emails &gt;&gt; logs/email_cron.log 2&gt;&amp;1</code>
+                </div>
+            </section>
+
             <!-- Automated System Email Coverage Info -->
             <section class="panel" style="padding: 24px; background: #ffffff;">
                 <h3 style="font-size: 15px; margin-top: 0; margin-bottom: 12px; color: #0f172a;">

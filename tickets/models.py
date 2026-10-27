@@ -298,6 +298,16 @@ class Ticket(models.Model):
             self.assigned_at = timezone.now()
             self.save(update_fields=['assigned_technician', 'assigned_group', 'assigned_at', 'updated_at'])
             try:
+                TicketNotification.objects.create(
+                    recipient=tech,
+                    ticket=self,
+                    title=f"New Ticket Assigned: #{self.ticket_number}",
+                    message=f"You have been allotted to Ticket #{self.ticket_number} - '{self.title}' ({self.get_urgency_display()})",
+                    notification_type=TicketNotification.NotificationType.ASSIGNED
+                )
+            except Exception:
+                pass
+            try:
                 from .services import send_ticket_assigned_email
                 send_ticket_assigned_email(self, tech)
             except Exception:

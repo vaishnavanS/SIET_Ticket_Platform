@@ -1,12 +1,11 @@
-from django.core.mail import EmailMessage
-from accounts.utils import get_site_email_connection, get_site_base_url
+from accounts.utils import get_site_email_connection, get_site_base_url, queue_email
 import logging
 
 logger = logging.getLogger(__name__)
 
 def send_ticket_assigned_email(ticket, technician=None):
     """
-    Send an automated notification email to the technician who is allotted for a ticket
+    Queue an automated notification email to the technician who is allotted for a ticket
     from the admin-configured site email with direct LAN portal link.
     """
     tech = technician or ticket.assigned_technician
@@ -22,7 +21,7 @@ def send_ticket_assigned_email(ticket, technician=None):
     base_url = get_site_base_url()
     ticket_url = f"{base_url}/tickets/{ticket.pk}/"
 
-    conn, from_email, site_name = get_site_email_connection()
+    _, _, site_name = get_site_email_connection()
 
     subject = f"[{site_name}] New Ticket Assigned: #{ticket.ticket_number} - {ticket.title}"
     body = f"""Hello {tech_name},
@@ -35,7 +34,7 @@ Title:        {ticket.title}
 Category:     {category_name}
 Priority:     {priority_name}
 Reported By:  {reporter_name} ({reporter_email})
-Created At:   {ticket.created_at.strftime('%B %d, %Y at %I:%M %p')}
+Created At:   {ticket.created_at.strftime('%B %d, %Y at %I:%M %p') if ticket.created_at else 'Just now'}
 ============================================================
 
 Problem Description:
@@ -51,23 +50,23 @@ Regards,
 """
 
     try:
-        msg = EmailMessage(
+        queue_email(
+            recipient_email=tech.email,
+            recipient_name=tech_name,
             subject=subject,
             body=body,
-            from_email=from_email,
-            to=[tech.email],
-            connection=conn,
+            ticket=ticket,
+            notification_type='ticket_assigned',
         )
-        msg.send(fail_silently=False)
         return True
     except Exception as e:
-        logger.error(f"Failed to dispatch ticket assigned email to {tech.email}: {e}")
+        logger.error(f"Failed to queue ticket assigned email to {tech.email}: {e}")
         return False
 
 
 def send_ticket_resolved_email(ticket, resolution_notes=None):
     """
-    Send an email notification to the user who raised the ticket when the technician resolves it.
+    Queue an email notification to the user who raised the ticket when the technician resolves it.
     """
     if not ticket.reporter or not ticket.reporter.email:
         return False
@@ -85,7 +84,7 @@ def send_ticket_resolved_email(ticket, resolution_notes=None):
     base_url = get_site_base_url()
     ticket_url = f"{base_url}/tickets/{ticket.pk}/"
 
-    conn, from_email, site_name = get_site_email_connection()
+    _, _, site_name = get_site_email_connection()
 
     subject = f"[{site_name}] Your Ticket #{ticket.ticket_number} has been Resolved"
     body = f"""Hello {reporter_name},
@@ -114,15 +113,16 @@ Best regards,
 """
 
     try:
-        msg = EmailMessage(
+        queue_email(
+            recipient_email=ticket.reporter.email,
+            recipient_name=reporter_name,
             subject=subject,
             body=body,
-            from_email=from_email,
-            to=[ticket.reporter.email],
-            connection=conn,
+            ticket=ticket,
+            notification_type='ticket_resolved',
         )
-        msg.send(fail_silently=False)
         return True
     except Exception as e:
-        logger.error(f"Failed to dispatch ticket resolved email to {ticket.reporter.email}: {e}")
+        logger.error(f"Failed to queue ticket resolved email to {ticket.reporter.email}: {e}")
         return False
+

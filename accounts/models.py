@@ -142,3 +142,44 @@ class SiteEmailSetting(models.Model):
         verbose_name = "Site Email Configuration"
 
 
+class EmailQueue(models.Model):
+    """
+    Queue table for asynchronous email dispatch.
+    Decouples HTTP requests from external SMTP network latency so Gunicorn workers never block.
+    """
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        SENT = 'sent', 'Sent'
+        FAILED = 'failed', 'Failed'
+
+    recipient_email = models.EmailField(db_index=True)
+    recipient_name = models.CharField(max_length=150, blank=True, default='')
+    subject = models.CharField(max_length=255)
+    body = models.TextField()
+    html_message = models.TextField(blank=True, default='')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING, db_index=True)
+    attempts = models.PositiveIntegerField(default=0)
+    max_attempts = models.PositiveIntegerField(default=3)
+    error_message = models.TextField(blank=True, default='')
+    notification_type = models.CharField(max_length=50, blank=True, default='general', db_index=True)
+    ticket = models.ForeignKey(
+        'tickets.Ticket',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='queued_emails',
+        help_text="Optional associated ticket"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = "Queued Email"
+        verbose_name_plural = "Queued Emails"
+
+    def __str__(self):
+        return f"[{self.status.upper()}] {self.subject} -> {self.recipient_email}"
+
+
+
