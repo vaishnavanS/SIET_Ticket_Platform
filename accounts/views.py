@@ -714,10 +714,7 @@ def password_reset_request_view(request):
                     messages.info(request, "If an account matches, a reset link has been sent.")
                     return redirect('accounts:password_reset_done')
             else:
-                # To prevent user enumeration, show the generic confirmation even if account is not found
-                request.session['reset_email_masked'] = "your registered email address"
-                messages.info(request, "If an account matches, a reset link has been sent.")
-                return redirect('accounts:password_reset_done')
+                error = "No account found with this username or email address. Please check your credentials or contact the Network Team to get this resolved."
 
     return render(request, 'accounts/password_reset.html', {
         'error': error,
