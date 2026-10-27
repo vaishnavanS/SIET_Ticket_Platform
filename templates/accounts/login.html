@@ -11,19 +11,25 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIET Helpdesk - Login</title>
-    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+    <title>Sri Shakthi Institute of Engineering and Technology - SIET Helpdesk</title>
+    <link rel="stylesheet" href="{% static 'css/login.css' %}?v=3.0">
 </head>
 <body>
     <header class="navbar">
-        <span class="logo-text">SIET-Helpdesk</span>
+        <div class="navbar-brand-group">
+            <span class="logo-text">SIET-Helpdesk</span>
+            <span class="navbar-divider">|</span>
+            <span class="navbar-college-name">Sri Shakthi Institute of Engineering and Technology</span>
+        </div>
         <span class="service-text">&#9881; &nbsp;Campus IT Service Desk</span>
     </header>
 
     <main class="login-container">
         <div class="login-card">
             <div class="logo-section">
-                <img src="{% static 'images/logo.jpg' %}" alt="SIET logo" class="logo">
+                <img src="{% static 'images/logo.jpg' %}" alt="Sri Shakthi Institute of Engineering and Technology Logo" class="logo">
+                <h2 class="college-name">Sri Shakthi Institute of Engineering and Technology</h2>
+                <p class="college-sub">Campus IT Helpdesk &amp; Ticketing Portal</p>
             </div>
 
             <h1>Login to your account</h1>
@@ -69,6 +75,8 @@
         </div>
     </main>
 
-    <footer class="site-footer"></footer>
+    <footer class="site-footer">
+        &copy; {% now "Y" %} Sri Shakthi Institute of Engineering and Technology &bull; SIET Helpdesk
+    </footer>
 </body>
 </html>

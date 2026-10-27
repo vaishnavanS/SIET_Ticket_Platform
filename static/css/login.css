@@ -25,6 +25,12 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
+.navbar-brand-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .logo-text {
     color: #ffffff;
     font-size: 16px;
@@ -32,12 +38,28 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    white-space: nowrap;
+}
+
+.navbar-divider {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 14px;
+    font-weight: 300;
+}
+
+.navbar-college-name {
+    color: #c8ecc2;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
 }
 
 .service-text {
     color: #d7c800;
     font-size: 13px;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .login-container {
@@ -59,7 +81,7 @@ body {
 }
 
 .logo-section {
-    margin-bottom: 18px;
+    margin-bottom: 14px;
 }
 
 .logo {
@@ -67,12 +89,32 @@ body {
     height: 82px;
     object-fit: contain;
     border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(6, 75, 13, 0.15);
+}
+
+.college-name {
+    margin-top: 12px;
+    margin-bottom: 4px;
+    color: #064b0d;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.35;
+    letter-spacing: -0.2px;
+}
+
+.college-sub {
+    margin: 0 0 14px 0;
+    color: #1b5e20;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .login-card h1 {
     margin-bottom: 16px;
     color: #064b0d;
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 700;
 }
 
@@ -219,14 +261,27 @@ body {
 }
 
 /* Responsive Design */
+@media (max-width: 768px) {
+    .navbar-divider,
+    .navbar-college-name {
+        display: none;
+    }
+}
+
 @media (max-width: 600px) {
     .navbar {
         padding: 0 16px;
     }
 
-    .service-text { font-size: 11px; }
+    .service-text { 
+        font-size: 11px; 
+    }
 
     .login-card {
         padding: 26px 18px 30px;
+    }
+
+    .college-name {
+        font-size: 16px;
     }
 }
